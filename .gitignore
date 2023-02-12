@@ -1,5 +1,6 @@
+
 **.ipynb_checkpoints
-**/.DS_Store
+**.DS_Store
 webarchive
 saved psi
 tdse2 copy 2.jl
@@ -7,6 +8,12 @@ tdse2 copy 3.jl
 tdse2.jl
 tdse2 copy.jl
 OneDrive
-output
+
 parameters_notes
 archived/bragg2d-v3.1.3.ipynb
+
+!output/
+output/*
+!output/(20230212-191315-F) bragg_mixing_0_Pi/
+output/(20230212-191315-F) bragg_mixing_0_Pi/*
+!output/(20230212-191315-F) bragg_mixing_0_Pi/(20230212-191315-F) bragg_mixing_0_Pi.mov
