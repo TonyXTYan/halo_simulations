@@ -1975,15 +1975,8 @@ plt.show()
 ```
 
 ```python
-
-```
-
-```python
-
-```
-
-```python
-
+with pgzip.open(output_prefix+'(t,psi)'+output_ext, 'wb', thread=8, blocksize=1*10**8) as file:
+    pickle.dump((t,psi), file) 
 ```
 
 ```python
@@ -2023,6 +2016,18 @@ with contextlib.ExitStack() as stack:
     # https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html#gif
     img.save(fp=fp_out, format='GIF', append_images=imgs,
              save_all=True, duration=50, loop=0)
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
 ```
 
 ```python
