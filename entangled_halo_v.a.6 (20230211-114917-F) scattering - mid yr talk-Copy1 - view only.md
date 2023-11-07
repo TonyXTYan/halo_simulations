@@ -120,7 +120,7 @@ dtyper = np.float64
 ```
 
 ```python
-
+np.complex128
 ```
 
 ```python
@@ -182,8 +182,8 @@ print("zmax =", zmax)
 print("(dx,dz) =", (dx, dz) ) 
 print("rotate phase =", 1j*hb*dt/(2*m4*dx*dz)) #want this to be small
 
-pxmax= (nx+1)/2 * 2*pi/(2*xmax)*hb # want this to be greater than p
-pzmax= (nz+1)/2 * 2*pi/(2*zmax)*hb
+pxmax= (nx-1)/2 * 2*pi/(2*xmax)*hb # want this to be greater than p
+pzmax= (nz-1)/2 * 2*pi/(2*zmax)*hb
 print("pxmax =", pxmax)
 print("pzmax =", pzmax)
 dpx = 2*pi/(2*xmax)*hb
@@ -200,7 +200,15 @@ assert ((nx*nz)**2 < 1000**4), "This is in the terra range! too big!"
 ```
 
 ```python
+2*pi*hb/(2*dx)
+```
 
+```python
+dpx
+```
+
+```python
+pxmax/(nx-1)*2
 ```
 
 ```python
@@ -209,6 +217,10 @@ assert ((nx*nz)**2 < 1000**4), "This is in the terra range! too big!"
 
 ```python
 warnings.warn(str(round(5*2*8*(nx*nz)**2/1000/1000/1000,3)) + " GB of RAM needed to run this thing (estimate)")
+```
+
+```python
+2*8*(nx*nz)**2/1000/1000/1000
 ```
 
 ```python
@@ -1852,7 +1864,7 @@ scattering_evolve_loop_plot(t,f+1,psi,phi, plt_show=True, plt_save=True)
 ```
 
 ```python
-def scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=True, plt_save=False, power=1):
+def scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=True, plt_save=False, logPlus=1):
     t_str = str(round(t,5))
     if plt_show:
         print("t = " +t_str+ " \t\t frame =", f, "\t\t memory used: " + 
@@ -1862,36 +1874,40 @@ def scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=True, plt_save=False, 
     plt.subplot(2,2,1)
 #     plt.imshow(np.flipud(only3(psi).T), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds')
 #     plt.imshow(np.emath.logn(power,np.flipud(only3(psi).T)), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds')
-    plt.imshow(np.power(np.flipud(only3(psi).T),power), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds')
+#     plt.imshow(np.power(np.flipud(only3(psi).T),power), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds')
+    plt.imshow(np.log(logPlus+np.flipud(only3(psi).T)), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds')
     plt.xlabel("$x \ (\mu m)$")
     plt.ylabel("$z \ (\mu m)$")
     plt.title("$t="+t_str+" \ ms $")
 
     plt.subplot(2,2,2)
 #     plt.imshow(np.flipud(only4(psi).T), extent=[-xmax,xmax,-zmax, zmax],cmap='Blues')
-    plt.imshow(np.power(np.flipud(only4(psi).T),power), extent=[-xmax,xmax,-zmax, zmax],cmap='Blues')
+#     plt.imshow(np.power(np.flipud(only4(psi).T),power), extent=[-xmax,xmax,-zmax, zmax],cmap='Blues')
 #     plt.imshow(np.emath.logn(power,np.flipud(only4(psi).T)), extent=[-xmax,xmax,-zmax, zmax],cmap='Blues')
+    plt.imshow(np.log(logPlus+np.flipud(only4(psi).T)), extent=[-xmax,xmax,-zmax, zmax],cmap='Blues')
     plt.xlabel("$x \ (\mu m)$")
     plt.ylabel("$z \ (\mu m)$")
 
     plt.subplot(2,2,3)
 #     plt.imshow((only3phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds')
-    plt.imshow(np.power(only3phi(phi).T,power), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds')
+#     plt.imshow(np.power(only3phi(phi).T,power), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds')
 #     plt.imshow(np.emath.logn(power,only3phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds')
     # plt.colorbar()
+    plt.imshow(np.log(logPlus+only3phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds')
     plt.xlabel("$p_x \ (\hbar k)$")
     plt.ylabel("$p_z \ (\hbar k)$")
 
     plt.subplot(2,2,4)
 #     plt.imshow((only4phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues')
-    plt.imshow(np.power(only4phi(phi).T,power), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues')
+#     plt.imshow(np.power(only4phi(phi).T,power), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues')
 #     plt.imshow(np.emath.logn(power,only4phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues')
+    plt.imshow(np.log(logPlus+only4phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues')
     # plt.colorbar()
     plt.xlabel("$p_x \ (\hbar k)$")
     plt.xlabel("$p_x \ (\hbar k)$")
 
     if plt_save:
-        title= output_prefix_bracket + " scattering_evolve_loop_plot alt (f="+str(f)+",t="+t_str+",power="+str(power)+")" 
+        title= output_prefix_bracket + " scattering_evolve_loop_plot alt (f="+str(f)+",t="+t_str+",logPlus="+str(logPlus)+")" 
         plt.savefig("output/"+title+".pdf", dpi=600)
         plt.savefig("output/"+title+".png", dpi=600)
     
@@ -1900,7 +1916,7 @@ def scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=True, plt_save=False, 
 ```
 
 ```python
-scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=True, plt_save=True, power=0.4)
+scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=True, plt_save=False, logPlus=10)
 ```
 
 ```python
@@ -1930,7 +1946,7 @@ def gp3p4_dhalo_calc(phi,cut=5.0,offset3=0,offset4=0):
 #     ind3 = abs(pzlin-offset3) < (cut+1e-15)*dpz
 #     ind4 = abs(pzlin-offset4) < (cut+1e-15)*dpz
     ind3 = abs(pzlin-offset3) < (cut+1e-15)*dpz
-    ind4 = abs(pzlin+offset4) < (cut+1e-15)*dpz
+    ind4 = abs(pzlin-offset4) < (cut+1e-15)*dpz
 #     ind3 = np.logical_or(abs(pzlin-offset3) < (cut+1e-15)*dpz, abs(pzlin+offset3) < (cut+1e-15)*dpz)
 #     ind4 = np.logical_or(abs(pzlin-offset4) < (cut+1e-15)*dpz, abs(pzlin+offset4) < (cut+1e-15)*dpz)
     gx3x4 = np.trapz(np.abs(phi[:,:,:,ind4])**2,pzlin[ind4],axis=3)
@@ -1954,15 +1970,15 @@ def plot_dhalo_gp3p4(gx3x4,cut,offset3=0,offset4=0):
     plt.ylabel("$p_4$")
     plt.axhline(y=0,color='white',alpha=0.8,linewidth=0.7)
     plt.axvline(x=0,color='white',alpha=0.8,linewidth=0.7)
-    plt.text(+xmax*0.6,+xmax*0.8,"$g^{(2)}_{++}="+str(round(gpp,4))+"$", color='white',ha='center',alpha=0.9)
-    plt.text(-xmax*0.6,+xmax*0.8,"$g^{(2)}_{-+}="+str(round(gmp,4))+"$", color='white',ha='center',alpha=0.9)
-    plt.text(+xmax*0.6,-xmax*0.8,"$g^{(2)}_{+-}="+str(round(gpm,4))+"$", color='white',ha='center',alpha=0.9)
-    plt.text(-xmax*0.6,-xmax*0.8,"$g^{(2)}_{--}="+str(round(gmm,4))+"$", color='white',ha='center',alpha=0.9)
+    plt.text(+pxmax*0.6/(hb*k),+pxmax*0.8/(hb*k),"$g^{(2)}_{++}="+str(round(gpp,1))+"$", color='white',ha='center',alpha=0.9)
+    plt.text(-pxmax*0.6/(hb*k),+pxmax*0.8/(hb*k),"$g^{(2)}_{-+}="+str(round(gmp,1))+"$", color='white',ha='center',alpha=0.9)
+    plt.text(+pxmax*0.6/(hb*k),-pxmax*0.8/(hb*k),"$g^{(2)}_{+-}="+str(round(gpm,1))+"$", color='white',ha='center',alpha=0.9)
+    plt.text(-pxmax*0.6/(hb*k),-pxmax*0.8/(hb*k),"$g^{(2)}_{--}="+str(round(gmm,1))+"$", color='white',ha='center',alpha=0.9)
     
 ```
 
 ```python
-abs(pzlin-(1.25/4)*(3*8/14)*hb*k) < (1+1e-15)*dpz
+abs(pzlin-(1.25/4)*(3*8/14)*hb*k) < (0.5+1e-15)*dpz
 ```
 
 ```python
@@ -2031,6 +2047,164 @@ phi, swnf = phiAndSWNF(psi, nthreads=8)
 
 ```python
 
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+# https://artmenlope.github.io/plotting-complex-variable-functions/
+from colorsys import hls_to_rgb
+
+def colorize(fz):
+
+    """
+    The original colorize function can be found at:
+    https://stackoverflow.com/questions/17044052/mathplotlib-imshow-complex-2d-array
+    by the user nadapez.
+    """
+    
+    r = np.log2(1. + np.abs(fz))
+    
+    h = np.angle(fz)/(2*np.pi)
+#     l = 1 - 0.45**(np.log(1+r)) 
+    l = 0.75*((np.abs(fz))/np.abs(fz).max())**1.2
+    s = 1
+
+    c = np.vectorize(hls_to_rgb)(h,l,s) # --> tuple
+    c = np.array(c)  # -->  array of (3,n,m) shape, but need (m,n,3)
+    c = np.rot90(c.transpose(2,1,0), 1) # Change shape to (m,n,3) and rotate 90 degrees
+    
+    return c
+
+```
+
+```python
+def gp3p4_dhalo_calc_noAb(phi,cut=5.0,offset3=0,offset4=0):
+#     ind3 = abs(pzlin-offset3) < (cut+1e-15)*dpz
+#     ind4 = abs(pzlin-offset4) < (cut+1e-15)*dpz
+    ind3 = abs(pzlin-offset3) < (cut+1e-15)*dpz
+    ind4 = abs(pzlin-offset4) < (cut+1e-15)*dpz
+#     ind3 = np.logical_or(abs(pzlin-offset3) < (cut+1e-15)*dpz, abs(pzlin+offset3) < (cut+1e-15)*dpz)
+#     ind4 = np.logical_or(abs(pzlin-offset4) < (cut+1e-15)*dpz, abs(pzlin+offset4) < (cut+1e-15)*dpz)
+    gx3x4 = np.trapz(phi[:,:,:,ind4],pzlin[ind4],axis=3)
+    gx3x4 = np.trapz(gx3x4[:,ind3,:],pzlin[ind3],axis=1)
+    return gx3x4 
+```
+
+```python
+from matplotlib.lines import Line2D
+legend_elements = [Line2D([0], [0], marker='o', color='cyan', label='$Arg=\pm\pi$', markersize=10, lw=0),
+                   Line2D([0], [0], marker='o', color='red', label='$Arg=0$', markersize=10, lw=0)]
+```
+
+```python
+plt.figure(figsize=(14,9))
+
+# cut_list = [1, 10, 30]
+cut_list = [1, 5, 15]
+for i in range(3):
+    cut = cut_list[i]
+    gx3x4 = gp3p4_dhalo_calc_noAb(psi,cut=cut,offset3=(1.25/4)*(3*8/14)*hb*k,offset4=(1.25/4)*(4*8/14)*hb*k)
+    plt.subplot(2,3,i+1)
+    gx3x4_img = colorize(gx3x4.T)
+#     plot_dhalo_gp3p4(gx3x4_img,cut)
+#     fig, ax = plt.subplots()
+    
+    xip = pxlin > +0*cut*dpz 
+    xim = pxlin < -0*cut*dpz 
+    gpp = np.trapz(np.trapz(gx3x4[:,xip],pxlin[xip],axis=1)[xip],pxlin[xip],axis=0)
+    gpm = np.trapz(np.trapz(gx3x4[:,xim],pxlin[xim],axis=1)[xip],pxlin[xip],axis=0)
+    gmp = np.trapz(np.trapz(gx3x4[:,xip],pxlin[xip],axis=1)[xim],pxlin[xim],axis=0)
+    gmm = np.trapz(np.trapz(gx3x4[:,xim],pxlin[xim],axis=1)[xim],pxlin[xim],axis=0)
+#     E = (gpp+gmm-gpm-gmp)/((gpp+gmm+gpm+gmp))
+    
+    plt.imshow(gx3x4_img, extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k))
+#     ax.imshow(np.flipud(gx3x4_img.T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k))
+#     plt.title("$g^{(2)}_{\pm\pm}$ of $p_\mathrm{cut} = "+str(cut)+"dpz$ and $E="+str(round(E,4))+"$")
+    plt.title("$g^{(2)}_{\pm\pm}$ of $p_\mathrm{cut} = "+str(cut)+"dpz$")
+    plt.xlabel("$p_3$")
+    plt.ylabel("$p_4$")
+    plt.axhline(y=0,color='white',alpha=0.8,linewidth=0.7)
+    plt.axvline(x=0,color='white',alpha=0.8,linewidth=0.7)
+#     plt.text(+pxmax*0.6/(hb*k),+pxmax*0.8/(hb*k),"$g^{(2)}_{++}="+str(round(gpp,4))+"$", color='white',ha='center',alpha=0.9)
+#     plt.text(-pxmax*0.6/(hb*k),+pxmax*0.8/(hb*k),"$g^{(2)}_{-+}="+str(round(gmp,4))+"$", color='white',ha='center',alpha=0.9)
+#     plt.text(+pxmax*0.6/(hb*k),-pxmax*0.8/(hb*k),"$g^{(2)}_{+-}="+str(round(gpm,4))+"$", color='white',ha='center',alpha=0.9)
+#     plt.text(-pxmax*0.6/(hb*k),-pxmax*0.8/(hb*k),"$g^{(2)}_{--}="+str(round(gmm,4))+"$", color='white',ha='center',alpha=0.9)
+plt.legend(handles=legend_elements, loc='upper right')    
+
+for i in range(3):
+    cut = cut_list[i]
+    gx3x4 = gp3p4_dhalo_calc(psi,cut=cut,offset3=(1.25/4)*(3*8/14)*hb*k,offset4=(1.25/4)*(4*8/14)*hb*k)
+    plt.subplot(2,3,i+1+3)
+    plot_dhalo_gp3p4(gx3x4,cut)
+
+# plt.colorbar()
+    
+plt.tight_layout(pad=0)
+title = "double halo corr with phase"
+plt.savefig("output/"+title+".pdf", dpi=600)
+plt.savefig("output/"+title+".png", dpi=600)
+
+plt.show()
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+N = 3
+lim = 3
+x, y = np.meshgrid(np.linspace(-lim,lim,N),
+                   np.linspace(-lim,lim,N))
+z = x + 1j*y
+f = (z-1)**5+1j
+```
+
+```python
+z
+```
+
+```python
+np.abs(z).max()
+```
+
+```python
+z.max()
+```
+
+```python
+colorize(f)
+```
+
+```python
+
+```
+
+```python
+dx
+```
+
+```python
+dpz
+```
+
+```python
+dpz/(hb*k)
 ```
 
 ```python
