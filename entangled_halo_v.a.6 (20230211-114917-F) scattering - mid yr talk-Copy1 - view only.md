@@ -13,11 +13,11 @@ jupyter:
     name: python3
 ---
 
-```python
+```python slideshow={"slide_type": ""}
 !python -V
 ```
 
-```python
+```python slideshow={"slide_type": ""}
 import os
 os.environ['OPENBLAS_NUM_THREADS'] = '8'
 os.environ['VECLIB_MAXIMUM_THREADS'] = '8'
