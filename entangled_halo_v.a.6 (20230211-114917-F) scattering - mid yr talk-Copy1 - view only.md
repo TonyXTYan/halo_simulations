@@ -84,7 +84,7 @@ warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
 warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 from numba import njit, jit, prange, objmode, vectorize
 import numba
 numba.set_num_threads(8)

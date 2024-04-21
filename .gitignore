@@ -18,3 +18,4 @@ output/*
 output/(20230212-191315-F) bragg_mixing_0_Pi/*
 !output/(20230212-191315-F) bragg_mixing_0_Pi/(20230212-191315-F) bragg_mixing_0_Pi.mov
 *.virtual_documents
+*.ipynb
