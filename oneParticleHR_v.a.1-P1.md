@@ -868,7 +868,7 @@ testFreeEv2 = freeEvolve(0,psi0ringNpOffset(5,1,p,0,5,0,p),
 ```python editable=true slideshow={"slide_type": ""}
 # tPiOutput = Parallel(n_jobs=N_JOBS)(
 tPiOutput = Parallel(n_jobs=2)(
-    delayed(lambda i: (i, scanTauPiInnerEval(i, False, False,0,p,0*dopd,0.4*V0F)[:2]) )(i) 
+    delayed(lambda i: (i, scanTauPiInnerEval(i, False, False,0,p,0*dopd,VR)[:2]) )(i) 
     for i in tqdm(tPiTest)
 )   #### THIS THING TAKE A FEW MIN (or Hours)
 ```
