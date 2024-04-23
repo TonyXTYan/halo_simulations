@@ -17,7 +17,7 @@ jupyter:
 !python -V
 ```
 
-```python slideshow={"slide_type": ""}
+```python slideshow={"slide_type": ""} editable=true
 import os
 os.environ['OPENBLAS_NUM_THREADS'] = '8'
 os.environ['VECLIB_MAXIMUM_THREADS'] = '8'
@@ -98,10 +98,10 @@ from numba_progress import ProgressBar
 from matplotlib.ticker import MaxNLocator
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 import gc
 gc.enable(  )
-# gc.set_debug(gc.DEBUG_SAVEALL)
+# gc.set_debug(gc.DEBUG_SAVEALL)p
 ```
 
 ```python
@@ -1850,7 +1850,7 @@ _ = scattering_evolve_loop_helper2(t,psi,swnf,steps=print_every,progress_proxy=N
 
 ```
 
-```python code_folding=[]
+```python code_folding=[] editable=true slideshow={"slide_type": ""}
 with ProgressBar(total=total_steps) as progressbar:
     for f in range(frames_count):
         scattering_evolve_loop_plot(t,f,psi,phi, plt_show=True, plt_save=True)
