@@ -242,7 +242,7 @@ l.info(f"""dpx = {dpx} uµm/ms
 dpz = {dpz} """)
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 #### WARNING:
 ###  These frequencies are in Hz, 
 #### This simulation uses time in ms, 1Hz = 0.001 /ms
@@ -625,10 +625,10 @@ def plotNow(t, psi):
 ```python
 # @jit
 # @jit(forceobj=True, cache=True)
-def loop(t,psi,tauPi,tauMid,V0FArg,doppd,phase,swnf):
+def loop(t,psi,tauPi,tauMid,V0FArg,doppd,phase,swnf,kkx,kkz):
     # nonlocal V0FArg
     # cosGrid = np.cos(2*k*xgrid + doppd*(t-tBraggCenter) + phase)
-    cosGrid = np.cos(2*kx*xlin[:,np.newaxis] + 2*kz*zlin + doppd*(t-tauMid) + phase)
+    cosGrid = np.cos(2*kkx*xlin[:,np.newaxis] + 2*kkz*zlin + doppd*(t-tauMid) + phase)
     VxExpGrid = np.exp(-(1j/hb) * 0.5*dt * VBF(t,tauMid,tauPi,V0FArg) * cosGrid )
     psi *= VxExpGrid
     phi = toMomentum(psi,swnf)
@@ -643,7 +643,7 @@ def loop(t,psi,tauPi,tauMid,V0FArg,doppd,phase,swnf):
 ```
 
 ```python
-_ = loop(0,psi0ringNpOffset(10,1.7,p,0,+10,0,p),1,1,1,0,0,1)
+_ = loop(0,psi0ringNpOffset(10,1.7,p,0,+10,0,p),1,1,1,0,0,1,kx,kz)
 ```
 
 ```python
@@ -669,6 +669,8 @@ def numericalEvolve(
         final_plot=True,
         progress_bar=True, 
         V0FArg=V0F,
+        kkx=kx,
+        kkz=kz
     ):
     assert (print_every_t > dt or print_every_t <= 0), "print_every_t cannot be smaller than dt"
     steps = ceil((t_final - t_init) / dt) 
@@ -715,11 +717,11 @@ def numericalEvolve(
     if progress_bar:
         for step in tqdm(range(steps)):
             # loop()
-            (t,psi) = loop(t,psi,tauPi,tauMid,V0FArg,doppd,phase,swnf)
+            (t,psi) = loop(t,psi,tauPi,tauMid,V0FArg,doppd,phase,swnf,kkx,kkz)
     else:
         for step in range(steps):
             # loop()
-            (t,psi) = loop(t,psi,tauPi,tauMid,V0FArg,doppd,phase,swnf)
+            (t,psi) = loop(t,psi,tauPi,tauMid,V0FArg,doppd,phase,swnf,kkx,kkz)
     
     # if final_plot:
     #     print("ALL DONE")
@@ -731,7 +733,7 @@ def numericalEvolve(
 _ = numericalEvolve(0, psi0np(1,1,0,0), 10*dt, final_plot=False, progress_bar=False)
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 # test run 
 %timeit numericalEvolve(0, psi0np(1,1,0,0), dt, final_plot=False, progress_bar=False)
 # M1 107 ms ± 2.05 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
@@ -776,7 +778,9 @@ _ = freeEvolve(0,psi0np(1,1,0,0),0.1,final_plot=False,logging=True)
 
 ```python editable=true slideshow={"slide_type": ""}
 # @jit(forceobj=True, cache=True)
-def scanTauPiInnerEval(tPi, logging=True, progress_bar=True, ang=0, pmom=p, doppd=dopd, V0FArg=V0F):
+def scanTauPiInnerEval(tPi, 
+                       logging=True, progress_bar=True, 
+                       ang=0, pmom=p, doppd=dopd, V0FArg=V0F, kkx=kx, kkz=kz):
     tauPi  = tPi
     tauMid = tauPi * 5
     tauEnd = tauPi * 10
@@ -788,13 +792,14 @@ def scanTauPiInnerEval(tPi, logging=True, progress_bar=True, ang=0, pmom=p, dopp
     output = numericalEvolve(0, psi0ringNpOffset(5,1,pmom,0,5,0,pmom), 
                              tauEnd, tauPi, tauMid, doppd=doppd, 
                              final_plot=logging,progress_bar=progress_bar,
-                             V0FArg=V0FArg,
-                            )
+                             V0FArg=V0FArg,kkx=kkx,kkz=kkz)
 #     if pbar != None: pbar.update(1)
     return output
 ```
 
-```python
+## Scanning pulse duration
+
+```python editable=true slideshow={"slide_type": ""}
 dt*1000
 ```
 
@@ -802,11 +807,15 @@ dt*1000
 tBraggPi*1000
 ```
 
+```python
+
+```
+
 ```python editable=true slideshow={"slide_type": ""}
 # tPiTest = np.append(np.arange(0,0.05,-0.0005), 0) # note this is decending
     # tPiTest = np.arange(dt,3*dt,dt)
 dddt = 0.001 * 0.05
-tPiTest = np.flip(np.linspace(0,dddt*500,20)) ##AHHHH
+tPiTest = np.flip(np.linspace(0,dddt*600,20)) ##AHHHH
 l.info(f"#tPiTest = {len(tPiTest)}, max={tPiTest[0]*1000}, min={tPiTest[-1]*1000} us")
 
 plt.figure(figsize=(12,5))
@@ -859,7 +868,7 @@ tPiTestRun = scanTauPiInnerEval(tPiTest[-2], False, True,0,p,0*dopd,VR)
 ```
 
 ```python
-testFreeEv = freeEvolve(0,psi0ringNpOffset(5,1,p,0,5,0,p),
+testFreeEv1 = freeEvolve(0,psi0ringNpOffset(5,1,p,0,5,0,p),
                         tPiTest[0]*10,final_plot=False,logging=False)
 testFreeEv2 = freeEvolve(0,psi0ringNpOffset(5,1,p,0,5,0,p),
                          tPiTest[0]*20,final_plot=False,logging=False)
@@ -867,21 +876,21 @@ testFreeEv2 = freeEvolve(0,psi0ringNpOffset(5,1,p,0,5,0,p),
 
 ```python editable=true slideshow={"slide_type": ""}
 tPiOutput = Parallel(n_jobs=N_JOBS)(
-    delayed(lambda i: (i, scanTauPiInnerEval(i, False, False,0,p,0*dopd,0.4*V0F)[:2]) )(i) 
+    delayed(lambda i: (i, scanTauPiInnerEval(i, False, False,0,p,0*dopd,VR)[:2]) )(i) 
     for i in tqdm(tPiTest)
 )   #### THIS THING TAKE A FEW MIN (or Hours)
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
-psi = tPiOutput[-1][1][1]
+# psi = tPiOutput[-1][1][1]
 # psi = tPiTestRun[1]
-# psi = testFreeEv[1]
+psi = testFreeEv1[1]
 plot_psi(psi)
 # (swnf, phi) = phiAndSWNF(psi)
 plot_mom(psi,5,5)
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 tPiOutputFramesDir = []
 os.makedirs(output_prefix+"tPiScan", exist_ok=True)
 for (ti, tPi) in enumerate(tPiTest):
@@ -912,7 +921,7 @@ for (j, hbar_k) in enumerate(hbar_k_transfers):
     # print(i,hbar_k)
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 plt.figure(figsize=(4,4))
 plt.imshow(pxlinIndexSet.T,interpolation='none',aspect=1,extent=[-7,7,-pzmax/p,pzmax/p])
 # plt.axvline(x=1001, linewidth=1, alpha=0.7)
@@ -929,7 +938,7 @@ plt.show()
 hbar_k_transfers
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 # phiDensityGrid = np.zeros((len(tPiTest), pxlin.size))
 phiDensityGrid = np.zeros((len(tPiTest), pzlin.size))
 phiDensityGrid_hbark = np.zeros((len(tPiTest),len(hbar_k_transfers)))
@@ -954,7 +963,7 @@ for i in tqdm(range(len(tPiTest))):
 
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 plt.figure(figsize=(12,5))
 plt.subplot(1,2,1)
 
@@ -990,7 +999,7 @@ title="mom_dist_at_diff_angle"
 plt.show()
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 phiDensityNormFactor = np.trapz(phiDensityGrid_hbark)
 
 ```
@@ -1030,11 +1039,11 @@ title = "bragg_pulse_duration_test_labeled"
 plt.show()
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 hbar_k_transfers
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 np.argmax(phiDensityGrid_hbark[:,3]/phiDensityNormFactor[3])
 ```
 
@@ -1042,7 +1051,7 @@ np.argmax(phiDensityGrid_hbark[:,3]/phiDensityNormFactor[3])
 tPiTest[6]*1000
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 phiDensityGrid_hbark[12,3]/phiDensityNormFactor[3]
 ```
 
@@ -1058,20 +1067,195 @@ phiDensityGrid_hbark[12,3]/phiDensityNormFactor[3]
 
 ```
 
-```python
+## Setting up intensity duration scan
 
+```python
+dddt = 0.001 * 0.05
+tPiTest = np.flip(np.linspace(0,dddt*400,100)) ##AHHHH
+l.info(f"#tPiTest = {len(tPiTest)}, max={tPiTest[0]*1000}, min={tPiTest[-1]*1000} us")
+
+plt.figure(figsize=(12,5))
+def plot_inner_helper():
+    for (i, tauPi) in enumerate(tPiTest):
+        if tauPi == 0: continue
+        tauMid = tauPi * 5 
+        tauEnd = tauPi * 10 
+        tlinspace = np.arange(0,tauEnd,dt)
+        plt.plot(tlinspace*1000, VBF(tlinspace, tauMid, tauPi),
+                 linewidth=0.5,alpha=0.9
+            )
+plt.subplot(2,1,1)
+plot_inner_helper()
+plt.ylabel("$V(t)$")
+
+plt.subplot(2,1,2)
+plot_inner_helper()
+plt.xlim([0,5])
+plt.xlabel("$t \ (μs)$ ")
+plt.ylabel("$V(t)$")
+
+
+title="bragg_strength_V0"
+# plt.savefig("output/"+title+".pdf", dpi=600)
+# plt.savefig("output/"+title+".png", dpi=600)
+
+plt.show()
+```
+
+```python editable=true slideshow={"slide_type": ""}
+omegaRabi
+```
+
+```python editable=true slideshow={"slide_type": ""}
+intensityScan = np.linspace(0.1,5,10)
+l.info(f"intensityScan: {intensityScan}")
+omegaRabiScan = (linewidth*np.sqrt(intensityScan/intenSat/2))**2 /2/detuning
+l.info(f"omegaRabiScan: {omegaRabiScan}")
+VRScan = 2*hb*omegaRabiScan*0.001
+l.info(f"VRScan: {VRScan}")
+l.info(f"VRScan/VR: {VRScan/VR}")
 ```
 
 ```python
-
+intensityWidthGrid = []
+for (VRi,VRs) in enumerate(VRScan):
+    tempTRow = []
+    for (ti, tP) in enumerate(tPiTest):
+        tempTRow.append((VRs,tP))
+    intensityWidthGrid.append(tempTRow)
 ```
 
 ```python
+VRs_grid, tP_grid = np.meshgrid(VRScan, tPiTest, indexing='ij')
+intensityWidthGrid = np.stack((VRs_grid, tP_grid), axis=-1)
+```
 
+```python editable=true slideshow={"slide_type": ""}
+intensityWidthGrid[:,1]
 ```
 
 ```python
+intensityWidthGrid[0,:]
+```
 
+```python
+ksz=kz
+ksx=kx
+```
+
+```python editable=true slideshow={"slide_type": ""}
+VRScanOutput = []
+```
+
+```python editable=true slideshow={"slide_type": ""}
+for (VRi,VRs) in enumerate(VRScan):
+    print(f"Computing VRi={VRi}, VRs={VRs}")
+    tPiOutput = Parallel(n_jobs=N_JOBS)(
+        delayed(lambda i: (i, scanTauPiInnerEval(i, False, False,0,p,0*dopd,VRs)[:2],ksz,ksx) )(i) 
+        for i in tqdm(tPiTest)
+    )   #### THIS THING TAKE A FEW MIN (or Hours)
+    phiDensityGrid = np.zeros((len(tPiTest), pzlin.size))
+    phiDensityGrid_hbark = np.zeros((len(tPiTest),len(hbar_k_transfers)))
+    
+    # tPiOutputFramesDir = []
+    output_prefix_tPiVscan = output_prefix+f"tPiScan ({VRi},{VRs})"
+    os.makedirs(output_prefix_tPiVscan, exist_ok=True)
+    for (ti, tPi) in enumerate(tPiTest):
+        print(f"Exporting frame {ti}, tPi={tPi*1000}us",end="\r")
+        psi = tPiOutput[ti][1][1]
+        plot_psi(psi, False)
+        plt.savefig(output_prefix_tPiVscan+f"/psi-({ti},{tPi}).png",dpi=600)
+        # tPiOutputFramesDir.append(output_prefix+f"tPiScan/psi-({ti},{tPi}).png")
+        plt.close()
+        plot_mom(psi,5,5,False)
+        plt.savefig(output_prefix_tPiVscan+f"/phi-({ti},{tPi}).png",dpi=600)
+        plt.close()
+    print("DONE \t\t\t ", end="\r")
+    
+    # for i in tqdm(range(len(tPiTest))):
+    for i in range(len(tPiTest)):
+        item = tPiOutput[i]
+        (swnf, phi) = phiAndSWNF(item[1][1])
+        phiAbsSq = np.abs(phi)**2
+        phiZ = np.trapz(phiAbsSq, pzlin,axis=0)
+        phiDensityGrid[i] = phiZ
+        for (j, hbar_k) in enumerate(hbar_k_transfers):
+            index = pxlinIndexSet[j]
+            phiDensityGrid_hbark[i,j] = np.trapz(phiZ[index], pzlin[index])
+
+    VRScanOutput.append((VRi, phiDensityGrid, phiDensityGrid_hbark))
+    
+    plt.figure(figsize=(12,5))
+    plt.subplot(1,2,1)
+    nxm = int((nx-1)/2)
+    nx2 = int((nx-1)/2)
+    plt.imshow(phiDensityGrid[:,nxm-nx2:nxm+nx2], 
+               extent=[pzlin[nxm-nx2]/(hb*k),pzlin[nxm+nx2]/(hb*k),0,len(tPiTest)], 
+               interpolation='none',aspect=0.15)
+    ax = plt.gca()
+    ax.yaxis.set_major_locator(matplotlib.ticker.MaxNLocator(integer=True))
+    plt.ylabel("$dt =$"+str(dt*1000) + "$\mu \mathrm{s}$")
+    plt.xlabel("$p_z \ (\hbar k)$")
+    plt.subplot(1,2,2)
+    plt.imshow(phiDensityGrid_hbark, 
+               extent=[hbar_k_transfers[0],hbar_k_transfers[-1],0,len(tPiTest)], 
+               interpolation='none',aspect=0.15)
+    plt.xlabel("$p_z \ (\hbar k)$ integrated block")
+    
+    title="mom_dist_at_diff_angle"
+    plt.savefig(output_prefix_tPiVscan+"/"+title+".pdf", dpi=600)
+    plt.savefig(output_prefix_tPiVscan+"/"+title+".png", dpi=600)
+    plt.show()
+    plt.close()
+    phiDensityNormFactor = np.trapz(phiDensityGrid_hbark)
+    plt.figure(figsize=(11,5))
+    for (i, hbar_k) in enumerate(hbar_k_transfers):
+        if abs(hbar_k) >3: continue
+        if   hbar_k > 0: style = '+-'
+        elif hbar_k < 0: style = 'x-'
+        else:            style = '.-'
+        plt.plot(tPiTest*1000, phiDensityGrid_hbark[:,i]/phiDensityNormFactor[i],
+                 style, linewidth=1,alpha=0.5, markersize=5,
+                 label=str(hbar_k)+"$\hbar k$",
+                )
+    
+    plt.legend(loc=1,ncols=2)
+    plt.ylabel("$normalised \int |\phi(p)| dp$ around region ($\pm$"+str(cut_p_width)+")")
+    plt.xlabel("$t_\pi \ (\mu s)$")
+    title = "bragg_pulse_duration_test_labeled"
+    plt.savefig(output_prefix_tPiVscan+"/"+title+".pdf", dpi=600)
+    plt.savefig(output_prefix_tPiVscan+"/"+title+".png", dpi=600)
+    plt.show()
+    plt.close()
+    
+    indMax = np.argmax(phiDensityGrid_hbark[:,3]/phiDensityNormFactor[3])
+```
+
+```python editable=true slideshow={"slide_type": ""}
+
+```
+
+```python editable=true slideshow={"slide_type": ""}
+vtSliceM1 = np.empty((len(VRScan),len(tPiTest)))
+for (VRi,VRs) in enumerate(VRScan):
+    phiDensityGrid_hbark = VRScanOutput[VRi][2]
+    phiDensityNormFactor = np.trapz(phiDensityGrid_hbark)
+    vtSliceM1[VRi] = phiDensityGrid_hbark[:,3]/phiDensityNormFactor
+```
+
+```python editable=true slideshow={"slide_type": ""}
+plt.imshow(np.fliplr(np.flipud(vtSliceM1)),aspect=3, 
+           extent=[tPiTest[-1]*1000,tPiTest[0]*1000,intensityScan[0],intensityScan[-1]],
+           cmap=plt.get_cmap('viridis', 20)
+          )
+plt.colorbar(ticks=np.linspace(0,1,21))
+plt.xlabel("Pulse width $\sigma$ $\mu s$")
+plt.ylabel("Intensity $\mathrm{mW/mm^2}$")
+title = "Transfer fraction of halo into -1$\hbar k$ state"
+plt.title(title)
+plt.savefig(output_prefix+"/"+title+".pdf", dpi=600)
+plt.savefig(output_prefix+"/"+title+".png", dpi=600)
+plt.show()
 ```
 
 ```python
