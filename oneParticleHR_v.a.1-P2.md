@@ -964,7 +964,7 @@ nx2 = int((nx-1)/2)
 plt.imshow(phiDensityGrid[:,nxm-nx2:nxm+nx2], 
            # extent=[pxlin[nxm-nx2]/(hb*k),pxlin[nxm+nx2]/(hb*k),0,len(tPiTest)], 
            extent=[pzlin[nxm-nx2]/(hb*k),pzlin[nxm+nx2]/(hb*k),0,len(tPiTest)], 
-           interpolation='none',aspect=0.7)
+           interpolation='none',aspect=0.15)
 # plt.imshow(phiDensityGrid, 
 #            extent=[-pxmax/(hb*k),pxmax/(hb*k),1,len(tPiTest)+1], 
 #            interpolation='none',aspect=1)
@@ -981,7 +981,7 @@ plt.xlabel("$p_z \ (\hbar k)$")
 plt.subplot(1,2,2)
 plt.imshow(phiDensityGrid_hbark, 
            extent=[hbar_k_transfers[0],hbar_k_transfers[-1],0,len(tPiTest)], 
-           interpolation='none',aspect=0.4)
+           interpolation='none',aspect=0.15)
 # plt.xlabel("$p_x \ (\hbar k)$ integrated block")
 plt.xlabel("$p_z \ (\hbar k)$ integrated block")
 
@@ -1025,8 +1025,8 @@ plt.xlabel("$t_\pi \ (\mu s)$")
 # plt.text((1+ 9)*dt*1000, 1, "$\pi/4$",color='orange')
 
 title = "bragg_pulse_duration_test_labeled"
-# plt.savefig("output/"+title+".pdf", dpi=600)
-# plt.savefig("output/"+title+".png", dpi=600)
+plt.savefig(output_prefix+"/"+title+".pdf", dpi=600)
+plt.savefig(output_prefix+"/"+title+".png", dpi=600)
 
 plt.show()
 ```
@@ -1048,7 +1048,13 @@ phiDensityGrid_hbark[12,3]/phiDensityNormFactor[3]
 ```
 
 ```python
-
+# psi = testFreeEv1[1]
+ind = -20
+print(tPiOutput[ind][0]*1000)
+psi = tPiOutput[ind][1][1]
+plot_psi(psi)
+# (swnf, phi) = phiAndSWNF(psi)
+plot_mom(psi,5,5)
 ```
 
 ```python
