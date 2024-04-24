@@ -1426,7 +1426,7 @@ for (VRi,VRs) in enumerate(VRScan):
 
 # In[241]:
 
-
+plt.close()
 plt.imshow(np.fliplr(np.flipud(vtSliceM1)),aspect=3, 
            extent=[tPiTest[-1]*1000,tPiTest[0]*1000,intensityScan[0],intensityScan[-1]],
            cmap=plt.get_cmap('viridis', 20)

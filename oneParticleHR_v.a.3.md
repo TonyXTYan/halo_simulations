@@ -60,7 +60,7 @@ plt.rcParams["mathtext.fontset"] = "dejavuserif"
 plt.close("all") # close all existing matplotlib plots
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 import gc
 gc.enable(  )
 ```
@@ -175,7 +175,7 @@ minutes per grid op = {round((nx*nz)*0.001*0.001/60, 3)} \t(for 1μs/element_op)
 """)
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 wavelength = 1.083 #Micrometers
 beam_angle = 90
 k = sin(beam_angle*pi/180/2) * 2*pi / wavelength # effective wavelength
@@ -206,7 +206,7 @@ v3 = hb*k/m3
 dopd = v3**2 * m3 / hb
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 l.info(f"""wavelength = {wavelength} µm
 beam_angle = {beam_angle}
 k = {k} 1/µm
@@ -276,7 +276,7 @@ tBraggEnd = tBraggPi * 10
 V0F = 50*1000
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 l.info(f"""a4 = {a4} µm
 intensity1 = {intensity1}  # mW/mm^2 of beam 1
 intensity2 = {intensity2}  
@@ -296,7 +296,7 @@ tBraggEnd = {tBraggEnd}
 """)
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 def V(t):
     return V0 * (2*pi)**-0.5 * tBraggPi**-1 * np.exp(-0.5*(t-tBraggCenter)**2 * tBraggPi**-2)
 
@@ -317,7 +317,7 @@ l.info(f"max(V)  {1j*(dt/hb)*V(tBraggCenter)}")
 l.info(f"max(VR) {1j*(dt/hb)*VBF(tBraggCenter,tBraggPi,VR)}")
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 xlin = np.linspace(-xmax,+xmax, nx)
 zlin = np.linspace(-zmax,+zmax, nz)
 psi=np.zeros((nx,nz),dtype=complex)
@@ -388,7 +388,7 @@ plt.show()
 
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 def plot_psi(psi, plt_show=True):
     """Plots $\psi$ of position wavefunction
 
@@ -502,7 +502,7 @@ def psi0ringUnNorm(x,z,pr=p,mur=10,sg=sg):
             * np.exp(+(1j/hb) * (x**2 + z**2)**0.5 * pr)
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 # @njit(parallel=True)
 # @jit(nopython=True) 
 # @jit(forceobj=True)
@@ -525,7 +525,7 @@ for indx in range(nx):
     expPGrid[indx, :] = np.exp(-(1j/hb) * (0.5/m3) * (dt) * (pxlin[indx]**2 + pzlin**2))  
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 def psi0np(mux=10,muz=10,p0x=0,p0z=0):
     psi=np.zeros((nx,nz),dtype=complex)
     for ix in range(1,nx-1):
@@ -542,7 +542,7 @@ def psi0ringNp(mur=1,sg=1,pr=p):
     return psi
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 # @jit(forceobj=True)
 # @njit(forceobj=True)
 # @jit(cache=True)
@@ -629,7 +629,7 @@ def plotNow(t, psi):
         plot_mom(psi)
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 # @jit
 # @jit(forceobj=True, cache=True)
 def loop(t,psi,tauPi,tauMid,V0FArg,doppd,phase,swnf,kkx,kkz):
@@ -653,7 +653,7 @@ def loop(t,psi,tauPi,tauMid,V0FArg,doppd,phase,swnf,kkx,kkz):
 _ = loop(0,psi0ringNpOffset(10,1.7,p,0,+10,0,p),1,1,1,0,0,1,kx,kz)
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 # @njit(parallel=True)
 # @jit(nopython=True) 
 # @jit(nopython=False) 
@@ -930,7 +930,7 @@ for (j, hbar_k) in enumerate(hbar_k_transfers):
     # print(i,hbar_k)
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 np.sum(pxlinIndexSet,axis=1)
 ```
 

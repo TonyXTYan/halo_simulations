@@ -13,7 +13,7 @@ jupyter:
     name: python3
 ---
 
-```python slideshow={"slide_type": ""}
+```python slideshow={"slide_type": ""} editable=true
 !python -V
 ```
 
@@ -26,7 +26,7 @@ os.environ["MKL_NUM_THREADS"] = '6' # export MKL_NUM_THREADS=6
 os.environ["NUMEXPR_NUM_THREADS"] = '6' # export NUMEXPR_NUM_THREADS=6
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 import matplotlib.pyplot as plt
 import numpy as np
 from math import *

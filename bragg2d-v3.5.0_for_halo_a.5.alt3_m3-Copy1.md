@@ -1084,7 +1084,7 @@ else: # compute
             pickle.dump(tauEvalResult, file) 
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 (t_Pi ,psi_Pi ,phi_Pi ) = tauEvalResult[0]
 (t_Pi2,psi_Pi2,phi_Pi2) = tauEvalResult[1]
 # (t_Pi4,psi_Pi4,phi_Pi4) = tauEvalResult[2]
