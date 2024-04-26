@@ -743,7 +743,8 @@ plt.show()
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
-psi = tPiOutput[-30][1][1]
+# psi = tPiOutput[-30][1][1]
+psi = tPiOutput[10][1][1]
 # psi = tPiTestRun[1]
 # psi = testFreeEv1[1]
 plot_psi(psi)
@@ -775,7 +776,7 @@ print("DONE \t\t\t ", end="\r")
 hbar_k_transfers = np.arange(-3,3+1,+2)
 # pzlinIndexSet = np.zeros((len(hbar_k_transfers), len(pxlin)), dtype=bool)
 pxlinIndexSet = np.zeros((len(hbar_k_transfers), len(pzlin)), dtype=bool)
-cut_p_width = 0.9*dpz/p
+cut_p_width = 1.5*dpz/p
 for (j, hbar_k) in enumerate(hbar_k_transfers):
     # pzlinIndexSet[j] = abs(pxlin/(hb*k) - hbar_k) <= cut_p_width
     pxlinIndexSet[j] = abs(pzlin/p + hbar_k) <= cut_p_width
@@ -833,7 +834,7 @@ nx2 = int((nx-1)/2)
 plt.imshow(phiDensityGrid[:,nxm-nx2:nxm+nx2], 
            # extent=[pxlin[nxm-nx2]/(hb*k),pxlin[nxm+nx2]/(hb*k),0,len(tPiTest)], 
            extent=[pzlin[nxm-nx2]/(hb*k),pzlin[nxm+nx2]/(hb*k),0,len(tPiTest)], 
-           interpolation='none',aspect=0.1)
+           interpolation='none',aspect=0.08)
 # plt.imshow(phiDensityGrid, 
 #            extent=[-pxmax/(hb*k),pxmax/(hb*k),1,len(tPiTest)+1], 
 #            interpolation='none',aspect=1)
@@ -861,14 +862,15 @@ plt.show()
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
-phiDensityNormFactor = np.sum(phiDensityGrid_hbark,axis=1)
+# phiDensityNormFactor = np.sum(phiDensityGrid_hbark,axis=1)
+phiDensityNormFactor = np.trapz(phiDensityGrid_hbark,axis=1)
 ```
 
 ```python
 # phiDensityNormFactor
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 
 ```
 

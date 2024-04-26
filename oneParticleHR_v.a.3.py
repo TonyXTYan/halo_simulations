@@ -1233,7 +1233,7 @@ phiDensityGrid_hbark = np.zeros((len(tPiTest),len(hbar_k_transfers)))
 
 
 dddt = 0.001 * 0.05
-tPiTest = np.flip(np.linspace(0,dddt*400,100)) ##AHHHH
+tPiTest = np.flip(np.linspace(0,dddt*600,100)) ##AHHHH
 l.info(f"#tPiTest = {len(tPiTest)}, max={tPiTest[0]*1000}, min={tPiTest[-1]*1000} us")
 l.info(f"tPiTest: {tPiTest}")
 
@@ -1274,7 +1274,7 @@ omegaRabi
 # In[123]:
 
 
-intensityScan = np.linspace(0.1,2,50)
+intensityScan = np.linspace(0.1,4,50)
 l.info(f"intensityScan: {intensityScan}")
 omegaRabiScan = (linewidth*np.sqrt(intensityScan/intenSat/2))**2 /2/detuning
 l.info(f"omegaRabiScan: {omegaRabiScan}")
@@ -1352,7 +1352,10 @@ for (VRi,VRs) in enumerate(VRScan):
         plot_mom(psi,5,5,False)
         plt.savefig(output_prefix_tPiVscan+f"/phi-({ti},{tPi}).png",dpi=600)
         plt.close()
-    print("DONE \t\t\t ", end="\r")
+    print("DONE \t\t\t ", end="\r") 
+
+    with pgzip.open(output_prefix_tPiVscan+'tPiOutput'+output_ext, 'wb', thread=8, blocksize=1*10**8) as file:
+        pickle.dump(tPiOutput, file) 
     
     # for i in tqdm(range(len(tPiTest))):
     for i in range(len(tPiTest)):
@@ -1364,7 +1367,7 @@ for (VRi,VRs) in enumerate(VRScan):
         for (j, hbar_k) in enumerate(hbar_k_transfers):
             index = pxlinIndexSet[j]
             phiDensityGrid_hbark[i,j] = np.trapz(phiZ[index], pzlin[index])
-
+    
     VRScanOutput.append((VRi, phiDensityGrid, phiDensityGrid_hbark))
     
     plt.figure(figsize=(12,5))
@@ -1443,8 +1446,11 @@ plt.show(block=False)
 
 # In[ ]:
 
+with pgzip.open(output_prefix+'/VRScanOutput'+output_ext, 'wb', thread=8, blocksize=1*10**8) as file:
+    pickle.dump(VRScanOutput, file) 
 
-
+with pgzip.open(output_prefix+'/intensityWidthGrid'+output_ext, 'wb', thread=8, blocksize=1*10**8) as file:
+    pickle.dump(intensityWidthGrid, file) 
 
 
 # In[ ]:
