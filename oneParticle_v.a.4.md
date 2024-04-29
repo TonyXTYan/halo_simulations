@@ -1108,7 +1108,7 @@ for (VRi,VRs) in enumerate(VRScan):
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
-plt.imshow(np.fliplr(np.flipud(vtSliceM1)),aspect=3, 
+plt.imshow(np.fliplr(np.flipud(vtSliceM1)),aspect=6, 
            extent=[tPiTest[-1]*1000,tPiTest[0]*1000,intensityScan[0],intensityScan[-1]],
            cmap=plt.get_cmap('viridis', 20)
           )
@@ -1123,7 +1123,11 @@ plt.show()
 ```
 
 ```python
+with pgzip.open(output_prefix+'/VRScanOutput'+output_ext, 'wb', thread=8, blocksize=1*10**8) as file:
+    pickle.dump(VRScanOutput, file) 
 
+with pgzip.open(output_prefix+'/intensityWidthGrid'+output_ext, 'wb', thread=8, blocksize=1*10**8) as file:
+    pickle.dump(intensityWidthGrid, file) 
 ```
 
 ```python
