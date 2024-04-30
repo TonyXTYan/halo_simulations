@@ -43,13 +43,13 @@ import logging
 import sys
 
 from joblib import Parallel, delayed
-N_JOBS=6
+
 from tqdm.notebook import tqdm
 from datetime import datetime
 import time
 
 import pyfftw
-nthreads=2
+
 
 %config InlineBackend.figure_format = 'retina'
 %matplotlib inline
@@ -57,6 +57,11 @@ plt.rcParams["figure.figsize"] = (8, 5)
 plt.rcParams["font.family"] = "serif" 
 plt.rcParams["mathtext.fontset"] = "dejavuserif" 
 plt.close("all") # close all existing matplotlib plots
+```
+
+```python
+N_JOBS=-1-4
+nthreads=2
 ```
 
 ```python
@@ -133,7 +138,7 @@ N_JOBS = {N_JOBS}""")
 ```python
 nx = 120+1
 nz = 120+1
-xmax = 100 #Micrometers
+xmax = 50 #Micrometers
 # zmax = (nz/nx)*xmax
 zmax = xmax
 dt = 1e-4 # Milliseconds
@@ -312,7 +317,7 @@ tBraggEnd = {tBraggEnd}
 """)
 ```
 
-```python
+```python jupyter={"source_hidden": true}
 l.info(f"""hb*k**2/(2*m3) = {hb*k**2/(2*m3)} \t/ms
 hb*k**2/(2*m4) = {hb*k**2/(2*m4)}
 (hb*k**2/(2*m3))**-1 = {(hb*k**2/(2*m3))**-1} \tms
@@ -581,7 +586,7 @@ def phiAndSWNF(psi):
     return (swnf, phi)
     
 # psi = psi0ringNp(4,2,p)
-psi = psi0ringNpOffset(10,10,p,0,10,0,p)
+psi = psi0ringNpOffset(5,5,p,0,5,0,p)
 # psi = psi0np(2,2,0.5*p*np.cos(0),0.5*p*np.sin(0))
 (swnf, phi) = phiAndSWNF(psi)
 
@@ -731,7 +736,7 @@ def scanTauPiInnerEval(tPi,
         print("Testing parameters")
         print("tauPi =", round(tPi,6), "    \t tauMid =", round(tauMid,6), " \t tauEnd = ", round(tauEnd,6))
     # output = numericalEvolve(0, psi0np(2,2,pmom*np.cos(ang),pmom*np.sin(ang)), 
-    output = numericalEvolve(0, psi0ringNpOffset(10,10,pmom,0,10,0,pmom), 
+    output = numericalEvolve(0, psi0ringNpOffset(5,5,pmom,0,5,0,pmom), 
                              tauEnd, tauPi, tauMid, doppd=doppd, 
                              final_plot=logging,progress_bar=progress_bar,
                              V0FArg=V0FArg,kkx=kkx,kkz=kkz
@@ -741,7 +746,7 @@ def scanTauPiInnerEval(tPi,
 ```
 
 ```python
-tPiTest = np.append(np.arange(0.03,0,-3*dt), 0) # note this is decending
+tPiTest = np.append(np.arange(0.05,0,-4*dt), 0) # note this is decending
     # tPiTest = np.arange(dt,3*dt,dt)
 l.info(f"#tPiTest = {len(tPiTest)}, max={tPiTest[0]*1000}, min={tPiTest[-1]*1000} us")
 l.info(f"tPiTest: {tPiTest}")
@@ -812,20 +817,8 @@ plot_mom(psi,5,5)
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
-# tPiOutputFramesDir = []
 tPiScanOutputTimeStart = datetime.now()
 os.makedirs(output_prefix+"tPiScan", exist_ok=True)
-# for (ti, tPi) in enumerate(tPiTest):
-#     print(f"Exporting frame {ti}, tPi={tPi*1000}us",end="\r")
-#     psi = tPiOutput[ti][1][1]
-#     plot_psi(psi, False)
-#     plt.savefig(output_prefix+f"tPiScan/psi-({ti},{tPi}).png",dpi=600)
-#     tPiOutputFramesDir.append(output_prefix+f"tPiScan/psi-({ti},{tPi}).png")
-#     plt.close()
-#     plot_mom(psi,5,5,False)
-#     plt.savefig(output_prefix+f"tPiScan/phi-({ti},{tPi}).png",dpi=600)
-#     plt.close()
-# print("DONE \t\t\t ", end="\r")
 
 def tPiTestFrameExportHelper(ti, tPi, output_prefix_tPiVscan): 
     psi = tPiOutput[ti][1][1]
@@ -1000,8 +993,9 @@ plt.show()
 <!-- #endregion -->
 
 ```python editable=true slideshow={"slide_type": ""}
-intensityScan = np.linspace(0.05,1,10)
-l.info(f"intensityScan: {intensityScan}")
+intensityScan = np.arange(0.01,1.1,0.1)
+l.info(f"""len(intensityScan): {len(intensityScan)}
+intensityScan: {intensityScan}""")
 omegaRabiScan = (linewidth*np.sqrt(intensityScan/intenSat/2))**2 /2/detuning
 l.info(f"omegaRabiScan: {omegaRabiScan}")
 VRScan = 2*hb*omegaRabiScan*0.001
@@ -1053,8 +1047,12 @@ Estimate total scan time: {(tPiScanTimeDelta+tPiScanOutputTimeDelta)*len(intensi
 ksz=kz
 ksx=kx
 VRScanOutput = []
+VRScanTimeStart = datetime.now()
 for (VRi,VRs) in enumerate(VRScan):
-    l.info(f"Computing VRi={VRi}, VRs={VRs}")
+    VRScanTimeNow = datetime.now()
+    tE = VRScanTimeNow - VRScanTimeStart
+    tR = (len(VRScan)-VRi)* tD/VRi
+    l.info(f"Computing VRi={VRi}, VRs={round(VRs,2)}, tE{tE} tD{tR}")
     tPiOutput = Parallel(n_jobs=N_JOBS)(
         delayed(lambda i: (i, scanTauPiInnerEval(i, False, False,0,p,0*dopd,VRs)[:2],ksz,ksx) )(i) 
         for i in tqdm(tPiTest)
@@ -1131,9 +1129,11 @@ for (VRi,VRs) in enumerate(VRScan):
     indMax = np.argmax(phiDensityGrid_hbark[:,3]/phiDensityNormFactor[3])
     gc.collect()
 l.info("""
-=========================================
-====    ====    SCAN DONE    ====    ====
-=========================================
+==================================================================================
+==================================================================================
+====    ====    SCAN DONE    ====    =============================================
+==================================================================================
+==================================================================================
 """)
 ```
 
@@ -1152,7 +1152,7 @@ print(hbar_k_transfers[hbarkInd])
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
-plt.imshow(np.fliplr(np.flipud(vtSliceM1)),aspect=2.5*len(tPiTest)/len(intensityScan), 
+plt.imshow(np.fliplr(np.flipud(vtSliceM1)),aspect=3*len(tPiTest)/len(intensityScan), 
            extent=[tPiTest[-1]*1000,tPiTest[0]*1000,intensityScan[0],intensityScan[-1]],
            cmap=plt.get_cmap('viridis', 20)
           )
@@ -1167,7 +1167,14 @@ plt.show()
 ```
 
 ```python
+with pgzip.open(output_prefix+'/VRScanOutput'+output_ext, 'wb', thread=8, blocksize=1*10**8) as file:
+    pickle.dump(VRScanOutput, file) 
 
+with pgzip.open(output_prefix+'/intensityScan'+output_ext, 'wb', thread=8, blocksize=1*10**8) as file:
+    pickle.dump(intensityScan, file) 
+
+with pgzip.open(output_prefix+'/intensityWidthGrid'+output_ext, 'wb', thread=8, blocksize=1*10**8) as file:
+    pickle.dump(intensityWidthGrid, file) 
 ```
 
 ```python
