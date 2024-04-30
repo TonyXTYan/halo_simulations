@@ -133,9 +133,9 @@ N_JOBS = {N_JOBS}""")
 ```python
 nx = 120+1
 nz = 120+1
-xmax = 20 #Micrometers
+xmax = 100 #Micrometers
 # zmax = (nz/nx)*xmax
-zmax = 20
+zmax = xmax
 dt = 1e-4 # Milliseconds
 dx = 2*xmax/(nx-1)
 dz = 2*zmax/(nz-1)
@@ -149,7 +149,7 @@ pzmax = 2*pi*hb/dz/2
 # pzmax= (nz+1)/2 * 2*pi/(2*zmax)*hb
 ```
 
-```python
+```python jupyter={"source_hidden": true}
 s = f"""nx = {nx}
 nz = {nz} 
 xmax = {xmax}
@@ -166,7 +166,7 @@ pymax = {pzmax}
 l.info(s)
 ```
 
-```python editable=true slideshow={"slide_type": ""}
+```python editable=true slideshow={"slide_type": ""} jupyter={"source_hidden": true}
 l.info(f"""rotate phase per dt for m3 = {1j*hb*dt/(2*m3*dx*dz)} \t #want this to be small
 rotate phase per dt for m4 = {1j*hb*dt/(2*m4*dx*dz)} 
 number of grid points = {round(nx*nz/1000/1000,3)} (million)
@@ -233,7 +233,7 @@ if not 2*pi/(2*k)/dx > 1:  l.warning(f"2*pi/(2*k)/dx = {2*pi/(2*k)/dx} aliasing 
 ```
 
 ```python
-hb*pi*nx / (2*m3*xmax*6)
+hb*pi*(nx-1) / (2*m3*xmax*6)
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
@@ -286,6 +286,10 @@ if abs(dpx - (pxlin[1]-pxlin[0])) > 0.0001: l.error("AHHHHH px is messed up (?!)
 if abs(dpz - (pzlin[1]-pzlin[0])) > 0.0001: l.error("AHHHHH pz")
 l.info(f"""dpx = {dpx} uµm/m
 dpz = {dpz} """)
+```
+
+```python
+
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
@@ -573,7 +577,7 @@ def phiAndSWNF(psi):
     return (swnf, phi)
     
 # psi = psi0ringNp(4,2,p)
-psi = psi0ringNpOffset(3,2,p,0,5,0,p)
+psi = psi0ringNpOffset(10,10,p,0,10,0,p)
 # psi = psi0np(2,2,0.5*p*np.cos(0),0.5*p*np.sin(0))
 (swnf, phi) = phiAndSWNF(psi)
 
@@ -723,7 +727,7 @@ def scanTauPiInnerEval(tPi,
         print("Testing parameters")
         print("tauPi =", round(tPi,6), "    \t tauMid =", round(tauMid,6), " \t tauEnd = ", round(tauEnd,6))
     # output = numericalEvolve(0, psi0np(2,2,pmom*np.cos(ang),pmom*np.sin(ang)), 
-    output = numericalEvolve(0, psi0ringNpOffset(3,2,pmom,0,5,0,pmom), 
+    output = numericalEvolve(0, psi0ringNpOffset(10,10,pmom,0,10,0,pmom), 
                              tauEnd, tauPi, tauMid, doppd=doppd, 
                              final_plot=logging,progress_bar=progress_bar,
                              V0FArg=V0FArg,kkx=kkx,kkz=kkz
@@ -771,14 +775,14 @@ plt.show()
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
+tPiScanTimeStart = datetime.now()
 tPiOutput = Parallel(n_jobs=N_JOBS)(
     delayed(lambda i: (i, scanTauPiInnerEval(i, False, False,0,p,0*dopd,VR)[:2]) )(i) 
     for i in tqdm(tPiTest)
-)   
-```
-
-```python
-
+) 
+tPiScanTimeEnd = datetime.now()
+tPiScanTimeDelta = tPiScanTimeEnd-tPiScanTimeStart
+l.info(f"""Time to run one scan: {tPiScanTimeDelta}""")
 ```
 
 ```python
@@ -800,19 +804,12 @@ plot_mom(psi,5,5)
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
-(xmax-3-2)/v3
-```
-
-```python editable=true slideshow={"slide_type": ""}
-(zmax-3-5)/v3
-```
-
-```python editable=true slideshow={"slide_type": ""}
 
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
 # tPiOutputFramesDir = []
+tPiScanOutputTimeStart = datetime.now()
 os.makedirs(output_prefix+"tPiScan", exist_ok=True)
 # for (ti, tPi) in enumerate(tPiTest):
 #     print(f"Exporting frame {ti}, tPi={tPi*1000}us",end="\r")
@@ -848,6 +845,9 @@ tPiOutputFramesDir = Parallel(n_jobs=-3, timeout=1000)(
     delayed(tPiTestFrameExportHelper)(ti, tPiTest[ti], output_prefix+"tPiScan")
     for ti in tqdm(range(len(tPiTest)))
 )
+tPiScanOutputTimeEnd = datetime.now()
+tPiScanOutputTimeDelta = tPiScanOutputTimeEnd-tPiScanOutputTimeStart
+l.info(f"""Time to output one scan: {tPiScanOutputTimeDelta}""")
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
@@ -996,7 +996,7 @@ plt.show()
 <!-- #endregion -->
 
 ```python editable=true slideshow={"slide_type": ""}
-intensityScan = np.linspace(0.1,4,100)
+intensityScan = np.linspace(0.05,1,10)
 l.info(f"intensityScan: {intensityScan}")
 omegaRabiScan = (linewidth*np.sqrt(intensityScan/intenSat/2))**2 /2/detuning
 l.info(f"omegaRabiScan: {omegaRabiScan}")
@@ -1033,6 +1033,16 @@ intensityWidthGrid[:,0] # VRScan , tPiTest[0]
 
 ```python
 intensityWidthGrid[0,:] # VRScan[0], tPiTest
+```
+
+```python
+l.info(f"""len(intensityScan) = {len(intensityScan)}
+Each scan takes time roughtly {tPiScanTimeDelta.seconds}s + {tPiScanOutputTimeDelta.seconds}s  
+Estimate total scan time: {(tPiScanTimeDelta+tPiScanOutputTimeDelta)*len(intensityScan)}""")
+```
+
+```python
+
 ```
 
 ```python
