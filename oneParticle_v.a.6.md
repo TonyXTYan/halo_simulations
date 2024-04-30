@@ -60,7 +60,7 @@ plt.close("all") # close all existing matplotlib plots
 ```
 
 ```python
-N_JOBS=-1-4
+N_JOBS=-1-3
 nthreads=2
 ```
 
@@ -746,7 +746,7 @@ def scanTauPiInnerEval(tPi,
 ```
 
 ```python
-tPiTest = np.append(np.arange(0.05,0,-4*dt), 0) # note this is decending
+tPiTest = np.append(np.arange(0.06,0,-4*dt), 0) # note this is decending
     # tPiTest = np.arange(dt,3*dt,dt)
 l.info(f"#tPiTest = {len(tPiTest)}, max={tPiTest[0]*1000}, min={tPiTest[-1]*1000} us")
 l.info(f"tPiTest: {tPiTest}")
@@ -817,37 +817,6 @@ plot_mom(psi,5,5)
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
-tPiScanOutputTimeStart = datetime.now()
-os.makedirs(output_prefix+"tPiScan", exist_ok=True)
-
-def tPiTestFrameExportHelper(ti, tPi, output_prefix_tPiVscan): 
-    psi = tPiOutput[ti][1][1]
-    plot_psi(psi, False)
-    plt.savefig(output_prefix_tPiVscan+f"/psi-({ti},{tPi}).png",dpi=600)
-    # tPiOutputFramesDir.append(output_prefix+f"tPiScan/psi-({ti},{tPi}).png")
-    plt.close()
-    plot_mom(psi,5,5,False)
-    plt.savefig(output_prefix_tPiVscan+f"/phi-({ti},{tPi}).png",dpi=600)
-    plt.close()
-    plt.cla() 
-    plt.clf() 
-    plt.close('all')
-    # plt.ioff() # idk, one of these should clear memroy issues?
-    time.sleep(0.05)
-    gc.collect()
-    return(output_prefix_tPiVscan+f"/psi-({ti},{tPi}).png", 
-           output_prefix_tPiVscan+f"/phi-({ti},{tPi}).png")
-
-tPiOutputFramesDir = Parallel(n_jobs=-3, timeout=1000)(
-    delayed(tPiTestFrameExportHelper)(ti, tPiTest[ti], output_prefix+"tPiScan")
-    for ti in tqdm(range(len(tPiTest)))
-)
-tPiScanOutputTimeEnd = datetime.now()
-tPiScanOutputTimeDelta = tPiScanOutputTimeEnd-tPiScanOutputTimeStart
-l.info(f"""Time to output one scan: {tPiScanOutputTimeDelta}""")
-```
-
-```python editable=true slideshow={"slide_type": ""}
 hbar_k_transfers = np.arange(-5,5+1,+2)
 # pzlinIndexSet = np.zeros((len(hbar_k_transfers), len(pxlin)), dtype=bool)
 pxlinIndexSet = np.zeros((len(hbar_k_transfers), len(pzlin)), dtype=bool)
@@ -864,6 +833,18 @@ hbar_k_transfers
 
 ```python editable=true slideshow={"slide_type": ""}
 np.sum(pxlinIndexSet,axis=1)
+```
+
+```python editable=true slideshow={"slide_type": ""}
+plt.figure(figsize=(4,4))
+plt.imshow(pxlinIndexSet.T,interpolation='none',aspect=0.5,extent=[-2,2,-pzmax/p,pzmax/p])
+# plt.imshow(pzlinIndexSet,interpolation='none',aspect=5)
+# plt.axvline(x=1001, linewidth=1, alpha=0.7)
+
+title="hbar_k_pxlin_integration_range"
+# plt.savefig("output/"+title+".pdf", dpi=600)
+# plt.savefig("output/"+title+".png", dpi=600)
+plt.show()
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
@@ -886,18 +867,6 @@ for i in tqdm(range(len(tPiTest))):
         # phiDensityGrid_hbark[i,j] = np.trapz(phiX[index], pxlin[index])
         # phiDensityGrid_hbark[i,j] = np.trapz(phiZ[index], pzlin[index])
         phiDensityGrid_hbark[i,j] = np.sum(phiZ[index])
-```
-
-```python editable=true slideshow={"slide_type": ""}
-plt.figure(figsize=(4,4))
-plt.imshow(pxlinIndexSet.T,interpolation='none',aspect=0.5,extent=[-2,2,-pzmax/p,pzmax/p])
-# plt.imshow(pzlinIndexSet,interpolation='none',aspect=5)
-# plt.axvline(x=1001, linewidth=1, alpha=0.7)
-
-title="hbar_k_pxlin_integration_range"
-# plt.savefig("output/"+title+".pdf", dpi=600)
-# plt.savefig("output/"+title+".png", dpi=600)
-plt.show()
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
@@ -984,6 +953,41 @@ plt.savefig(output_prefix+"/tPiScan/"+title+".png", dpi=600)
 plt.show()
 ```
 
+```python
+
+```
+
+```python editable=true slideshow={"slide_type": ""}
+tPiScanOutputTimeStart = datetime.now()
+os.makedirs(output_prefix+"tPiScan", exist_ok=True)
+
+def tPiTestFrameExportHelper(ti, tPi, output_prefix_tPiVscan): 
+    psi = tPiOutput[ti][1][1]
+    plot_psi(psi, False)
+    plt.savefig(output_prefix_tPiVscan+f"/psi-({ti},{tPi}).png",dpi=600)
+    # tPiOutputFramesDir.append(output_prefix+f"tPiScan/psi-({ti},{tPi}).png")
+    plt.close()
+    plot_mom(psi,5,5,False)
+    plt.savefig(output_prefix_tPiVscan+f"/phi-({ti},{tPi}).png",dpi=600)
+    plt.close()
+    plt.cla() 
+    plt.clf() 
+    plt.close('all')
+    # plt.ioff() # idk, one of these should clear memroy issues?
+    time.sleep(0.05)
+    gc.collect()
+    return(output_prefix_tPiVscan+f"/psi-({ti},{tPi}).png", 
+           output_prefix_tPiVscan+f"/phi-({ti},{tPi}).png")
+
+tPiOutputFramesDir = Parallel(n_jobs=-3, timeout=1000)(
+    delayed(tPiTestFrameExportHelper)(ti, tPiTest[ti], output_prefix+"tPiScan")
+    for ti in tqdm(range(len(tPiTest)))
+)
+tPiScanOutputTimeEnd = datetime.now()
+tPiScanOutputTimeDelta = tPiScanOutputTimeEnd-tPiScanOutputTimeStart
+l.info(f"""Time to output one scan: {tPiScanOutputTimeDelta}""")
+```
+
 ```python editable=true slideshow={"slide_type": ""}
 
 ```
@@ -993,7 +997,7 @@ plt.show()
 <!-- #endregion -->
 
 ```python editable=true slideshow={"slide_type": ""}
-intensityScan = np.arange(0.01,1.1,0.1)
+intensityScan = np.arange(0.01,1.05,0.05)
 l.info(f"""len(intensityScan): {len(intensityScan)}
 intensityScan: {intensityScan}""")
 omegaRabiScan = (linewidth*np.sqrt(intensityScan/intenSat/2))**2 /2/detuning
@@ -1010,8 +1014,9 @@ for i in range(len(intensityScan)):
 ```
 
 ```python
-l.info(f"""intensityScanParamNotes (i, intensityScan[i], omegaRabiScan[i], VRScan[i]): 
-{intensityScanParamNotes}""")
+l.info(f"""intensityScanParamNotes
+(i, intensityScan[i], omegaRabiScan[i], VRScan[i]): 
+{intensityScanParamNotes}""".replace("), (", "),\n("))
 ```
 
 ```python
@@ -1051,8 +1056,9 @@ VRScanTimeStart = datetime.now()
 for (VRi,VRs) in enumerate(VRScan):
     VRScanTimeNow = datetime.now()
     tE = VRScanTimeNow - VRScanTimeStart
-    tR = (len(VRScan)-VRi)* tD/VRi
-    l.info(f"Computing VRi={VRi}, VRs={round(VRs,2)}, tE{tE} tD{tR}")
+    if VRi != 0 :
+        tR = (len(VRScan)-VRi)* tE/VRi
+        l.info(f"Computing VRi={VRi}, VRs={round(VRs,2)}, tE{tE} tR{tR}")
     tPiOutput = Parallel(n_jobs=N_JOBS)(
         delayed(lambda i: (i, scanTauPiInnerEval(i, False, False,0,p,0*dopd,VRs)[:2],ksz,ksx) )(i) 
         for i in tqdm(tPiTest)
@@ -1152,7 +1158,7 @@ print(hbar_k_transfers[hbarkInd])
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
-plt.imshow(np.fliplr(np.flipud(vtSliceM1)),aspect=3*len(tPiTest)/len(intensityScan), 
+plt.imshow(np.fliplr(np.flipud(vtSliceM1)),aspect=6*len(tPiTest)/len(intensityScan), 
            extent=[tPiTest[-1]*1000,tPiTest[0]*1000,intensityScan[0],intensityScan[-1]],
            cmap=plt.get_cmap('viridis', 20)
           )
