@@ -746,7 +746,7 @@ def scanTauPiInnerEval(tPi,
 ```
 
 ```python
-tPiTest = np.append(np.arange(0.06,0,-4*dt), 0) # note this is decending
+tPiTest = np.append(np.arange(0.1,0,-5*dt), 0) # note this is decending
     # tPiTest = np.arange(dt,3*dt,dt)
 l.info(f"#tPiTest = {len(tPiTest)}, max={tPiTest[0]*1000}, min={tPiTest[-1]*1000} us")
 l.info(f"tPiTest: {tPiTest}")
@@ -804,7 +804,7 @@ tPiTest[30]
 
 ```python editable=true slideshow={"slide_type": ""}
 # psi = tPiOutput[-30][1][1]
-psi = tPiOutput[30][1][1]
+psi = tPiOutput[-5][1][1]
 # psi = tPiTestRun[1]
 # psi = testFreeEv1[1]
 plot_psi(psi)
@@ -915,7 +915,7 @@ phiDensityNormFactor = np.trapz(phiDensityGrid_hbark,axis=1)
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
-
+os.makedirs(output_prefix+"tPiScan", exist_ok=True)
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
@@ -959,8 +959,6 @@ plt.show()
 
 ```python editable=true slideshow={"slide_type": ""}
 tPiScanOutputTimeStart = datetime.now()
-os.makedirs(output_prefix+"tPiScan", exist_ok=True)
-
 def tPiTestFrameExportHelper(ti, tPi, output_prefix_tPiVscan): 
     psi = tPiOutput[ti][1][1]
     plot_psi(psi, False)
@@ -1058,7 +1056,7 @@ for (VRi,VRs) in enumerate(VRScan):
     tE = VRScanTimeNow - VRScanTimeStart
     if VRi != 0 :
         tR = (len(VRScan)-VRi)* tE/VRi
-        l.info(f"Computing VRi={VRi}, VRs={round(VRs,2)}, tE{tE} tR{tR}")
+        l.info(f"Computing VRi={VRi}, VRs={round(VRs,2)}, tE {tE} tR {tR}")
     tPiOutput = Parallel(n_jobs=N_JOBS)(
         delayed(lambda i: (i, scanTauPiInnerEval(i, False, False,0,p,0*dopd,VRs)[:2],ksz,ksx) )(i) 
         for i in tqdm(tPiTest)
@@ -1158,7 +1156,7 @@ print(hbar_k_transfers[hbarkInd])
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
-plt.imshow(np.fliplr(np.flipud(vtSliceM1)),aspect=6*len(tPiTest)/len(intensityScan), 
+plt.imshow(np.fliplr(np.flipud(vtSliceM1)),aspect=8*len(tPiTest)/len(intensityScan), 
            extent=[tPiTest[-1]*1000,tPiTest[0]*1000,intensityScan[0],intensityScan[-1]],
            cmap=plt.get_cmap('viridis', 20)
           )
@@ -1181,6 +1179,18 @@ with pgzip.open(output_prefix+'/intensityScan'+output_ext, 'wb', thread=8, block
 
 with pgzip.open(output_prefix+'/intensityWidthGrid'+output_ext, 'wb', thread=8, blocksize=1*10**8) as file:
     pickle.dump(intensityWidthGrid, file) 
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
 ```
 
 ```python
