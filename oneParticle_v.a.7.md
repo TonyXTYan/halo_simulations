@@ -347,6 +347,32 @@ l.info(f"max(V) {1j*(dt/hb)*V(tBraggCenter)}")
 ```
 
 ```python
+def VS(ttt, mid, wid, V0=VR):
+    return V0 * 0.5 * (1 + np.cos(2*np.pi/wid*(ttt-mid))) * \
+            (-0.5*wid+mid<ttt) * (ttt<0.5*wid+mid)
+```
+
+```python
+tbtest = np.arange(tBraggCenter-5*tBraggPi,tBraggCenter+5*tBraggPi,dt)
+plt.plot(tbtest, VBF(tbtest,tBraggPi*5,tBraggPi))
+plt.plot(tbtest, VS(tbtest,tBraggPi,tBraggPi*2,0.3*V0F))
+plt.show()
+l.info(f"max(V) {1j*(dt/hb)*VBF(tBraggCenter,tBraggPi*5,tBraggPi)}")
+```
+
+```python editable=true slideshow={"slide_type": ""}
+V(tBraggCenter)
+```
+
+```python
+VBF(tBraggCenter,tBraggPi*5,tBraggPi)
+```
+
+```python
+np.trapz(V(tbtest),tbtest) # this should be V0
+```
+
+```python
 xlin = np.linspace(-xmax,+xmax, nx)
 zlin = np.linspace(-zmax,+zmax, nz)
 psi=np.zeros((nx,nz),dtype=complex)
@@ -363,24 +389,6 @@ if abs(dz - (zlin[1]-zlin[0])) > 0.0001: l.error("AHHHHz")
 
 ```python editable=true slideshow={"slide_type": ""}
 l.info(f"{round(psi.nbytes/1000/1000 ,3)} MB of data used to store psi")
-```
-
-```python
-tbtest = np.arange(tBraggCenter-5*tBraggPi,tBraggCenter+5*tBraggPi,dt)
-plt.plot(tbtest, VBF(tbtest,tBraggPi*5,tBraggPi))
-l.info(f"max(V) {1j*(dt/hb)*VBF(tBraggCenter,tBraggPi*5,tBraggPi)}")
-```
-
-```python editable=true slideshow={"slide_type": ""}
-V(tBraggCenter)
-```
-
-```python
-VBF(tBraggCenter,tBraggPi*5,tBraggPi)
-```
-
-```python
-np.trapz(V(tbtest),tbtest) # this should be V0
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
@@ -658,7 +666,9 @@ def numericalEvolve(
         nonlocal phi
         # cosGrid = np.cos(2*k*xgrid + doppd*(t-tBraggCenter) + phase)
         cosGrid = np.cos(2*kkx*xlin[:,np.newaxis] + 2*kkz*zlin + doppd*(t-tauMid) + phase)
-        VxExpGrid = np.exp(-(1j/hb) * 0.5*dt * VBF(t,tauMid,tauPi,V0FArg) * cosGrid )
+        VxExpGrid = np.exp(-(1j/hb) * 0.5*dt * VS(t,tauMid,tauPi,V0FArg) * cosGrid )
+        # VxExpGrid = np.exp(-(1j/hb) * 0.5*dt * V0FArg * 
+        #                    np.cos(2*kkx*xlin[:,np.newaxis] + 2*kkz*zlin + doppd*(t-tauMid) + phase))
         psi *= VxExpGrid
         phi = toMomentum(psi,swnf)
         phi *= expPGrid
@@ -730,8 +740,8 @@ def scanTauPiInnerEval(tPi,
                        logging=True, progress_bar=True, 
                        ang=0, pmom=p, doppd=dopd, V0FArg=V0F, kkx=kx, kkz=kz):
     tauPi  = tPi
-    tauMid = tauPi * 5
-    tauEnd = tauPi * 10
+    tauMid = tauPi / 2 
+    tauEnd = tauPi 
     if logging:
         print("Testing parameters")
         print("tauPi =", round(tPi,6), "    \t tauMid =", round(tauMid,6), " \t tauEnd = ", round(tauEnd,6))
@@ -746,7 +756,7 @@ def scanTauPiInnerEval(tPi,
 ```
 
 ```python
-tPiTest = np.append(np.arange(0.1,0,-2*dt), 0) # note this is decending
+tPiTest = np.append(np.arange(0.6,0,-20*dt), 0) # note this is decending
     # tPiTest = np.arange(dt,3*dt,dt)
 l.info(f"#tPiTest = {len(tPiTest)}, max={tPiTest[0]*1000}, min={tPiTest[-1]*1000} us")
 l.info(f"tPiTest: {tPiTest}")
@@ -755,10 +765,13 @@ plt.figure(figsize=(12,5))
 def plot_inner_helper():
     for (i, tauPi) in enumerate(tPiTest):
         if tauPi == 0: continue
-        tauMid = tauPi * 5 
-        tauEnd = tauPi * 10 
+        tauMid = tauPi / 2 
+        tauEnd = tauPi * 1
         tlinspace = np.arange(0,tauEnd,dt)
-        plt.plot(tlinspace, VBF(tlinspace, tauMid, tauPi),
+        # plt.plot(tlinspace, VBF(tlinspace, tauMid, tauPi),
+        #          linewidth=0.5,alpha=0.9
+        #     )
+        plt.plot(tlinspace, VS(tlinspace, tauMid, tauPi),
                  linewidth=0.5,alpha=0.9
             )
 plt.subplot(2,1,1)
@@ -875,10 +888,12 @@ plt.subplot(1,2,1)
 
 nxm = int((nx-1)/2)
 nx2 = int((nx-1)/2)
+mom_dist_at_diff_angle_phi_asss=0.04
+mom_dist_at_diff_angle_den_asss=0.04
 plt.imshow(phiDensityGrid[:,nxm-nx2:nxm+nx2], 
            # extent=[pxlin[nxm-nx2]/(hb*k),pxlin[nxm+nx2]/(hb*k),0,len(tPiTest)], 
            extent=[pzlin[nxm-nx2]/(hb*k),pzlin[nxm+nx2]/(hb*k),0,len(tPiTest)], 
-           interpolation='none',aspect=0.025)
+           interpolation='none',aspect=mom_dist_at_diff_angle_phi_asss)
 # plt.imshow(phiDensityGrid, 
 #            extent=[-pxmax/(hb*k),pxmax/(hb*k),1,len(tPiTest)+1], 
 #            interpolation='none',aspect=1)
@@ -895,7 +910,7 @@ plt.xlabel("$p_z \ (\hbar k)$")
 plt.subplot(1,2,2)
 plt.imshow(phiDensityGrid_hbark, 
            extent=[hbar_k_transfers[0],hbar_k_transfers[-1],0,len(tPiTest)], 
-           interpolation='none',aspect=0.02)
+           interpolation='none',aspect=mom_dist_at_diff_angle_den_asss)
 # plt.xlabel("$p_x \ (\hbar k)$ integrated block")
 plt.xlabel("$p_z \ (\hbar k)$ integrated block")
 
@@ -995,7 +1010,7 @@ l.info(f"""Time to output one scan: {tPiScanOutputTimeDelta}""")
 <!-- #endregion -->
 
 ```python editable=true slideshow={"slide_type": ""}
-intensityScan = np.arange(0.05,0.5,0.01)
+intensityScan = np.arange(0.01,0.41,0.005)
 l.info(f"""len(intensityScan): {len(intensityScan)}
 intensityScan: {intensityScan}""")
 omegaRabiScan = (linewidth*np.sqrt(intensityScan/intenSat/2))**2 /2/detuning
@@ -1095,7 +1110,7 @@ for (VRi,VRs) in enumerate(VRScan):
     nx2 = int((nx-1)/2)
     plt.imshow(phiDensityGrid[:,nxm-nx2:nxm+nx2], 
                extent=[pzlin[nxm-nx2]/(hb*k),pzlin[nxm+nx2]/(hb*k),0,len(tPiTest)], 
-               interpolation='none',aspect=0.025)
+               interpolation='none',aspect=mom_dist_at_diff_angle_phi_asss)
     ax = plt.gca()
     ax.yaxis.set_major_locator(matplotlib.ticker.MaxNLocator(integer=True))
     plt.ylabel("$dt =$"+str(dt*1000) + "$\mu \mathrm{s}$")
@@ -1103,7 +1118,7 @@ for (VRi,VRs) in enumerate(VRScan):
     plt.subplot(1,2,2)
     plt.imshow(phiDensityGrid_hbark, 
                extent=[hbar_k_transfers[0],hbar_k_transfers[-1],0,len(tPiTest)], 
-               interpolation='none',aspect=0.02)
+               interpolation='none',aspect=mom_dist_at_diff_angle_den_asss)
     plt.xlabel("$p_z \ (\hbar k)$ integrated block")
     
     title="mom_dist_at_diff_angle"
@@ -1149,6 +1164,7 @@ l.info("""
 hbarkInd = 2
 vtSliceM1 = np.empty((len(VRScan),len(tPiTest)))
 for (VRi,VRs) in enumerate(VRScan):
+    if VRi >= len(VRScanOutput): break
     phiDensityGrid_hbark = VRScanOutput[VRi][2]
     phiDensityNormFactor = np.trapz(phiDensityGrid_hbark)
     vtSliceM1[VRi] = phiDensityGrid_hbark[:,hbarkInd]/phiDensityNormFactor
@@ -1156,15 +1172,17 @@ print(hbar_k_transfers[hbarkInd])
 ```
 
 ```python
-
+vtSliceM1.shape
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
-plt.imshow(np.fliplr(np.flipud(vtSliceM1)),aspect=12*len(tPiTest)/len(intensityScan), 
+cmapS = plt.get_cmap('viridis', 20).copy()
+cmapS.set_bad(color='black')
+plt.imshow(np.fliplr(np.flipud(vtSliceM1)),aspect=6*len(tPiTest)/len(intensityScan), 
            extent=[tPiTest[-1]*1000,tPiTest[0]*1000,intensityScan[0],intensityScan[-1]],
-           cmap=plt.get_cmap('viridis', 20)
+           cmap=cmapS
           )
-plt.colorbar(ticks=np.linspace(0,1,21))
+# plt.colorbar(ticks=np.linspace(0,1,21))
 plt.xlabel("Pulse width $\sigma$ $\mu s$")
 plt.ylabel("Intensity $\mathrm{mW/mm^2}$")
 title = f"Transfer fraction of halo into {hbar_k_transfers[hbarkInd]}$\hbar k$ state"
@@ -1172,6 +1190,10 @@ plt.title(title)
 plt.savefig(output_prefix+"/"+title+".pdf", dpi=600)
 plt.savefig(output_prefix+"/"+title+".png", dpi=600)
 plt.show()
+```
+
+```python
+
 ```
 
 ```python
