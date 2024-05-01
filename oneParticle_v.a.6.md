@@ -746,7 +746,7 @@ def scanTauPiInnerEval(tPi,
 ```
 
 ```python
-tPiTest = np.append(np.arange(0.1,0,-5*dt), 0) # note this is decending
+tPiTest = np.append(np.arange(0.1,0,-2*dt), 0) # note this is decending
     # tPiTest = np.arange(dt,3*dt,dt)
 l.info(f"#tPiTest = {len(tPiTest)}, max={tPiTest[0]*1000}, min={tPiTest[-1]*1000} us")
 l.info(f"tPiTest: {tPiTest}")
@@ -878,7 +878,7 @@ nx2 = int((nx-1)/2)
 plt.imshow(phiDensityGrid[:,nxm-nx2:nxm+nx2], 
            # extent=[pxlin[nxm-nx2]/(hb*k),pxlin[nxm+nx2]/(hb*k),0,len(tPiTest)], 
            extent=[pzlin[nxm-nx2]/(hb*k),pzlin[nxm+nx2]/(hb*k),0,len(tPiTest)], 
-           interpolation='none',aspect=0.08)
+           interpolation='none',aspect=0.025)
 # plt.imshow(phiDensityGrid, 
 #            extent=[-pxmax/(hb*k),pxmax/(hb*k),1,len(tPiTest)+1], 
 #            interpolation='none',aspect=1)
@@ -895,7 +895,7 @@ plt.xlabel("$p_z \ (\hbar k)$")
 plt.subplot(1,2,2)
 plt.imshow(phiDensityGrid_hbark, 
            extent=[hbar_k_transfers[0],hbar_k_transfers[-1],0,len(tPiTest)], 
-           interpolation='none',aspect=0.05)
+           interpolation='none',aspect=0.02)
 # plt.xlabel("$p_x \ (\hbar k)$ integrated block")
 plt.xlabel("$p_z \ (\hbar k)$ integrated block")
 
@@ -995,7 +995,7 @@ l.info(f"""Time to output one scan: {tPiScanOutputTimeDelta}""")
 <!-- #endregion -->
 
 ```python editable=true slideshow={"slide_type": ""}
-intensityScan = np.arange(0.01,1.05,0.05)
+intensityScan = np.arange(0.05,0.5,0.01)
 l.info(f"""len(intensityScan): {len(intensityScan)}
 intensityScan: {intensityScan}""")
 omegaRabiScan = (linewidth*np.sqrt(intensityScan/intenSat/2))**2 /2/detuning
@@ -1003,6 +1003,12 @@ l.info(f"omegaRabiScan: {omegaRabiScan}")
 VRScan = 2*hb*omegaRabiScan*0.001
 l.info(f"VRScan: {VRScan}")
 l.info(f"VRScan/VR: {VRScan/VR}")
+```
+
+```python
+l.info(f"""len(intensityScan) = {len(intensityScan)}
+Each scan takes time roughtly {tPiScanTimeDelta.seconds}s + {tPiScanOutputTimeDelta.seconds}s  
+Estimate total scan time: {(tPiScanTimeDelta+tPiScanOutputTimeDelta)*len(intensityScan)}""")
 ```
 
 ```python
@@ -1037,9 +1043,7 @@ intensityWidthGrid[0,:] # VRScan[0], tPiTest
 ```
 
 ```python
-l.info(f"""len(intensityScan) = {len(intensityScan)}
-Each scan takes time roughtly {tPiScanTimeDelta.seconds}s + {tPiScanOutputTimeDelta.seconds}s  
-Estimate total scan time: {(tPiScanTimeDelta+tPiScanOutputTimeDelta)*len(intensityScan)}""")
+
 ```
 
 ```python
@@ -1091,7 +1095,7 @@ for (VRi,VRs) in enumerate(VRScan):
     nx2 = int((nx-1)/2)
     plt.imshow(phiDensityGrid[:,nxm-nx2:nxm+nx2], 
                extent=[pzlin[nxm-nx2]/(hb*k),pzlin[nxm+nx2]/(hb*k),0,len(tPiTest)], 
-               interpolation='none',aspect=0.15)
+               interpolation='none',aspect=0.025)
     ax = plt.gca()
     ax.yaxis.set_major_locator(matplotlib.ticker.MaxNLocator(integer=True))
     plt.ylabel("$dt =$"+str(dt*1000) + "$\mu \mathrm{s}$")
@@ -1099,7 +1103,7 @@ for (VRi,VRs) in enumerate(VRScan):
     plt.subplot(1,2,2)
     plt.imshow(phiDensityGrid_hbark, 
                extent=[hbar_k_transfers[0],hbar_k_transfers[-1],0,len(tPiTest)], 
-               interpolation='none',aspect=0.15)
+               interpolation='none',aspect=0.02)
     plt.xlabel("$p_z \ (\hbar k)$ integrated block")
     
     title="mom_dist_at_diff_angle"
@@ -1156,7 +1160,7 @@ print(hbar_k_transfers[hbarkInd])
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
-plt.imshow(np.fliplr(np.flipud(vtSliceM1)),aspect=8*len(tPiTest)/len(intensityScan), 
+plt.imshow(np.fliplr(np.flipud(vtSliceM1)),aspect=12*len(tPiTest)/len(intensityScan), 
            extent=[tPiTest[-1]*1000,tPiTest[0]*1000,intensityScan[0],intensityScan[-1]],
            cmap=plt.get_cmap('viridis', 20)
           )
@@ -1179,6 +1183,14 @@ with pgzip.open(output_prefix+'/intensityScan'+output_ext, 'wb', thread=8, block
 
 with pgzip.open(output_prefix+'/intensityWidthGrid'+output_ext, 'wb', thread=8, blocksize=1*10**8) as file:
     pickle.dump(intensityWidthGrid, file) 
+```
+
+```python
+
+```
+
+```python
+
 ```
 
 ```python
