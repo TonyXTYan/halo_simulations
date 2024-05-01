@@ -1010,7 +1010,7 @@ l.info(f"""Time to output one scan: {tPiScanOutputTimeDelta}""")
 <!-- #endregion -->
 
 ```python editable=true slideshow={"slide_type": ""}
-intensityScan = np.arange(0.02,0.52,0.02)
+intensityScan = np.arange(0.01,0.71,0.01)
 l.info(f"""len(intensityScan): {len(intensityScan)}
 intensityScan: {intensityScan}""")
 omegaRabiScan = (linewidth*np.sqrt(intensityScan/intenSat/2))**2 /2/detuning
