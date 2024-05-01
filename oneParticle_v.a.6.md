@@ -908,6 +908,10 @@ plt.show()
 ```python editable=true slideshow={"slide_type": ""}
 # phiDensityNormFactor = np.sum(phiDensityGrid_hbark,axis=1)
 phiDensityNormFactor = np.trapz(phiDensityGrid_hbark,axis=1)
+phiDensityNormed = []
+for i in range(len(hbar_k_transfers)):
+    phiDensityNormed phiDensityGrid_hbark[:,i]/phiDensityNormFactor[i]
+
 ```
 
 ```python
