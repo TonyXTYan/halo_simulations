@@ -1010,7 +1010,7 @@ l.info(f"""Time to output one scan: {tPiScanOutputTimeDelta}""")
 <!-- #endregion -->
 
 ```python editable=true slideshow={"slide_type": ""}
-intensityScan = np.arange(0.01,0.71,0.01)
+intensityScan = np.arange(0.01,0.41,0.005)
 l.info(f"""len(intensityScan): {len(intensityScan)}
 intensityScan: {intensityScan}""")
 omegaRabiScan = (linewidth*np.sqrt(intensityScan/intenSat/2))**2 /2/detuning
@@ -1164,6 +1164,7 @@ l.info("""
 hbarkInd = 2
 vtSliceM1 = np.empty((len(VRScan),len(tPiTest)))
 for (VRi,VRs) in enumerate(VRScan):
+    if VRi >= len(VRScanOutput): break
     phiDensityGrid_hbark = VRScanOutput[VRi][2]
     phiDensityNormFactor = np.trapz(phiDensityGrid_hbark)
     vtSliceM1[VRi] = phiDensityGrid_hbark[:,hbarkInd]/phiDensityNormFactor
@@ -1171,15 +1172,17 @@ print(hbar_k_transfers[hbarkInd])
 ```
 
 ```python
-
+vtSliceM1.shape
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
+cmapS = plt.get_cmap('viridis', 20).copy()
+cmapS.set_bad(color='black')
 plt.imshow(np.fliplr(np.flipud(vtSliceM1)),aspect=6*len(tPiTest)/len(intensityScan), 
            extent=[tPiTest[-1]*1000,tPiTest[0]*1000,intensityScan[0],intensityScan[-1]],
-           cmap=plt.get_cmap('viridis', 20)
+           cmap=cmapS
           )
-plt.colorbar(ticks=np.linspace(0,1,21))
+# plt.colorbar(ticks=np.linspace(0,1,21))
 plt.xlabel("Pulse width $\sigma$ $\mu s$")
 plt.ylabel("Intensity $\mathrm{mW/mm^2}$")
 title = f"Transfer fraction of halo into {hbar_k_transfers[hbarkInd]}$\hbar k$ state"
@@ -1187,6 +1190,10 @@ plt.title(title)
 plt.savefig(output_prefix+"/"+title+".pdf", dpi=600)
 plt.savefig(output_prefix+"/"+title+".png", dpi=600)
 plt.show()
+```
+
+```python
+
 ```
 
 ```python
