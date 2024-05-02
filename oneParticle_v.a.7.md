@@ -756,7 +756,8 @@ def scanTauPiInnerEval(tPi,
 ```
 
 ```python
-tPiTest = np.append(np.arange(0.6,0,-20*dt), 0) # note this is decending
+tPDelta = 40*dt
+tPiTest = np.append(np.arange(0.8,0,-tPDelta), 0) # note this is decending
     # tPiTest = np.arange(dt,3*dt,dt)
 l.info(f"#tPiTest = {len(tPiTest)}, max={tPiTest[0]*1000}, min={tPiTest[-1]*1000} us")
 l.info(f"tPiTest: {tPiTest}")
@@ -1052,6 +1053,14 @@ tPiScanOutputTimeDelta = tPiScanOutputTimeEnd-tPiScanOutputTimeStart
 l.info(f"""Time to output one scan: {tPiScanOutputTimeDelta}""")
 ```
 
+```python
+
+```
+
+```python
+
+```
+
 ```python editable=true slideshow={"slide_type": ""}
 
 ```
@@ -1248,13 +1257,13 @@ cmapS = plt.get_cmap('viridis', 20).copy()
 cmapS.set_bad(color='black')
 plt.close()
 plt.figure(figsize=(12,8))
-plt.imshow(np.fliplr(np.flipud(vtSliceM1)),aspect=0.7*(tPiTest[0]-tPiTest[-1])/(intensityScan[-1]-intensityScan[0])*1000, 
-           extent=[tPiTest[-1]*1000,tPiTest[0]*1000,intensityScan[0],intensityScan[-1]+isDelta],
+plt.imshow(np.fliplr(np.flipud(vtSliceM1)),aspect=0.8*(tPiTest[0]-tPiTest[-1])/(intensityScan[-1]-intensityScan[0])*1000, 
+           extent=[tPiTest[-1]*1000,(tPiTest[0]+tPDelta)*1000,intensityScan[0],intensityScan[-1]+isDelta],
            cmap=cmapS
           )
 plt.colorbar(ticks=np.linspace(0,1,21))
-plt.scatter(VRSOPi[:,1]*1000,intensityScan+0.5*isDelta,color='red',marker='v')
-plt.scatter(VRSOPM[:,1]*1000,intensityScan+0.5*isDelta,color='fuchsia',marker='d')
+plt.scatter(VRSOPi[:,1]*1000,intensityScan+0.5*isDelta,color='red',marker='.',s=8)
+plt.scatter(VRSOPM[:,1]*1000,intensityScan+0.5*isDelta,color='fuchsia',marker='.',s=10)
 plt.xlabel("Pulse width $\sigma$ $\mu s$")
 plt.ylabel("Intensity $\mathrm{mW/mm^2}$")
 title = f"Transfer fraction of halo into {hbar_k_transfers[hbarkInd]}$\hbar k$ state"
@@ -1265,7 +1274,8 @@ plt.show()
 ```
 
 ```python
-VRSOPi
+for (i,v) in enumerate(VRSOPi):
+    print(f"{i}, {round(intensityScan[i],4)}, {round(VRScan[i],1)} \t {v}")
 ```
 
 ```python
