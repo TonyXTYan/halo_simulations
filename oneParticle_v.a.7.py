@@ -20,7 +20,7 @@ from scipy.stats import chi2
 import scipy
 from matplotlib import gridspec
 import matplotlib
-import pandas
+import pandas as pd
 import sys
 import statsmodels.api as sm
 import warnings ## statsmodels.api is too old ... -_-#
@@ -848,10 +848,11 @@ def scanTauPiInnerEval(tPi,
     return output
 
 
-# In[71]:
+# In[98]:
 
 
-tPiTest = np.append(np.arange(0.6,0,-20*dt), 0) # note this is decending
+tPDelta = 40*dt
+tPiTest = np.append(np.arange(0.8,0,-tPDelta), 0) # note this is decending
     # tPiTest = np.arange(dt,3*dt,dt)
 l.info(f"#tPiTest = {len(tPiTest)}, max={tPiTest[0]*1000}, min={tPiTest[-1]*1000} us")
 l.info(f"tPiTest: {tPiTest}")
@@ -893,7 +894,7 @@ plt.show()
 
 
 
-# In[72]:
+# In[50]:
 
 
 tPiScanTimeStart = datetime.now()
@@ -906,19 +907,19 @@ tPiScanTimeDelta = tPiScanTimeEnd-tPiScanTimeStart
 l.info(f"""Time to run one scan: {tPiScanTimeDelta}""")
 
 
-# In[73]:
+# In[51]:
 
 
 tPiOutput[30][1][0]
 
 
-# In[74]:
+# In[52]:
 
 
 tPiTest[30]
 
 
-# In[75]:
+# In[53]:
 
 
 # psi = tPiOutput[-30][1][1]
@@ -936,7 +937,7 @@ plot_mom(psi,5,5)
 
 
 
-# In[76]:
+# In[54]:
 
 
 hbar_k_transfers = np.arange(-5,5+1,+2)
@@ -949,19 +950,19 @@ for (j, hbar_k) in enumerate(hbar_k_transfers):
     # print(i,hbar_k)
 
 
-# In[77]:
+# In[55]:
 
 
 hbar_k_transfers
 
 
-# In[78]:
+# In[56]:
 
 
 np.sum(pxlinIndexSet,axis=1)
 
 
-# In[79]:
+# In[57]:
 
 
 plt.figure(figsize=(4,4))
@@ -975,7 +976,7 @@ title="hbar_k_pxlin_integration_range"
 plt.show()
 
 
-# In[80]:
+# In[58]:
 
 
 # phiDensityGrid = np.zeros((len(tPiTest), pxlin.size))
@@ -999,7 +1000,7 @@ for i in tqdm(range(len(tPiTest))):
         phiDensityGrid_hbark[i,j] = np.sum(phiZ[index])
 
 
-# In[81]:
+# In[59]:
 
 
 plt.figure(figsize=(12,5))
@@ -1039,7 +1040,7 @@ plt.savefig("output/"+title+".png", dpi=600)
 plt.show()
 
 
-# In[82]:
+# In[60]:
 
 
 # phiDensityNormFactor = np.sum(phiDensityGrid_hbark,axis=1)
@@ -1050,19 +1051,19 @@ phiDensityNormFactor = np.trapz(phiDensityGrid_hbark,axis=1)
 phiDensityNormed = phiDensityGrid_hbark / phiDensityNormFactor[:, np.newaxis]
 
 
-# In[83]:
+# In[61]:
 
 
 # phiDensityNormFactor
 
 
-# In[84]:
+# In[62]:
 
 
 os.makedirs(output_prefix+"tPiScan", exist_ok=True)
 
 
-# In[85]:
+# In[63]:
 
 
 plt.figure(figsize=(11,5))
@@ -1099,14 +1100,14 @@ plt.savefig(output_prefix+"/tPiScan/"+title+".png", dpi=600)
 plt.show()
 
 
-# In[86]:
+# In[64]:
 
 
 hbarkInd = 2  # Index of target state
 hbarkInI = 3  # Index of original state 
 
 
-# In[87]:
+# In[65]:
 
 
 indPDNPi = np.argmax(phiDensityNormed[:,hbarkInd])
@@ -1114,7 +1115,7 @@ l.info(f"""max transfer (π) to -1hbk at σt {tPiTest[indPDNPi]*1000} μs
 with efficiency to -1hbk: {phiDensityNormed[indPDNPi,hbarkInd]}""")
 
 
-# In[88]:
+# In[66]:
 
 
 pi2searchHelper=np.abs(phiDensityNormed[:,hbarkInd]-0.5)+np.abs(phiDensityNormed[:,hbarkInI]-0.5)
@@ -1124,7 +1125,7 @@ with transfer fraction to -1hbk of {phiDensityNormed[indPDNPM,hbarkInd]}
 with transfer fraction to +1hbk of {phiDensityNormed[indPDNPM,hbarkInI]}""")
 
 
-# In[89]:
+# In[67]:
 
 
 plt.plot(tPiTest*1000,pi2searchHelper,'.-',alpha=0.7,label='helper')
@@ -1136,20 +1137,20 @@ plt.xlabel("$t_\pi \ (\mu s)$")
 plt.show()
 
 
-# In[90]:
+# In[68]:
 
 
 l.info(f"""indPDNPi = {indPDNPi} \ttPiTest[indPDNPi] = {round(tPiTest[indPDNPi]*1000,2)} μs \teff {round(phiDensityNormed[indPDNPi,hbarkInd],4)}
 indPDNPM = {indPDNPM} \ttPiTest[indPDNPM] = {round(tPiTest[indPDNPM]*1000,2)} μs \tef- {round(phiDensityNormed[indPDNPM,hbarkInd],4)} \tef+ {round(phiDensityNormed[indPDNPM,hbarkInI],4)}""")
 
 
-# In[91]:
+# In[69]:
 
 
 (indPDNPi, tPiTest[indPDNPi], phiDensityNormed[indPDNPi,hbarkInd])
 
 
-# In[92]:
+# In[70]:
 
 
 (indPDNPM, tPiTest[indPDNPM], phiDensityNormed[indPDNPM,hbarkInd], phiDensityNormed[indPDNPM,hbarkInI])
@@ -1167,7 +1168,7 @@ indPDNPM = {indPDNPM} \ttPiTest[indPDNPM] = {round(tPiTest[indPDNPM]*1000,2)} μ
 
 
 
-# In[93]:
+# In[71]:
 
 
 tPiScanOutputTimeStart = datetime.now()
@@ -1205,9 +1206,21 @@ l.info(f"""Time to output one scan: {tPiScanOutputTimeDelta}""")
 
 
 
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
 # ## Intensity Scan
 
-# In[110]:
+# In[72]:
 
 
 isDelta = 0.003
@@ -1221,7 +1234,7 @@ l.info(f"VRScan: {VRScan}")
 l.info(f"VRScan/VR: {VRScan/VR}")
 
 
-# In[111]:
+# In[73]:
 
 
 l.info(f"""len(intensityScan) = {len(intensityScan)}
@@ -1229,7 +1242,7 @@ Each scan takes time roughtly {tPiScanTimeDelta.seconds}s + {tPiScanOutputTimeDe
 Estimate total scan time: {(tPiScanTimeDelta+tPiScanOutputTimeDelta)*len(intensityScan)}""")
 
 
-# In[112]:
+# In[74]:
 
 
 intensityScanParamNotes = []
@@ -1237,7 +1250,7 @@ for i in range(len(intensityScan)):
     intensityScanParamNotes.append((i, intensityScan[i], omegaRabiScan[i], VRScan[i]))
 
 
-# In[113]:
+# In[75]:
 
 
 l.info(f"""intensityScanParamNotes
@@ -1245,7 +1258,7 @@ l.info(f"""intensityScanParamNotes
 {intensityScanParamNotes}""".replace("), (", "),\n("))
 
 
-# In[114]:
+# In[76]:
 
 
 intensityWidthGrid = []
@@ -1258,13 +1271,13 @@ VRs_grid, tP_grid = np.meshgrid(VRScan, tPiTest, indexing='ij')
 intensityWidthGrid = np.stack((VRs_grid, tP_grid), axis=-1)
 
 
-# In[115]:
+# In[77]:
 
 
 intensityWidthGrid[:,0] # VRScan , tPiTest[0] 
 
 
-# In[116]:
+# In[78]:
 
 
 intensityWidthGrid[0,:] # VRScan[0], tPiTest
@@ -1282,7 +1295,7 @@ intensityWidthGrid[0,:] # VRScan[0], tPiTest
 
 
 
-# In[ ]:
+# In[79]:
 
 
 ksz=kz
@@ -1326,6 +1339,7 @@ for (VRi,VRs) in enumerate(VRScan):
             phiDensityGrid_hbark[i,j] = np.trapz(phiZ[index], pzlin[index])
 
     VRScanOutput.append((VRi, phiDensityGrid, phiDensityGrid_hbark))
+    phiDensityNormFactor = np.trapz(phiDensityGrid_hbark,axis=1)
     phiDensityNormed = phiDensityGrid_hbark / phiDensityNormFactor[:, np.newaxis]
     indPDNPi = np.argmax(phiDensityNormed[:,hbarkInd])
     indPDNPM = np.argmin(np.abs(phiDensityNormed[:,hbarkInd]-0.5)+np.abs(phiDensityNormed[:,hbarkInI]-0.5))
@@ -1390,7 +1404,7 @@ l.info("""
 """)
 
 
-# In[ ]:
+# In[80]:
 
 
 # hbarkInd = 2
@@ -1403,33 +1417,33 @@ for (VRi,VRs) in enumerate(VRScan):
 print(hbar_k_transfers[hbarkInd])
 
 
-# In[ ]:
+# In[81]:
 
 
 vtSliceM1.shape
 
 
-# In[ ]:
+# In[82]:
 
 
 VRSOPi = np.array(VRScanOutputPi)
 VRSOPM = np.array(VRScanOutputPM)
 
 
-# In[ ]:
+# In[100]:
 
 
 cmapS = plt.get_cmap('viridis', 20).copy()
 cmapS.set_bad(color='black')
 plt.close()
 plt.figure(figsize=(12,8))
-plt.imshow(np.fliplr(np.flipud(vtSliceM1)),aspect=0.7*(tPiTest[0]-tPiTest[-1])/(intensityScan[-1]-intensityScan[0])*1000, 
-           extent=[tPiTest[-1]*1000,tPiTest[0]*1000,intensityScan[0],intensityScan[-1]+isDelta],
+plt.imshow(np.fliplr(np.flipud(vtSliceM1)),aspect=0.8*(tPiTest[0]-tPiTest[-1])/(intensityScan[-1]-intensityScan[0])*1000, 
+           extent=[tPiTest[-1]*1000,(tPiTest[0]+tPDelta)*1000,intensityScan[0],intensityScan[-1]+isDelta],
            cmap=cmapS
           )
 plt.colorbar(ticks=np.linspace(0,1,21))
-plt.scatter(VRSOPi[:,1]*1000,intensityScan+0.5*isDelta,color='red',marker='v')
-plt.scatter(VRSOPM[:,1]*1000,intensityScan+0.5*isDelta,color='fuchsia',marker='d')
+plt.scatter(VRSOPi[:,1]*1000,intensityScan+0.5*isDelta,color='red',marker='.',s=8)
+plt.scatter(VRSOPM[:,1]*1000,intensityScan+0.5*isDelta,color='fuchsia',marker='.',s=10)
 plt.xlabel("Pulse width $\sigma$ $\mu s$")
 plt.ylabel("Intensity $\mathrm{mW/mm^2}$")
 title = f"Transfer fraction of halo into {hbar_k_transfers[hbarkInd]}$\hbar k$ state"
@@ -1439,19 +1453,33 @@ plt.title(title)
 plt.show()
 
 
-# In[ ]:
+# In[131]:
 
 
-VRSOPi
+rowList = []
+for (i,v) in enumerate(VRSOPi):
+    u = VRSOPM[i]
+    # print(f"{i}, {round(intensityScan[i],4)}, {round(VRScan[i],1)} \t"
+    #       +f"{v[0]}, {round(v[1],3)}, {round(v[2],4)} \t"
+    #       +f"{u[0]}, {round(u[1],3)}, {round(u[2],4)}, {round(u[3],4)}"
+    #  )
+    rowList.append((i,intensityScan[i],VRScan[i],v[0],v[1],v[2],u[0],u[1],u[2],u[3]))
+pulseOutput = pd.DataFrame(rowList, columns=["i","I","V","Pi","ts","ef","PM","ts","e-","e+"])
 
 
-# In[ ]:
+# In[136]:
 
 
+pulseOutput
 
 
+# In[134]:
 
-# In[ ]:
+
+pulseOutput.to_csv(output_prefix+"VRScanPulseDuration.csv")
+
+
+# In[119]:
 
 
 with pgzip.open(output_prefix+'/VRScanOutput'+output_ext, 'wb', thread=8, blocksize=1*10**8) as file:
