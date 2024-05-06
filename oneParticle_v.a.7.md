@@ -30,7 +30,7 @@ from scipy.stats import chi2
 import scipy
 from matplotlib import gridspec
 import matplotlib
-import pandas
+import pandas as pd
 import sys
 import statsmodels.api as sm
 import warnings ## statsmodels.api is too old ... -_-#
@@ -756,7 +756,9 @@ def scanTauPiInnerEval(tPi,
 ```
 
 ```python
-tPiTest = np.append(np.arange(0.6,0,-20*dt), 0) # note this is decending
+tPDelta = 10*dt
+# tPiTest = np.append(np.arange(0.5,0.1,-tPDelta), 0) # note this is decending
+tPiTest = np.arange(0.5,0.1-tPDelta,-tPDelta)
     # tPiTest = np.arange(dt,3*dt,dt)
 l.info(f"#tPiTest = {len(tPiTest)}, max={tPiTest[0]*1000}, min={tPiTest[-1]*1000} us")
 l.info(f"tPiTest: {tPiTest}")
@@ -1052,6 +1054,14 @@ tPiScanOutputTimeDelta = tPiScanOutputTimeEnd-tPiScanOutputTimeStart
 l.info(f"""Time to output one scan: {tPiScanOutputTimeDelta}""")
 ```
 
+```python
+
+```
+
+```python
+
+```
+
 ```python editable=true slideshow={"slide_type": ""}
 
 ```
@@ -1061,8 +1071,8 @@ l.info(f"""Time to output one scan: {tPiScanOutputTimeDelta}""")
 <!-- #endregion -->
 
 ```python editable=true slideshow={"slide_type": ""}
-isDelta = 0.003
-intensityScan = np.arange(0.01,0.30+isDelta,isDelta)
+isDelta = 0.001
+intensityScan = np.arange(0.03,0.10+isDelta,isDelta)
 l.info(f"""len(intensityScan): {len(intensityScan)}
 intensityScan: {intensityScan}""")
 omegaRabiScan = (linewidth*np.sqrt(intensityScan/intenSat/2))**2 /2/detuning
@@ -1159,6 +1169,7 @@ for (VRi,VRs) in enumerate(VRScan):
             phiDensityGrid_hbark[i,j] = np.trapz(phiZ[index], pzlin[index])
 
     VRScanOutput.append((VRi, phiDensityGrid, phiDensityGrid_hbark))
+    phiDensityNormFactor = np.trapz(phiDensityGrid_hbark,axis=1)
     phiDensityNormed = phiDensityGrid_hbark / phiDensityNormFactor[:, np.newaxis]
     indPDNPi = np.argmax(phiDensityNormed[:,hbarkInd])
     indPDNPM = np.argmin(np.abs(phiDensityNormed[:,hbarkInd]-0.5)+np.abs(phiDensityNormed[:,hbarkInI]-0.5))
@@ -1193,7 +1204,7 @@ indPDNPM = {indPDNPM} \ttPiTest[indPDNPM] = {round(tPiTest[indPDNPM]*1000,2)} μ
     phiDensityNormFactor = np.trapz(phiDensityGrid_hbark)
     plt.figure(figsize=(11,5))
     for (i, hbar_k) in enumerate(hbar_k_transfers):
-        if abs(hbar_k) >3: continue
+        if abs(hbar_k) >5: continue
         if   hbar_k > 0: style = '+-'
         elif hbar_k < 0: style = 'x-'
         else:            style = '.-'
@@ -1248,24 +1259,40 @@ cmapS = plt.get_cmap('viridis', 20).copy()
 cmapS.set_bad(color='black')
 plt.close()
 plt.figure(figsize=(12,8))
-plt.imshow(np.fliplr(np.flipud(vtSliceM1)),aspect=0.7*(tPiTest[0]-tPiTest[-1])/(intensityScan[-1]-intensityScan[0])*1000, 
-           extent=[tPiTest[-1]*1000,tPiTest[0]*1000,intensityScan[0],intensityScan[-1]+isDelta],
+plt.imshow(np.fliplr(np.flipud(vtSliceM1)),aspect=0.8*(tPiTest[0]-tPiTest[-1])/(intensityScan[-1]-intensityScan[0])*1000, 
+           extent=[tPiTest[-1]*1000,(tPiTest[0]+tPDelta)*1000,intensityScan[0],intensityScan[-1]+isDelta],
            cmap=cmapS
           )
 plt.colorbar(ticks=np.linspace(0,1,21))
-plt.scatter(VRSOPi[:,1]*1000,intensityScan+0.5*isDelta,color='red',marker='v')
-plt.scatter(VRSOPM[:,1]*1000,intensityScan+0.5*isDelta,color='fuchsia',marker='d')
+plt.scatter(VRSOPi[:,1]*1000,intensityScan+0.5*isDelta,color='red',marker='.',s=8)
+plt.scatter(VRSOPM[:,1]*1000,intensityScan+0.5*isDelta,color='fuchsia',marker='.',s=10)
 plt.xlabel("Pulse width $\sigma$ $\mu s$")
 plt.ylabel("Intensity $\mathrm{mW/mm^2}$")
 title = f"Transfer fraction of halo into {hbar_k_transfers[hbarkInd]}$\hbar k$ state"
 plt.title(title)
-# plt.savefig(output_prefix+"/"+title+".pdf", dpi=600)
-# plt.savefig(output_prefix+"/"+title+".png", dpi=600)
+plt.savefig(output_prefix+"/"+title+".pdf", dpi=600)
+plt.savefig(output_prefix+"/"+title+".png", dpi=600)
 plt.show()
 ```
 
 ```python
-VRSOPi
+rowList = []
+for (i,v) in enumerate(VRSOPi):
+    u = VRSOPM[i]
+    # print(f"{i}, {round(intensityScan[i],4)}, {round(VRScan[i],1)} \t"
+    #       +f"{v[0]}, {round(v[1],3)}, {round(v[2],4)} \t"
+    #       +f"{u[0]}, {round(u[1],3)}, {round(u[2],4)}, {round(u[3],4)}"
+    #  )
+    rowList.append((i,intensityScan[i],VRScan[i],v[0],v[1],v[2],u[0],u[1],u[2],u[3]))
+pulseOutput = pd.DataFrame(rowList, columns=["i","I","V","Pi","ts","ef","PM","ts","e-","e+"])
+```
+
+```python
+pulseOutput
+```
+
+```python
+pulseOutput.to_csv(output_prefix+"VRScanPulseDuration.csv")
 ```
 
 ```python
@@ -1298,6 +1325,42 @@ with pgzip.open(output_prefix+'/intensityWidthGrid'+output_ext, 'wb', thread=8, 
 ```python
 
 ```
+
+```python
+
+```
+
+```python
+
+```
+
+<!-- #raw -->
+with pgzip.open('/Volumes/tonyNVME Gold/oneParticleSim/20240502-011818-TFF/VRScanOutput.pgz.pkl'
+                , 'rb', thread=8) as file:
+    VRScanOutput = pickle.load(file)
+
+with pgzip.open('/Volumes/tonyNVME Gold/oneParticleSim/20240502-011818-TFF/intensityScan.pgz.pkl'
+                , 'rb', thread=8) as file:
+    intensityScan = pickle.load(file)
+
+with pgzip.open('/Volumes/tonyNVME Gold/oneParticleSim/20240502-011818-TFF/intensityWidthGrid.pgz.pkl'
+                , 'rb', thread=8) as file:
+    intensityWidthGrid = pickle.load(file)
+<!-- #endraw -->
+
+<!-- #raw -->
+VRScanOutputPi = [] 
+VRScanOutputPM = []
+for (VRi,VRs) in enumerate(VRScan):
+    phiDensityGrid = VRScanOutput[VRi][1]
+    phiDensityGrid_hbark = VRScanOutput[VRi][2]
+    phiDensityNormFactor = np.trapz(phiDensityGrid_hbark,axis=1)
+    phiDensityNormed = phiDensityGrid_hbark / phiDensityNormFactor[:, np.newaxis]
+    indPDNPi = np.argmax(phiDensityNormed[:,hbarkInd])
+    indPDNPM = np.argmin(np.abs(phiDensityNormed[:,hbarkInd]-0.5)+np.abs(phiDensityNormed[:,hbarkInI]-0.5))
+    VRScanOutputPi.append((indPDNPi, tPiTest[indPDNPi], phiDensityNormed[indPDNPi,hbarkInd]))
+    VRScanOutputPM.append((indPDNPM, tPiTest[indPDNPM], phiDensityNormed[indPDNPM,hbarkInd], phiDensityNormed[indPDNPM,hbarkInI]))
+<!-- #endraw -->
 
 ```python
 
