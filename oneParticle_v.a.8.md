@@ -765,9 +765,9 @@ def scanTauPiInnerEval(tPi,
 ```
 
 ```python
-tPDelta = 5*dt
+tPDelta = 3*dt
 # tPiTest = np.append(np.arange(0.5,0.1,-tPDelta), 0) # note this is decending
-tPiTest = np.arange(0.2,0.0-tPDelta,-tPDelta)
+tPiTest = np.arange(0.130,0.04-tPDelta,-tPDelta)
     # tPiTest = np.arange(dt,3*dt,dt)
 l.info(f"#tPiTest = {len(tPiTest)}, max={tPiTest[0]*1000}, min={tPiTest[-1]*1000} us")
 l.info(f"tPiTest: {tPiTest}")
@@ -1005,8 +1005,8 @@ with transfer fraction to +1hbk of {phiDensityNormed[indPDNPM,hbarkInI]}""")
 
 ```python
 plt.plot(tPiTest*1000,pi2searchHelper,'.-',alpha=0.7,label='helper')
-plt.plot(tPiTest*1000,np.abs(phiDensityNormed[:,hbarkInd]-0.3),'.-',alpha=0.5,label="-1")
-plt.plot(tPiTest*1000,np.abs(phiDensityNormed[:,hbarkInI]-0.3),'.-',alpha=0.5,label="+1")
+plt.plot(tPiTest*1000,np.abs(phiDensityNormed[:,hbarkInd]-0.5),'-',alpha=0.5,label="-1")
+plt.plot(tPiTest*1000,np.abs(phiDensityNormed[:,hbarkInI]-0.5),'-',alpha=0.5,label="+1")
 plt.legend(ncols=3)
 plt.ylabel("fraction")
 plt.xlabel("$t_\pi \ (\mu s)$")
@@ -1081,8 +1081,8 @@ l.info(f"""Time to output one scan: {tPiScanOutputTimeDelta}""")
 <!-- #endregion -->
 
 ```python editable=true slideshow={"slide_type": ""}
-isDelta = 0.01
-intensityScan = np.arange(0.01,1.0+isDelta,isDelta)
+isDelta = 0.005
+intensityScan = np.arange(0.02,0.22+isDelta,isDelta)
 l.info(f"""len(intensityScan): {len(intensityScan)}
 intensityScan: {intensityScan}""")
 omegaRabiScan = (linewidth*np.sqrt(intensityScan/intenSat/2))**2 /2/detuning
@@ -1274,8 +1274,8 @@ plt.imshow(np.fliplr(np.flipud(vtSliceM1)),aspect=0.8*(tPiTest[0]-tPiTest[-1])/(
            cmap=cmapS
           )
 plt.colorbar(ticks=np.linspace(0,1,21))
-plt.scatter(VRSOPi[:,1]*1000,intensityScan2+0.5*isDelta,color='red',marker='.',s=8)
-plt.scatter(VRSOPM[:,1]*1000,intensityScan2+0.5*isDelta,color='fuchsia',marker='.',s=10)
+plt.scatter(VRSOPi[:,1]*1000,intensityScan+0.5*isDelta,color='red',marker='.',s=8)
+plt.scatter(VRSOPM[:,1]*1000,intensityScan+0.5*isDelta,color='fuchsia',marker='.',s=10)
 plt.xlabel("Pulse width $\sigma$ $\mu s$")
 plt.ylabel("Intensity $\mathrm{mW/mm^2}$")
 title = f"Transfer fraction of halo into {hbar_k_transfers[hbarkInd]}$\hbar k$ state"
@@ -1358,7 +1358,7 @@ with pgzip.open('/Volumes/tonyNVME Gold/oneParticleSim/20240502-011818-TFF/inten
     intensityWidthGrid = pickle.load(file)
 <!-- #endraw -->
 
-```python
+<!-- #raw -->
 VRScanOutputPi = [] 
 VRScanOutputPM = []
 intensityScan2 = []
@@ -1372,19 +1372,19 @@ for (VRi,VRs) in enumerate(VRScan):
     VRScanOutputPi.append((indPDNPi, tPiTest[indPDNPi], phiDensityNormed[indPDNPi,hbarkInd]))
     VRScanOutputPM.append((indPDNPM, tPiTest[indPDNPM], phiDensityNormed[indPDNPM,hbarkInd], phiDensityNormed[indPDNPM,hbarkInI]))
     intensityScan2.append(intensityScan[VRi])
-```
+<!-- #endraw -->
 
-```python
+<!-- #raw -->
 intensityScan2 = np.array(intensityScan2)
-```
+<!-- #endraw -->
 
-```python
+<!-- #raw -->
 np.shape(VRScanOutputPi)
-```
+<!-- #endraw -->
 
-```python
+<!-- #raw -->
 np.shape(intensityScan2)
-```
+<!-- #endraw -->
 
 ```python
 
