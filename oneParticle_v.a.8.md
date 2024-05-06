@@ -765,9 +765,9 @@ def scanTauPiInnerEval(tPi,
 ```
 
 ```python
-tPDelta = 50*dt
+tPDelta = 5*dt
 # tPiTest = np.append(np.arange(0.5,0.1,-tPDelta), 0) # note this is decending
-tPiTest = np.arange(0.5,0.0-tPDelta,-tPDelta)
+tPiTest = np.arange(0.2,0.0-tPDelta,-tPDelta)
     # tPiTest = np.arange(dt,3*dt,dt)
 l.info(f"#tPiTest = {len(tPiTest)}, max={tPiTest[0]*1000}, min={tPiTest[-1]*1000} us")
 l.info(f"tPiTest: {tPiTest}")
@@ -1082,7 +1082,7 @@ l.info(f"""Time to output one scan: {tPiScanOutputTimeDelta}""")
 
 ```python editable=true slideshow={"slide_type": ""}
 isDelta = 0.01
-intensityScan = np.arange(0.01,0.10+isDelta,isDelta)
+intensityScan = np.arange(0.01,1.0+isDelta,isDelta)
 l.info(f"""len(intensityScan): {len(intensityScan)}
 intensityScan: {intensityScan}""")
 omegaRabiScan = (linewidth*np.sqrt(intensityScan/intenSat/2))**2 /2/detuning
@@ -1274,8 +1274,8 @@ plt.imshow(np.fliplr(np.flipud(vtSliceM1)),aspect=0.8*(tPiTest[0]-tPiTest[-1])/(
            cmap=cmapS
           )
 plt.colorbar(ticks=np.linspace(0,1,21))
-plt.scatter(VRSOPi[:,1]*1000,intensityScan+0.5*isDelta,color='red',marker='.',s=8)
-plt.scatter(VRSOPM[:,1]*1000,intensityScan+0.5*isDelta,color='fuchsia',marker='.',s=10)
+plt.scatter(VRSOPi[:,1]*1000,intensityScan2+0.5*isDelta,color='red',marker='.',s=8)
+plt.scatter(VRSOPM[:,1]*1000,intensityScan2+0.5*isDelta,color='fuchsia',marker='.',s=10)
 plt.xlabel("Pulse width $\sigma$ $\mu s$")
 plt.ylabel("Intensity $\mathrm{mW/mm^2}$")
 title = f"Transfer fraction of halo into {hbar_k_transfers[hbarkInd]}$\hbar k$ state"
@@ -1358,9 +1358,10 @@ with pgzip.open('/Volumes/tonyNVME Gold/oneParticleSim/20240502-011818-TFF/inten
     intensityWidthGrid = pickle.load(file)
 <!-- #endraw -->
 
-<!-- #raw -->
+```python
 VRScanOutputPi = [] 
 VRScanOutputPM = []
+intensityScan2 = []
 for (VRi,VRs) in enumerate(VRScan):
     phiDensityGrid = VRScanOutput[VRi][1]
     phiDensityGrid_hbark = VRScanOutput[VRi][2]
@@ -1370,10 +1371,19 @@ for (VRi,VRs) in enumerate(VRScan):
     indPDNPM = np.argmin(np.abs(phiDensityNormed[:,hbarkInd]-0.5)+np.abs(phiDensityNormed[:,hbarkInI]-0.5))
     VRScanOutputPi.append((indPDNPi, tPiTest[indPDNPi], phiDensityNormed[indPDNPi,hbarkInd]))
     VRScanOutputPM.append((indPDNPM, tPiTest[indPDNPM], phiDensityNormed[indPDNPM,hbarkInd], phiDensityNormed[indPDNPM,hbarkInI]))
-<!-- #endraw -->
+    intensityScan2.append(intensityScan[VRi])
+```
 
 ```python
+intensityScan2 = np.array(intensityScan2)
+```
 
+```python
+np.shape(VRScanOutputPi)
+```
+
+```python
+np.shape(intensityScan2)
 ```
 
 ```python
@@ -1381,23 +1391,7 @@ for (VRi,VRs) in enumerate(VRScan):
 ```
 
 ```python
-
-```
-
-```python
-
-```
-
-```python
-
-```
-
-```python
-
-```
-
-```python
-
+ 
 ```
 
 ```python
