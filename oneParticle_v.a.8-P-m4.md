@@ -770,12 +770,14 @@ def scanTauPiInnerEval(tPi,
 ```
 
 ```python
-tPDelta = 10*dt # positive +, note I want tPiTest in decending order 
+tPDelta = 4*dt # positive +, note I want tPiTest in decending order 
+tPiExportMod = 5 # expore only index mod this == 0 
 # tPiTest = np.append(np.arange(0.5,0.1,-tPDelta), 0) # note this is decending
-tPiTest = np.arange(0.150,0.010-tPDelta,-tPDelta)
+tPiTest = np.arange(0.110,0.030-tPDelta,-tPDelta)
     # tPiTest = np.arange(dt,3*dt,dt)
 l.info(f"#tPiTest = {len(tPiTest)}, max={tPiTest[0]*1000}, min={tPiTest[-1]*1000} us")
 l.info(f"tPiTest: {tPiTest}")
+l.info(f"Number of exported frams: {len(tPiTest)//tPiExportMod}, note tPiExportMod = {tPiExportMod}")
 
 plt.figure(figsize=(12,5))
 def plot_inner_helper():
@@ -1093,18 +1095,11 @@ indPDNPM = {indPDNPM} \ttPiTest[indPDNPM] = {round(tPiTest[indPDNPM]*1000,2)} μ
 
 ```
 
-```python
-
-```
-
-```python
-
-```
-
 ```python editable=true slideshow={"slide_type": ""}
 tPiScanOutputTimeStart = datetime.now()
 os.makedirs(output_prefix+"tPiScan", exist_ok=True)
-def tPiTestFrameExportHelper(ti, tPi, output_prefix_tPiVscan): 
+def tPiTestFrameExportHelper(ti, tPi, output_prefix_tPiVscan, expMod=tPiExportMod): 
+    if ti % expMod != 0: return (None, None)
     psi = tPiOutput[ti][1][1]
     plot_psi(psi, False)
     plt.savefig(output_prefix_tPiVscan+f"/psi-({ti},{tPi}).png",dpi=600)
@@ -1148,7 +1143,7 @@ l.info(f"""Time to output one scan: {tPiScanOutputTimeDelta}""")
 <!-- #endregion -->
 
 ```python editable=true slideshow={"slide_type": ""}
-isDelta = 0.002
+isDelta = 0.004
 intensityScan = np.arange(0.02,0.22+isDelta,isDelta)
 l.info(f"""len(intensityScan): {len(intensityScan)}
 intensityScan: {intensityScan}""")
@@ -1345,7 +1340,7 @@ plt.scatter(VRSOPi[:,1]*1000,intensityScan+0.5*isDelta,color='red',marker='.',s=
 plt.scatter(VRSOPM[:,1]*1000,intensityScan+0.5*isDelta,color='fuchsia',marker='.',s=10)
 plt.xlabel("Pulse width $\sigma$ $\mu s$")
 plt.ylabel("Intensity $\mathrm{mW/mm^2}$")
-title = f"Transfer fraction of halo into {hbar_k_transfers[hbarkInd]}$\hbar k$ state"
+title = f"Transfer fraction of halo into {hbar_k_transfers[hbarkInd]}hbar k state"
 plt.title(title)
 plt.savefig(output_prefix+"/"+title+".pdf", dpi=600)
 plt.savefig(output_prefix+"/"+title+".png", dpi=600)
