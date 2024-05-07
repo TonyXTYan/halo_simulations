@@ -409,17 +409,17 @@ l.info(f"cosZGrid size {round(cosZGrid.nbytes/1000**2,3)} MB")
 
 ```python
 # Parameters from scan 20240506-184909-TFF
-Vpi1 = 0.08*VR # ratio corrent when using intensity=1
-tpi1 = 49.8e-3 # ms 
-epi1 = 0.9950  # expected efficiency from scan
-Vpi2 = 0.04*VR
-tpi2 = 49.9e-3
-epi2 = (0.4994, 0.499)
+V3pi1 = 0.08*VR # ratio corrent when using intensity=1
+t3pi1 = 49.8e-3 # ms 
+e3pi1 = 0.9950  # expected efficiency from scan
+V3pi2 = 0.04*VR
+t3pi2 = 49.9e-3
+e3pi2 = (0.4994, 0.499)
 ```
 
 ```python
-l.info(f"""(Vpi1, tpi1, epi1) = {(Vpi1, tpi1, epi1)}
-(Vpi2, tpi2, epi2) = {(Vpi2, tpi2, epi2)}""")
+l.info(f"""(V3pi1, t3pi1, e3pi1) = {(V3pi1, t3pi1, e3pi1)}
+(V3pi2, t3pi2, e3pi2) = {(V3pi2, t3pi2, e3pi2)}""")
 ```
 
 ```python
@@ -834,6 +834,16 @@ p/dpz
 ```
 
 ```python
+
+```
+
+```python
+
+```
+
+## Scattering
+
+```python
 # numba.set_num_threads(2)
 # Each thread will multiply the memory usage!
 # e.g. single thread 10GB -> 2 threads ~30GB
@@ -923,6 +933,216 @@ print("Total steps =" ,total_steps)
 
 ```python
 total_steps*dt 
+```
+
+```python
+
+```
+
+```python
+@njit(parallel=True, cache=True)
+def psi0_just_opposite_double(dr=20,s3=sg,s4=sg,pt=0,a=0,xlin=xlin,zlin=zlin,fuck3=0):
+    dr3 = 0.5 * dr;
+    dr4 = 0.5 * (m3/m4) * dr;
+    dx3 = dr3 * cos(a)
+    dz3 = dr3 * sin(a)
+    dx4 = dr4 * cos(a)
+    dz4 = dr4 * sin(a)
+    ph = 0.5 * pt;
+    px = +ph * cos(a)
+    pz = +ph * sin(a)
+    
+    dx3m = dr3 * cos(-a)
+    dz3m = dr3 * sin(-a)
+    dx4m = dr4 * cos(-a)
+    dz4m = dr4 * sin(-a)
+    pxm = +ph * cos(-a)
+    pzm = +ph * sin(-a)
+    
+    psi = np.zeros((nx,nz,nx,nz),dtype=dtypec)
+    for iz3 in prange(nz):
+        z3 = zlin[iz3]
+        for (ix4, x4) in enumerate(xlin):
+            for (iz4, z4) in enumerate(zlin):
+                psi[:,iz3,ix4,iz4] = \
+                psi0gaussianNN(
+                    xlin-dx3,z3-dz3, x4+dx4,z4+dz4, s3,s3, s4,s4,+fuck3*px,+fuck3*pz,-px,-pz) + \
+                psi0gaussianNN(
+                    xlin-dx3m,z3-dz3m, x4+dx4m,z4+dz4m, s3,s3, s4,s4,+fuck3*pxm,+fuck3*pzm,-pxm,-pzm)
+    normalisation = check_norm(psi)
+    return (psi/sqrt(normalisation)).astype(dtypec)
+```
+
+```python
+output_pre_selp = output_prefix + "scattering_evolve_loop_plot/"
+os.makedirs(output_pre_selp, exist_ok=True)
+def scattering_evolve_loop_plot(t,f,psi,phi, plt_show=True, plt_save=False):
+    t_str = str(round(t,5))
+    if plt_show:
+        print("t = " +t_str+ " \t\t frame =", f, "\t\t memory used: " + 
+              str(round(ram_py_MB(),3)) + "MB  ")
+
+    fig = plt.figure(figsize=(12,7))
+    plt.subplot(2,2,1)
+    plt.imshow(np.flipud(only3(psi).T), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds')
+#     plt.imshow(np.log(np.flipud(only3(psi).T)), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds')
+    plt.xlabel("$x \ (\mu m)$")
+    plt.ylabel("$z \ (\mu m)$")
+    plt.title("$t="+t_str+" \ ms $")
+
+    plt.subplot(2,2,2)
+    plt.imshow(np.flipud(only4(psi).T), extent=[-xmax,xmax,-zmax, zmax],cmap='Blues')
+#     plt.imshow(np.log(np.flipud(only4(psi).T)), extent=[-xmax,xmax,-zmax, zmax],cmap='Blues')
+    plt.xlabel("$x \ (\mu m)$")
+    plt.ylabel("$z \ (\mu m)$")
+
+    plt.subplot(2,2,3)
+    plt.imshow((only3phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds')
+#     plt.imshow(np.log(only3phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds')
+    # plt.colorbar()
+    plt.xlabel("$p_x \ (\hbar k)$")
+    plt.ylabel("$p_z \ (\hbar k)$")
+
+    plt.subplot(2,2,4)
+    plt.imshow((only4phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues')
+#     plt.imshow(np.log(only4phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues')
+    # plt.colorbar()
+    plt.xlabel("$p_x \ (\hbar k)$")
+    plt.xlabel("$p_x \ (\hbar k)$")
+
+    if plt_save:
+        title= "f="+str(f)+",t="+t_str 
+        plt.savefig(output_pre_selp+title+".pdf", dpi=600)
+        plt.savefig(output_pre_selp+title+".png", dpi=600)
+    
+    if plt_show: plt.show() 
+    else:        plt.close(fig) 
+```
+
+```python
+
+```
+
+```python
+output_pre_selpa = output_prefix + "scattering_evolve_loop_plot_alt/"
+os.makedirs(output_pre_selpa, exist_ok=True)
+def scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=True, plt_save=False, logPlus=1):
+    t_str = str(round(t,5))
+    if plt_show:
+        print("t = " +t_str+ " \t\t frame =", f, "\t\t memory used: " + 
+              str(round(ram_py_MB(),3)) + "MB  ")
+
+    fig = plt.figure(figsize=(12,7))
+    plt.subplot(2,2,1)
+#     plt.imshow(np.flipud(only3(psi).T), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds')
+#     plt.imshow(np.emath.logn(power,np.flipud(only3(psi).T)), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds')
+#     plt.imshow(np.power(np.flipud(only3(psi).T),power), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds')
+    plt.imshow(np.log(logPlus+np.flipud(only3(psi).T)), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds')
+    plt.xlabel("$x \ (\mu m)$")
+    plt.ylabel("$z \ (\mu m)$")
+    plt.title("$t="+t_str+" \ ms $")
+
+    plt.subplot(2,2,2)
+#     plt.imshow(np.flipud(only4(psi).T), extent=[-xmax,xmax,-zmax, zmax],cmap='Blues')
+#     plt.imshow(np.power(np.flipud(only4(psi).T),power), extent=[-xmax,xmax,-zmax, zmax],cmap='Blues')
+#     plt.imshow(np.emath.logn(power,np.flipud(only4(psi).T)), extent=[-xmax,xmax,-zmax, zmax],cmap='Blues')
+    plt.imshow(np.log(logPlus+np.flipud(only4(psi).T)), extent=[-xmax,xmax,-zmax, zmax],cmap='Blues')
+    plt.xlabel("$x \ (\mu m)$")
+    plt.ylabel("$z \ (\mu m)$")
+
+    plt.subplot(2,2,3)
+#     plt.imshow((only3phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds')
+#     plt.imshow(np.power(only3phi(phi).T,power), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds')
+#     plt.imshow(np.emath.logn(power,only3phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds')
+    # plt.colorbar()
+    plt.imshow(np.log(logPlus+only3phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds')
+    plt.xlabel("$p_x \ (\hbar k)$")
+    plt.ylabel("$p_z \ (\hbar k)$")
+
+    plt.subplot(2,2,4)
+#     plt.imshow((only4phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues')
+#     plt.imshow(np.power(only4phi(phi).T,power), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues')
+#     plt.imshow(np.emath.logn(power,only4phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues')
+    plt.imshow(np.log(logPlus+only4phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues')
+    # plt.colorbar()
+    plt.xlabel("$p_x \ (\hbar k)$")
+    plt.xlabel("$p_x \ (\hbar k)$")
+
+    if plt_save:
+        title= "f="+str(f)+",t="+t_str+",logPlus="+str(logPlus) 
+        plt.savefig(output_pre_selpa+title+".pdf", dpi=600)
+        plt.savefig(output_pre_selpa+title+".png", dpi=600)
+    
+    if plt_show: plt.show() 
+    else:        plt.close(fig) 
+```
+
+```python
+psi = psi0_just_opposite_double(dr=0,s3=su*1.2,s4=su,pt=-2.0*hb*k,a=0.5*pi)
+t = 0
+f = 0
+phi, swnf = phiAndSWNF(psi, nthreads=7)
+# 16.37s
+```
+
+```python
+scattering_evolve_loop_plot(t,f,psi,phi, plt_show=True, plt_save=False)
+```
+
+```python
+scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=True, plt_save=False, logPlus=10)
+```
+
+```python
+gc.collect()
+%reset -f in
+%reset -f out
+ram_py_log()
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+# Simulation Sequence ??? (dev)
+
+```python
+_ = scattering_evolve_loop_helper2(t,psi,swnf,steps=1,progress_proxy=None)
+# about 30s?
+# need to run this once before looping to cache numba compiles
+```
+
+```python
+gc.collect()
+%reset -f in
+%reset -f out
+ram_py_log()
+```
+
+```python
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
+with ProgressBar(total=total_steps) as progressbar:
+    for f in range(frames_count):
+        scattering_evolve_loop_plot(t,f,psi,phi, plt_show=True, plt_save=True)
+        gc.collect()
+        (t,psi,phi) = scattering_evolve_loop_helper2(t,psi,swnf,steps=print_every*10,progress_proxy=progressbar)
+scattering_evolve_loop_plot(t,f+1,psi,phi, plt_show=True, plt_save=True)
+```
+
+```python
+
 ```
 
 ```python
