@@ -770,8 +770,8 @@ def scanTauPiInnerEval(tPi,
 ```
 
 ```python
-tPDelta = 4*dt # positive +, note I want tPiTest in decending order 
-tPiExportMod = 5 # expore only index mod this == 0 
+tPDelta = 1*dt # positive +, note I want tPiTest in decending order 
+tPiExportMod = 10 # expore only index mod this == 0 
 # tPiTest = np.append(np.arange(0.5,0.1,-tPDelta), 0) # note this is decending
 tPiTest = np.arange(0.110,0.030-tPDelta,-tPDelta)
     # tPiTest = np.arange(dt,3*dt,dt)
@@ -837,12 +837,26 @@ l.info(f"""Time to run one scan: {tPiScanTimeDelta}""")
 tPiOutput1d0 = tPiOutput
 ```
 
+```python
+tPiOutput0d3 = Parallel(n_jobs=N_JOBS)(
+    delayed(lambda i: (i, scanTauPiInnerEval(i, False, False,0,p,0*dopd,0.3*VR)[:2]) )(i) 
+    for i in tqdm(tPiTest)
+) 
+```
+
 <!-- #raw -->
 tPiOutput0d4 = Parallel(n_jobs=N_JOBS)(
     delayed(lambda i: (i, scanTauPiInnerEval(i, False, False,0,p,0*dopd,0.4*VR)[:2]) )(i) 
     for i in tqdm(tPiTest)
 ) 
 <!-- #endraw -->
+
+```python
+tPiOutput0d6 = Parallel(n_jobs=N_JOBS)(
+    delayed(lambda i: (i, scanTauPiInnerEval(i, False, False,0,p,0*dopd,0.6*VR)[:2]) )(i) 
+    for i in tqdm(tPiTest)
+) 
+```
 
 <!-- #raw -->
 tPiOutput0d8 = Parallel(n_jobs=N_JOBS)(
@@ -866,9 +880,10 @@ tPiOutput0d9 = Parallel(n_jobs=N_JOBS)(
 
 ```
 
-<!-- #raw -->
-tPiOutput = tPiOutput0d8
-<!-- #endraw -->
+```python
+# tPiOutput = tPiOutput0d3
+tPiOutput = tPiOutput0d6
+```
 
 ```python
 
@@ -1085,6 +1100,18 @@ indPDNPM = {indPDNPM} \ttPiTest[indPDNPM] = {round(tPiTest[indPDNPM]*1000,2)} μ
 
 ```python
 (indPDNPM, tPiTest[indPDNPM], phiDensityNormed[indPDNPM,hbarkInd], phiDensityNormed[indPDNPM,hbarkInI])
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
 ```
 
 ```python
