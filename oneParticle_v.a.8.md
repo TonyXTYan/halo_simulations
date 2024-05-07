@@ -154,7 +154,7 @@ pzmax = 2*pi*hb/dz/2
 # pzmax= (nz+1)/2 * 2*pi/(2*zmax)*hb
 ```
 
-```python jupyter={"source_hidden": true}
+```python
 s = f"""nx = {nx}
 nz = {nz} 
 xmax = {xmax}
@@ -171,7 +171,7 @@ pymax = {pzmax}
 l.info(s)
 ```
 
-```python editable=true slideshow={"slide_type": ""} jupyter={"source_hidden": true}
+```python editable=true slideshow={"slide_type": ""}
 l.info(f"""rotate phase per dt for m3 = {1j*hb*dt/(2*m3*dx*dz)} \t #want this to be small
 rotate phase per dt for m4 = {1j*hb*dt/(2*m4*dx*dz)} 
 number of grid points = {round(nx*nz/1000/1000,3)} (million)
@@ -248,6 +248,21 @@ zmax/v3 = {zmax/v3}
 """)
 ```
 
+```python
+# V00 = 50000
+# dt=0.01
+# VxExpGrid = np.exp(-(1j/hb) * 0.5*dt * V00 * cosGrid )
+dpx = 2*pi/(2*xmax)*hb
+dpz = 2*pi/(2*zmax)*hb
+pxlin = np.linspace(-pxmax,+pxmax,nx)
+pzlin = np.linspace(-pzmax,+pzmax,nz)
+# print("(dpx,dpz) = ", (dpx, dpz))
+if abs(dpx - (pxlin[1]-pxlin[0])) > 0.0001: l.error("AHHHHH px is messed up (?!)")
+if abs(dpz - (pzlin[1]-pzlin[0])) > 0.0001: l.error("AHHHHH pz")
+l.info(f"""dpx = {dpx} uµm/m
+dpz = {dpz} """)
+```
+
 ```python editable=true slideshow={"slide_type": ""}
 
 ```
@@ -280,25 +295,10 @@ V0F = 50*1000
 ```
 
 ```python
-# V00 = 50000
-# dt=0.01
-# VxExpGrid = np.exp(-(1j/hb) * 0.5*dt * V00 * cosGrid )
-dpx = 2*pi/(2*xmax)*hb
-dpz = 2*pi/(2*zmax)*hb
-pxlin = np.linspace(-pxmax,+pxmax,nx)
-pzlin = np.linspace(-pzmax,+pzmax,nz)
-# print("(dpx,dpz) = ", (dpx, dpz))
-if abs(dpx - (pxlin[1]-pxlin[0])) > 0.0001: l.error("AHHHHH px is messed up (?!)")
-if abs(dpz - (pzlin[1]-pzlin[0])) > 0.0001: l.error("AHHHHH pz")
-l.info(f"""dpx = {dpx} uµm/m
-dpz = {dpz} """)
-```
-
-```python
 
 ```
 
-```python editable=true slideshow={"slide_type": ""} jupyter={"source_hidden": true}
+```python editable=true slideshow={"slide_type": ""}
 l.info(f"""a4 = {a4} µm
 intensity1 = {intensity1}  # mW/mm^2 of beam 1
 intensity2 = {intensity2}  
@@ -318,7 +318,7 @@ tBraggEnd = {tBraggEnd}
 """)
 ```
 
-```python jupyter={"source_hidden": true}
+```python
 l.info(f"""hb*k**2/(2*m3) = {hb*k**2/(2*m3)} \t/ms
 hb*k**2/(2*m4) = {hb*k**2/(2*m4)}
 (hb*k**2/(2*m3))**-1 = {(hb*k**2/(2*m3))**-1} \tms
@@ -765,9 +765,9 @@ def scanTauPiInnerEval(tPi,
 ```
 
 ```python
-tPDelta = 3*dt
+tPDelta = 1*dt
 # tPiTest = np.append(np.arange(0.5,0.1,-tPDelta), 0) # note this is decending
-tPiTest = np.arange(0.130,0.04-tPDelta,-tPDelta)
+tPiTest = np.arange(0.100,0.03-tPDelta,-tPDelta)
     # tPiTest = np.arange(dt,3*dt,dt)
 l.info(f"#tPiTest = {len(tPiTest)}, max={tPiTest[0]*1000}, min={tPiTest[-1]*1000} us")
 l.info(f"tPiTest: {tPiTest}")
@@ -899,8 +899,8 @@ plt.subplot(1,2,1)
 
 nxm = int((nx-1)/2)
 nx2 = int((nx-1)/2)
-mom_dist_at_diff_angle_phi_asss=0.04
-mom_dist_at_diff_angle_den_asss=0.04
+mom_dist_at_diff_angle_phi_asss=(2*pxmax/p)/len(tPiOutput)
+mom_dist_at_diff_angle_den_asss=(hbar_k_transfers[-1]-hbar_k_transfers[0])/len(tPiOutput)
 plt.imshow(phiDensityGrid[:,nxm-nx2:nxm+nx2], 
            # extent=[pxlin[nxm-nx2]/(hb*k),pxlin[nxm+nx2]/(hb*k),0,len(tPiTest)], 
            extent=[pzlin[nxm-nx2]/(hb*k),pzlin[nxm+nx2]/(hb*k),0,len(tPiTest)], 
