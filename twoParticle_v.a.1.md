@@ -46,8 +46,12 @@ import platform
 import logging
 import sys
 import psutil
+import glob
+import re
+from moviepy.editor import ImageSequenceClip
+import cv2
 
-from IPython.display import display, clear_output
+from IPython.display import display, clear_output, HTML
 
 from joblib import Parallel, delayed
 
@@ -893,9 +897,54 @@ multithread could use up to {round(ram_py_GB()*numba.get_num_threads(),2)} GB !!
 ```python
 # TODO WTF did this come from?
 # a34 = 0.029 #µm
-a34 = 0.5 #µm
+# a34 = 0.5 #µm
+a34 = sqrt(2)*5*dx
 strength34 = 1e5 # I don't know
--(1j/hb) * strength34 * np.exp(-((0-0)**2 +(0-0)**2)/(4*a34**2)) *0.5*dt
+l.info(f"{-(1j/hb) * strength34 * np.exp(-((0-0)**2 +(0-0)**2)/(4*a34**2)) *0.5*dt}")
+l.info(f"a34 = {a34}")
+```
+
+```python
+expContact = np.zeros((nx,nz, nx,nz),dtype=dtypec)
+for (iz3, z3) in enumerate(zlin):
+    for (ix4, x4) in enumerate(xlin):
+        for (iz4, z4) in enumerate(zlin):
+            dis = ((xlin-x4)**2 +(z3-z4)**2)**0.5
+            expContact[:,iz3,ix4,iz4] = np.exp(-(1j/hb) * # this one is unitary time evolution operator
+                                        strength34 *
+                                            0.5*(1+np.cos(2*np.pi/a34*( dis ))) * 
+                                            (-0.5*a34 < dis) * (dis < 0.5*a34)
+                                        # np.exp(-((xlin-x4)**2 +(z3-z4)**2)/(4*a34**2))
+                                               # inside the guassian contact potential
+                                               *0.5*dt
+                                        )  
+del dis
+```
+
+```python
+plt.figure(figsize=(15,4))
+plt.subplot(1,3,1)
+plt.imshow(np.angle(expContact[:,:,60,45]).T)
+plt.colorbar()
+
+plt.subplot(1,3,2)
+plt.imshow(np.flipud(np.angle(expContact[:,45,:,45]).T))
+plt.colorbar()
+
+plt.subplot(1,3,3)
+plt.imshow(np.flipud(np.angle(expContact[50,:,53,:]).T))
+plt.colorbar()
+plt.show()
+```
+
+```python
+expContact = None
+del expContact
+gc.collect()
+```
+
+```python
+
 ```
 
 ```python
@@ -907,9 +956,12 @@ def scattering_evolve_loop_helper2_inner_psi_step(psi_init, s34=strength34):
         z3 = zlin[iz3]
         for (ix4, x4) in enumerate(xlin):
             for (iz4, z4) in enumerate(zlin):
+                dis = ((xlin-x4)**2 +(z3-z4)**2)**0.5
                 psi[:,iz3,ix4,iz4] *= np.exp(-(1j/hb) * # this one is unitary time evolution operator
                                         s34 *
-                                        np.exp(-((xlin-x4)**2 +(z3-z4)**2)/(4*a34**2))
+                                             0.5*(1+np.cos(2*np.pi/a34*( dis ))) * 
+                                            (-0.5*a34 < dis) * (dis < 0.5*a34)
+                                        # np.exp(-((xlin-x4)**2 +(z3-z4)**2)/(4*a34**2))
                                                # inside the guassian contact potential
                                                *0.5*dt
                                             )
@@ -1173,6 +1225,15 @@ Estimated script runtime = {evolve_loop_time_estimate} which is {datetime.now()+
 ```
 
 ```python
+evolve_s34 = 1e6
+l.info(f"strength34 = {strength34}, \t evolve_s34 = {evolve_s34}")
+```
+
+```python
+assert False, "just to catch run all"
+```
+
+```python
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 evolve_many_loops_start = datetime.now()
 loopAccum = 0 
@@ -1181,13 +1242,17 @@ with ProgressBar(total=total_steps) as progressbar:
         evolve_many_loops_inner_now = datetime.now()
         tE = evolve_many_loops_inner_now - evolve_many_loops_start
         if loopAccum > 0: 
-            tR = (total_steps-loopAccum)* tE/loopAccum
+            tR = (frames_count-loopAccum)* tE/loopAccum
             l.info(f"Now l={loopAccum}, t={round(t,6)}, tE={tE}, tR={tR}")
-        scattering_evolve_loop_plot(t,f,psi,phi, plt_show=True, plt_save=True)
+        scattering_evolve_loop_plot(t,f,psi,phi, plt_show=False, plt_save=True)
+        scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
         gc.collect()
-        (t,psi,phi) = scattering_evolve_loop_helper2(t,psi,swnf,steps=print_every,progress_proxy=progressbar)
+        (t,psi,phi) = scattering_evolve_loop_helper2(t,psi,swnf,
+                                                     steps=print_every,progress_proxy=progressbar,s34=evolve_s34)
         loopAccum += 1
-scattering_evolve_loop_plot(t,f+1,psi,phi, plt_show=True, plt_save=True)
+f += 1
+scattering_evolve_loop_plot(t,f+1,psi,phi, plt_show=False, plt_save=True)
+scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
 ```
 
 ```python
@@ -1206,15 +1271,89 @@ with pgzip.open(output_prefix+f"psi at t={t}"+output_ext,
 ```
 
 ```python
-scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=True, plt_save=False, logPlus=1, po=0.01)
-```
-
-```python
 
 ```
 
 ```python
 
+```
+
+# Exporting to Video (High RAM usage)
+
+```python
+assert False, "just to catch run all"
+```
+
+```python
+# Function to extract frame number from filename
+def extract_frame_number(filename):
+    match = re.search(r'f=(\d+)', filename)
+    return int(match.group(1)) if match else None
+img_alt_list = glob.glob(output_pre_selpa+'*.png')
+img_alt_list.sort(key=lambda x: extract_frame_number(x))
+```
+
+```python
+N_JOBS
+```
+
+```python
+# img_alt_frames = []  # Read and process images, storing them in a list
+# for image in tqdm(img_alt_list, desc="Processing Images"):
+#     img = cv2.imread(image)
+#     img_alt_frames.append(img)  # Append processed frame to list
+img_alt_frames = Parallel(n_jobs=-1)(
+    delayed(lambda image: cv2.imread(image))(image) for image in tqdm(img_alt_list, desc="Processing Images")
+)
+```
+
+```python
+if img_alt_frames:  # Determine the width and height from the first image if not empty
+    height, width, layers = img_alt_frames[0].shape # Define the codec and create VideoWriter object
+    fourcc = cv2.VideoWriter_fourcc(*'hvc1')  # HEVC codec
+    out = cv2.VideoWriter(output_prefix+"scattering_evolve_loop_plot_alt.mov", 
+                          fourcc, 10.0, (width, height), True) # Write img_alt_frames to the video file
+    for frame in tqdm(img_alt_frames, desc="Writing Video"):
+        out.write(frame)  # Write out frame to video
+    out.release()  # Release the video writer
+    del frame, out
+else:
+    print("No images found or processed.")
+del img_alt_frames, frame
+gc.collect()
+```
+
+<!-- #raw -->
+# Create a clip from the images sequence
+clip = ImageSequenceClip(img_alt_list, fps=10)  # fps can be adjusted
+# Write the clip to a video file in MOV format
+clip.write_videofile(output_prefix+"scattering_evolve_loop_plot_alt.mp4",threads=8,fps=10.0)
+# Close the clip to free resources
+clip.close()
+<!-- #endraw -->
+
+<!-- #raw -->
+# Determine the width and height from the first image
+frame = cv2.imread(img_alt_list[0])
+height, width, layers = frame.shape
+
+# Define the codec and create VideoWriter object
+fourcc = cv2.VideoWriter_fourcc(*'hvc1')  # Be sure to use lower case
+out = cv2.VideoWriter(output_prefix+"scattering_evolve_loop_plot_alt.mov", fourcc, 10.0, (width, height))
+
+for image in tqdm(img_alt_list):
+    img = cv2.imread(image)
+    out.write(img)  # Write out frame to video
+
+out.release()  # Release the video writer
+<!-- #endraw -->
+
+```python
+gc.collect()
+%reset -f in
+%reset -f out
+ram_py_log()
+print_ram_usage(globals().items(),10)
 ```
 
 ```python
