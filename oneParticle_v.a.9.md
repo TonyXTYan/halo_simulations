@@ -356,9 +356,13 @@ def VS(ttt, mid, wid, V0=VR):
 ```python
 tbtest = np.arange(tBraggCenter-5*tBraggPi,tBraggCenter+5*tBraggPi,dt)
 plt.plot(tbtest, VBF(tbtest,tBraggPi*5,tBraggPi))
-plt.plot(tbtest, VS(tbtest,tBraggPi,tBraggPi*2,0.3*V0F))
+plt.plot(tbtest, VS(tbtest,tBraggPi/2,tBraggPi,0.3*V0F))
 plt.show()
 l.info(f"max(V) {1j*(dt/hb)*VBF(tBraggCenter,tBraggPi*5,tBraggPi)}")
+```
+
+```python
+tBraggPi
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
