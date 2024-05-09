@@ -426,13 +426,18 @@ e4pi1 = 0.9950  # expected efficiency from scan
 V4pi2 = 0.03*VR
 t4pi2 = 66.5e-3
 e4pi2 = (0.4990, 0.4994)
+# 20240509-181745-TFF 
+V4sc = 0.135*VR
+t4sc = 22.8e-3 
+e4sc = 0.4238 
 ```
 
 ```python
 l.info(f"""(V3pi1, t3pi1, e3pi1) = {(V3pi1, t3pi1, e3pi1)}
 (V3pi2, t3pi2, e3pi2) = {(V3pi2, t3pi2, e3pi2)}
 (V4pi1, t4pi1, e4pi1) = {(V4pi1, t4pi1, e4pi1)}
-(V4pi2, t4pi2, e4pi2) = {(V4pi2, t4pi2, e4pi2)}""")
+(V4pi2, t4pi2, e4pi2) = {(V4pi2, t4pi2, e4pi2)}
+(V4sc,  t4sc,  e4sc ) = {(V4sc,  t4sc,  e4sc)}""")
 ```
 
 ```python
@@ -440,10 +445,13 @@ if (intensity1 != 1) or (intensity2 != 1): l.warning(f"{intensity1}, {intensity2
 ```
 
 ```python
-tbtest = np.arange(0, 2*max(t3pi1,t3pi2),dt)
+tbtest = np.arange(0, max([t3pi1,t3pi2,t4pi1,t4pi2,t4sc]),dt)
 plt.figure()
-plt.plot(tbtest, VS(tbtest, t3pi1, t3pi1*2, V3pi1),label="$\pi$  pulse")
-plt.plot(tbtest, VS(tbtest, t3pi2, t3pi2*2, V3pi2),label="$\pi/2$ pulse")
+plt.plot(tbtest, VS(tbtest, 0.5*t3pi1, t3pi1, V3pi1),label="$\pi$    pulse for ${}^3\mathrm{He}$")
+plt.plot(tbtest, VS(tbtest, 0.5*t3pi2, t3pi2, V3pi2),label="$\pi/2$ pulse for ${}^3\mathrm{He}$")
+plt.plot(tbtest, VS(tbtest, 0.5*t4pi1, t4pi1, V4pi1),label="$\pi$    pulse for ${}^4\mathrm{He}$")
+plt.plot(tbtest, VS(tbtest, 0.5*t4pi2, t4pi2, V4pi2),label="$\pi/2$ pulse for ${}^4\mathrm{He}$")
+plt.plot(tbtest, VS(tbtest, 0.5*t4sc,  t4sc,  V4sc),label="scat pulse for ${}^4\mathrm{He}$")
 plt.legend()
 plt.xlabel("t (ms)")
 plt.ylabel("VS")
@@ -690,8 +698,9 @@ def toPsi(phi, swnf, nthreads=nthreads) -> np.ndarray:
 ```
 
 ```python
-su = 4
-psi = psi0gaussian(sx3=su, sz3=su, sx4=su, sz4=su, px3=-100, pz3=-50, px4=100, pz4=50)
+su = 3
+# psi = psi0gaussian(sx3=su, sz3=su, sx4=su, sz4=su, px3=-100, pz3=-50, px4=100, pz4=50)
+psi = psi0gaussian(sx3=su, sz3=su, sx4=su, sz4=su, px3=0, pz3=0, px4=0, pz4=0)
 t = 0
 ```
 
@@ -705,7 +714,7 @@ tempTest4phi = only4phi(phi)
 print("check normalisation phi", check_norm_phi(phi))
 print("swnf =", swnf)
 
-plt.figure(figsize=(12,6))
+plt.figure(figsize=(10,6))
 plt.subplot(2,2,1)
 plt.imshow(np.flipud(tempTest3.T), extent=[-xmax,xmax,-zmax,zmax])
 
@@ -746,18 +755,18 @@ with pgzip.open(output_prefix+'psi0ring_with_logging_testRun_128'+output_ext,
     pickle.dump(psi, file) 
 <!-- #endraw -->
 
-```python
+<!-- #raw -->
 with pgzip.open('/Volumes/tonyNVME Gold/twoParticleSim/20240507-191333-TFF/psi0ring_with_logging_testRun_128.pgz.pkl'
                 , 'rb', thread=8) as file:
     psi = pickle.load(file)
 su, t = 4, 0 
-```
+<!-- #endraw -->
 
 ```python
 
 ```
 
-```python
+<!-- #raw -->
 print("check normalisation psi", check_norm(psi))
 phi, swnf = phiAndSWNF(psi)
 print("check normalisation phi", check_norm_phi(phi))
@@ -784,7 +793,7 @@ gc.collect()
 %reset -f in
 %reset -f out
 ram_py_log()
-```
+<!-- #endraw -->
 
 ```python
 _ = None
@@ -904,7 +913,7 @@ l.info(f"{-(1j/hb) * strength34 * np.exp(-((0-0)**2 +(0-0)**2)/(4*a34**2)) *0.5*
 l.info(f"a34 = {a34}")
 ```
 
-```python
+<!-- #raw -->
 expContact = np.zeros((nx,nz, nx,nz),dtype=dtypec)
 for (iz3, z3) in enumerate(zlin):
     for (ix4, x4) in enumerate(xlin):
@@ -918,10 +927,9 @@ for (iz3, z3) in enumerate(zlin):
                                                # inside the guassian contact potential
                                                *0.5*dt
                                         )  
-del dis
-```
+<!-- #endraw -->
 
-```python
+<!-- #raw -->
 plt.figure(figsize=(15,4))
 plt.subplot(1,3,1)
 plt.imshow(np.angle(expContact[:,:,60,45]).T)
@@ -935,13 +943,13 @@ plt.subplot(1,3,3)
 plt.imshow(np.flipud(np.angle(expContact[50,:,53,:]).T))
 plt.colorbar()
 plt.show()
-```
+<!-- #endraw -->
 
-```python
+<!-- #raw -->
 expContact = None
 del expContact
 gc.collect()
-```
+<!-- #endraw -->
 
 ```python
 
@@ -1162,7 +1170,8 @@ def scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=True, plt_save=False, 
 
 ```python
 su = 3
-psi = psi0_just_opposite_double(dr=0,s3=su*(4/3),s4=su,pt=-4.0*hb*k,a=0.5*pi) # 16.37s
+# psi = psi0_just_opposite_double(dr=0,s3=su*(4/3),s4=su,pt=-4.0*hb*k,a=0.5*pi) # 16.37s
+psi = psi0gaussian(sx3=su, sz3=su, sx4=su, sz4=su, px3=0, pz3=0, px4=0, pz4=0)
 t = 0
 f = 0
 phi, swnf = phiAndSWNF(psi, nthreads=7)
@@ -1170,6 +1179,14 @@ phi, swnf = phiAndSWNF(psi, nthreads=7)
 
 ```python
 scattering_evolve_loop_plot(t,f,psi,phi, plt_show=True, plt_save=False)
+```
+
+```python
+
+```
+
+```python
+
 ```
 
 <!-- #raw -->
@@ -1197,6 +1214,10 @@ numba.get_num_threads()
 ```
 
 # Simulation Sequence ??? (dev)
+
+<!-- #region jp-MarkdownHeadingCollapsed=true -->
+## Scattering from perfect init state
+<!-- #endregion -->
 
 ```python
 evolve_loop_time_start = datetime.now()
@@ -1278,7 +1299,63 @@ with pgzip.open(output_prefix+f"psi at t={t}"+output_ext,
 
 ```
 
-# Exporting to Video (High RAM usage)
+```python
+
+```
+
+```python
+
+```
+
+## Scattering generated from Bragg pulse
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+<!-- #region jp-MarkdownHeadingCollapsed=true -->
+# Exporting to Video (Quite high VM RAM usage)
+<!-- #endregion -->
 
 ```python
 assert False, "just to catch run all"
