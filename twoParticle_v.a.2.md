@@ -373,7 +373,7 @@ tBraggPi = {tBraggPi} ms
 # V0F = 50*1000
 # def VBF(t, tauMid, tauPi, V0FArg=V0F):
 #     return V0FArg * (2*pi)**-0.5 * np.exp(-0.5*(t-tauMid)**2 * tauPi**-2)
-
+@njit
 def VS(ttt, mid, wid, V0=VR):
     return V0 * 0.5 * (1 + np.cos(2*np.pi/wid*(ttt-mid))) * \
             (-0.5*wid+mid<ttt) * (ttt<0.5*wid+mid)
@@ -1202,6 +1202,11 @@ ram_py_log()
 ```
 
 ```python
+evolve_s34 = 1e6
+l.info(f"strength34 = {strength34}, \t evolve_s34 = {evolve_s34}")
+```
+
+```python
 
 ```
 
@@ -1243,11 +1248,6 @@ evolve_loop_time_estimate = total_steps*evolve_loop_time_delta*1.1
 l.info(f"""print_every = {print_every}, \tframes_count = {frames_count}, total_steps = {total_steps}
 Target simulation end time = {frames_count*print_every*dt} ms
 Estimated script runtime = {evolve_loop_time_estimate} which is {datetime.now()+evolve_loop_time_estimate}""")
-```
-
-```python
-evolve_s34 = 1e6
-l.info(f"strength34 = {strength34}, \t evolve_s34 = {evolve_s34}")
 ```
 
 ```python
@@ -1310,7 +1310,71 @@ with pgzip.open(output_prefix+f"psi at t={t}"+output_ext,
 ## Scattering generated from Bragg pulse
 
 ```python
+@njit(parallel=True,cache=True)
+def scattering_evolve_bragg_loop_helper2_inner_psi_step(
+        psi_init, s34, tnow,
+        t3mid, t3wid, v3pot,
+        t4mid, t4wid, v4pot,
+    ):
+    psi = psi_init
+    for iz3 in prange(nz):
+        z3 = zlin[iz3]
+        for (ix4, x4) in enumerate(xlin):
+            for (iz4, z4) in enumerate(zlin):
+                # xlin is x3 here in the for loop
+                # a34 contact potential
+                dis = ((xlin-x4)**2 +(z3-z4)**2)**0.5
+                psi[:,iz3,ix4,iz4] *= np.exp(-(1j/hb)*0.5*dt* # this one is unitary time evolution operator
+                                             s34 * 0.5*(1+np.cos(2*np.pi/a34*( dis ))) * 
+                                                 (-0.5*a34 < dis) * (dis < 0.5*a34)
+                                        # np.exp(-((xlin-x4)**2 +(z3-z4)**2)/(4*a34**2)) # inside the guassian contact potential
+                                            )
+                # Bragg Potential (VxExpGrid in oneParticle)
+                VS3 = VS(tnow,t3mid,t3wid,v3pot)
+                VS4 = VS(tnow,t4mid,t4wid,v4pot)
+                if VS3 != 0 or VS4 != 0:
+                    psi[:,iz3,ix4,iz4] *= np.exp(-(1j/hb)*0.5*dt*(
+                                             VS3*np.cos(2*kx*xlin + 2*kz*z3) + 
+                                             VS4*np.cos(2*kx*x4   + 2*kz*z4)
+                                            ))
+                else: continue
+                #
+    return psi
 
+# @njit(parallel=True,cache=True)
+# def scattering_evolve_bragg_loop_helper2_inner_phi_step(phi_init):
+#     phi = phi_init
+#     for iz3 in prange(nz):
+#         pz3 = pzlin[iz3]
+# #     for (iz3, pz3) in enumerate(pzlin):
+#         for (ix4, px4) in enumerate(pxlin):
+#             for (iz4, pz4) in enumerate(pzlin):
+#                 phi[:,iz3,ix4,iz4] *= np.exp(-(1j/hb) * (0.5/m3) * (dt) * (pxlin**2 + pz3**2) \
+#                                              -(1j/hb) * (0.5/m4) * (dt) * (  px4**2 + pz4**2))
+#     return phi
+
+# @jit(nogil=True, parallel=True, forceobj=True)
+@jit(nogil=True, forceobj=True)
+# @njit(nogil=True, parallel=True)
+def scattering_evolve_bragg_loop_helper2(
+        tin, psii, swnf, 
+        steps=20, progress_proxy=None, s34=strength34,
+        t3mid=-2, t3wid=1, v3pot=0,
+        t4mid=-2, t4wid=1, v4pot=0,
+    ):
+    t = tin
+    psi = psii
+    for ia in range(steps):
+        psi = scattering_evolve_bragg_loop_helper2_inner_psi_step(psi,s34,t,t3mid,t3wid,v3pot,t4mid,t4wid,v4pot)
+        phi = toPhi(psi, swnf, nthreads=7)
+        phi = scattering_evolve_loop_helper2_inner_phi_step(phi)
+        #del psi  # might cause memory issues
+        psi = toPsi(phi, swnf, nthreads=7)
+        psi = scattering_evolve_bragg_loop_helper2_inner_psi_step(psi,s34,t,t3mid,t3wid,v3pot,t4mid,t4wid,v4pot)
+        t += dt 
+        if progress_proxy != None:
+            progress_proxy.update(1)                                   
+    return (t, psi, phi)
 ```
 
 ```python
@@ -1318,15 +1382,77 @@ with pgzip.open(output_prefix+f"psi at t={t}"+output_ext,
 ```
 
 ```python
-
+evolve_loop_time_start = datetime.now()
+_ = scattering_evolve_bragg_loop_helper2(t,psi,swnf,steps=1,progress_proxy=None,s34=evolve_s34,
+                                        t3mid=-3,t3wid=1,v3pot=0,
+                                        t4mid=0.5*t4sc,t4wid=t4sc,v4pot=V4sc)
+evolve_loop_time_end = datetime.now()
+evolve_loop_time_delta = evolve_loop_time_end - evolve_loop_time_start
+l.info(f"Time to run one evolve_loop_time_start is {evolve_loop_time_delta} (Run again to use cached compile)")
+# need to run this once before looping to cache numba compiles
 ```
 
 ```python
-
+VS(1*dt ,0.5*t4sc, t4sc, V4sc)
 ```
 
 ```python
+VS(10*dt ,-3,1, V4sc)
+```
 
+```python
+gc.collect()
+%reset -f in
+%reset -f out
+ram_py_log()
+print_ram_usage(globals().items(),10)
+```
+
+```python
+print_every = 10
+frames_count = 500
+total_steps = print_every * frames_count
+evolve_loop_time_estimate = total_steps*evolve_loop_time_delta*1.1
+l.info(f"""print_every = {print_every}, \tframes_count = {frames_count}, total_steps = {total_steps}
+Target simulation end time = {frames_count*print_every*dt} ms
+Estimated script runtime = {evolve_loop_time_estimate} which is {datetime.now()+evolve_loop_time_estimate}""")
+```
+
+```python
+assert False, "just to catch run all"
+```
+
+```python
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
+evolve_many_loops_start = datetime.now()
+loopAccum = 0 
+with ProgressBar(total=total_steps) as progressbar:
+    for f in range(frames_count):
+        evolve_many_loops_inner_now = datetime.now()
+        tP = evolve_many_loops_inner_now - evolve_many_loops_start
+        if loopAccum > 0: 
+            tR = (frames_count-loopAccum)* tP/loopAccum
+            tE = datetime.now() + tR
+            l.info(f"Now l={loopAccum}, t={round(t,6)}, tP={tP}, tR={tR}, tE = {tE}")
+        scattering_evolve_loop_plot(t,f,psi,phi, plt_show=False, plt_save=True)
+        scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
+        gc.collect()
+        (t,psi,phi) = scattering_evolve_bragg_loop_helper2(t,psi,swnf,
+                          steps=print_every,progress_proxy=progressbar,s34=evolve_s34,
+                          t3mid=-3, t3wid=1, v3pot=0, 
+                          t4mid=0.5*t4sc, t4wid=t4sc, v4pot=V4sc                        
+                          )
+        loopAccum += 1
+f += 1
+scattering_evolve_loop_plot(t,f+1,psi,phi, plt_show=False, plt_save=True)
+scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
+```
+
+```python
+l.info(t)
+with pgzip.open(output_prefix+f"psi at t={t}"+output_ext,
+                'wb', thread=8, blocksize=1*10**8) as file:
+    pickle.dump(psi, file) 
 ```
 
 ```python
