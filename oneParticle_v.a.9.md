@@ -768,9 +768,9 @@ def scanTauPiInnerEval(tPi,
 ```
 
 ```python
-tPDelta = 10*dt
+tPDelta = 4*dt
 # tPiTest = np.append(np.arange(0.5,0.1,-tPDelta), 0) # note this is decending
-tPiTest = np.arange(0.200,0.001-tPDelta,-tPDelta)
+tPiTest = np.arange(0.06,0.01-tPDelta,-tPDelta)
     # tPiTest = np.arange(dt,3*dt,dt)
 l.info(f"#tPiTest = {len(tPiTest)}, max={tPiTest[0]*1000}, min={tPiTest[-1]*1000} us")
 l.info(f"tPiTest: {tPiTest}")
@@ -1046,7 +1046,8 @@ indPDNPM = {indPDNPM} \ttPiTest[indPDNPM] = {round(tPiTest[indPDNPM]*1000,2)} μ
 ```python editable=true slideshow={"slide_type": ""}
 tPiScanOutputTimeStart = datetime.now()
 os.makedirs(output_prefix+"tPiScan", exist_ok=True)
-tPiTFEHSM = 10
+tPiTFEHSM = 5
+N_JOBS_PLT = -3
 def tPiTestFrameExportHelper(ti, tPi, output_prefix_tPiVscan, skipMod=1):
     if ti % skipMod != 0: return (None, None)
     psi = tPiOutput[ti][1][1]
@@ -1066,13 +1067,14 @@ def tPiTestFrameExportHelper(ti, tPi, output_prefix_tPiVscan, skipMod=1):
     return(output_prefix_tPiVscan+f"/psi-({ti},{tPi}).png", 
            output_prefix_tPiVscan+f"/phi-({ti},{tPi}).png")
 
-tPiOutputFramesDir = Parallel(n_jobs=-3, timeout=1000)(
+tPiOutputFramesDir = Parallel(n_jobs=N_JOBS_PLT, timeout=1000)(
     delayed(tPiTestFrameExportHelper)(ti, tPiTest[ti], output_prefix+"tPiScan", skipMod=tPiTFEHSM)
     for ti in tqdm(range(len(tPiTest)))
 )
 tPiScanOutputTimeEnd = datetime.now()
 tPiScanOutputTimeDelta = tPiScanOutputTimeEnd-tPiScanOutputTimeStart
 l.info(f"""Time to output one scan: {tPiScanOutputTimeDelta}""")
+gc.collect()
 ```
 
 ```python
@@ -1092,8 +1094,8 @@ l.info(f"""Time to output one scan: {tPiScanOutputTimeDelta}""")
 <!-- #endregion -->
 
 ```python editable=true slideshow={"slide_type": ""}
-isDelta = 0.05
-intensityScan = np.arange(0.05,2.0+isDelta,isDelta)
+isDelta = 0.005
+intensityScan = np.arange(0.1,0.6+isDelta,isDelta)
 l.info(f"""len(intensityScan): {len(intensityScan)}
 intensityScan: {intensityScan}""")
 omegaRabiScan = (linewidth*np.sqrt(intensityScan/intenSat/2))**2 /2/detuning
