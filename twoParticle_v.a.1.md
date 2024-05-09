@@ -46,8 +46,12 @@ import platform
 import logging
 import sys
 import psutil
+import glob
+import re
+from moviepy.editor import ImageSequenceClip
+import cv2
 
-from IPython.display import display, clear_output
+from IPython.display import display, clear_output, HTML
 
 from joblib import Parallel, delayed
 
@@ -409,17 +413,26 @@ l.info(f"cosZGrid size {round(cosZGrid.nbytes/1000**2,3)} MB")
 
 ```python
 # Parameters from scan 20240506-184909-TFF
-Vpi1 = 0.08*VR # ratio corrent when using intensity=1
-tpi1 = 49.8e-3 # ms 
-epi1 = 0.9950  # expected efficiency from scan
-Vpi2 = 0.04*VR
-tpi2 = 49.9e-3
-epi2 = (0.4994, 0.499)
+V3pi1 = 0.08*VR # ratio corrent when using intensity=1
+t3pi1 = 49.8e-3 # ms 
+e3pi1 = 0.9950  # expected efficiency from scan
+V3pi2 = 0.04*VR
+t3pi2 = 49.9e-3
+e3pi2 = (0.4994, 0.4990)
+# 20240507-212137-TFF
+V4pi1 = 0.06*VR # ratio corrent when using intensity=1
+t4pi1 = 66.4e-3 # ms 
+e4pi1 = 0.9950  # expected efficiency from scan
+V4pi2 = 0.03*VR
+t4pi2 = 66.5e-3
+e4pi2 = (0.4990, 0.4994)
 ```
 
 ```python
-l.info(f"""(Vpi1, tpi1, epi1) = {(Vpi1, tpi1, epi1)}
-(Vpi2, tpi2, epi2) = {(Vpi2, tpi2, epi2)}""")
+l.info(f"""(V3pi1, t3pi1, e3pi1) = {(V3pi1, t3pi1, e3pi1)}
+(V3pi2, t3pi2, e3pi2) = {(V3pi2, t3pi2, e3pi2)}
+(V4pi1, t4pi1, e4pi1) = {(V4pi1, t4pi1, e4pi1)}
+(V4pi2, t4pi2, e4pi2) = {(V4pi2, t4pi2, e4pi2)}""")
 ```
 
 ```python
@@ -427,10 +440,10 @@ if (intensity1 != 1) or (intensity2 != 1): l.warning(f"{intensity1}, {intensity2
 ```
 
 ```python
-tbtest = np.arange(0, 2*max(tpi1,tpi2),dt)
+tbtest = np.arange(0, 2*max(t3pi1,t3pi2),dt)
 plt.figure()
-plt.plot(tbtest, VS(tbtest, tpi1, tpi1*2, Vpi1),label="$\pi$  pulse")
-plt.plot(tbtest, VS(tbtest, tpi2, tpi2*2, Vpi2),label="$\pi/2$ pulse")
+plt.plot(tbtest, VS(tbtest, t3pi1, t3pi1*2, V3pi1),label="$\pi$  pulse")
+plt.plot(tbtest, VS(tbtest, t3pi2, t3pi2*2, V3pi2),label="$\pi/2$ pulse")
 plt.legend()
 plt.xlabel("t (ms)")
 plt.ylabel("VS")
@@ -717,9 +730,31 @@ ram_py_log()
 ```
 
 ```python
+
+```
+
+```python
+
+```
+
+<!-- #raw -->
 su = 4
-psi = psi0ring_with_logging(dr=5,s3=1.7,s4=1.7,pt=2*hb*k,an=32)
 t = 0
+psi = psi0ring_with_logging(dr=5,s3=1.7,s4=1.7,pt=2*hb*k,an=128) # Takes about 12m
+with pgzip.open(output_prefix+'psi0ring_with_logging_testRun_128'+output_ext,
+                'wb', thread=8, blocksize=1*10**8) as file:
+    pickle.dump(psi, file) 
+<!-- #endraw -->
+
+```python
+with pgzip.open('/Volumes/tonyNVME Gold/twoParticleSim/20240507-191333-TFF/psi0ring_with_logging_testRun_128.pgz.pkl'
+                , 'rb', thread=8) as file:
+    psi = pickle.load(file)
+su, t = 4, 0 
+```
+
+```python
+
 ```
 
 ```python
@@ -834,6 +869,16 @@ p/dpz
 ```
 
 ```python
+
+```
+
+```python
+
+```
+
+## Scattering
+
+```python
 # numba.set_num_threads(2)
 # Each thread will multiply the memory usage!
 # e.g. single thread 10GB -> 2 threads ~30GB
@@ -852,30 +897,78 @@ multithread could use up to {round(ram_py_GB()*numba.get_num_threads(),2)} GB !!
 ```python
 # TODO WTF did this come from?
 # a34 = 0.029 #µm
-a34 = 0.5 #µm
+# a34 = 0.5 #µm
+a34 = sqrt(2)*5*dx
 strength34 = 1e5 # I don't know
--(1j/hb) * strength34 * np.exp(-((0-0)**2 +(0-0)**2)/(4*a34**2)) *0.5*dt
+l.info(f"{-(1j/hb) * strength34 * np.exp(-((0-0)**2 +(0-0)**2)/(4*a34**2)) *0.5*dt}")
+l.info(f"a34 = {a34}")
 ```
 
 ```python
-# @njit(parallel=True,cache=True)
-@njit
-def scattering_evolve_loop_helper2_inner_psi_step(psi_init):
+expContact = np.zeros((nx,nz, nx,nz),dtype=dtypec)
+for (iz3, z3) in enumerate(zlin):
+    for (ix4, x4) in enumerate(xlin):
+        for (iz4, z4) in enumerate(zlin):
+            dis = ((xlin-x4)**2 +(z3-z4)**2)**0.5
+            expContact[:,iz3,ix4,iz4] = np.exp(-(1j/hb) * # this one is unitary time evolution operator
+                                        strength34 *
+                                            0.5*(1+np.cos(2*np.pi/a34*( dis ))) * 
+                                            (-0.5*a34 < dis) * (dis < 0.5*a34)
+                                        # np.exp(-((xlin-x4)**2 +(z3-z4)**2)/(4*a34**2))
+                                               # inside the guassian contact potential
+                                               *0.5*dt
+                                        )  
+del dis
+```
+
+```python
+plt.figure(figsize=(15,4))
+plt.subplot(1,3,1)
+plt.imshow(np.angle(expContact[:,:,60,45]).T)
+plt.colorbar()
+
+plt.subplot(1,3,2)
+plt.imshow(np.flipud(np.angle(expContact[:,45,:,45]).T))
+plt.colorbar()
+
+plt.subplot(1,3,3)
+plt.imshow(np.flipud(np.angle(expContact[50,:,53,:]).T))
+plt.colorbar()
+plt.show()
+```
+
+```python
+expContact = None
+del expContact
+gc.collect()
+```
+
+```python
+
+```
+
+```python
+@njit(parallel=True,cache=True)
+# @njit
+def scattering_evolve_loop_helper2_inner_psi_step(psi_init, s34=strength34):
     psi = psi_init
     for iz3 in prange(nz):
         z3 = zlin[iz3]
         for (ix4, x4) in enumerate(xlin):
             for (iz4, z4) in enumerate(zlin):
+                dis = ((xlin-x4)**2 +(z3-z4)**2)**0.5
                 psi[:,iz3,ix4,iz4] *= np.exp(-(1j/hb) * # this one is unitary time evolution operator
-                                        strength34 *
-                                        np.exp(-((xlin-x4)**2 +(z3-z4)**2)/(4*a34**2))
+                                        s34 *
+                                             0.5*(1+np.cos(2*np.pi/a34*( dis ))) * 
+                                            (-0.5*a34 < dis) * (dis < 0.5*a34)
+                                        # np.exp(-((xlin-x4)**2 +(z3-z4)**2)/(4*a34**2))
                                                # inside the guassian contact potential
                                                *0.5*dt
                                             )
     return psi
 
-# @njit(parallel=True,cache=True)
-@njit
+@njit(parallel=True,cache=True)
+# @njit
 def scattering_evolve_loop_helper2_inner_phi_step(phi_init):
     phi = phi_init
     for iz3 in prange(nz):
@@ -890,16 +983,16 @@ def scattering_evolve_loop_helper2_inner_phi_step(phi_init):
 # @jit(nogil=True, parallel=True, forceobj=True)
 @jit(nogil=True, forceobj=True)
 # @njit(nogil=True, parallel=True)
-def scattering_evolve_loop_helper2(t_init, psi_init, swnf, steps=20, progress_proxy=None):
+def scattering_evolve_loop_helper2(t_init, psi_init, swnf, steps=20, progress_proxy=None, s34=strength34):
     t = t_init
     psi = psi_init
     for ia in prange(steps):
-        psi = scattering_evolve_loop_helper2_inner_psi_step(psi)
+        psi = scattering_evolve_loop_helper2_inner_psi_step(psi,s34)
         phi = toPhi(psi, swnf, nthreads=7)
         phi = scattering_evolve_loop_helper2_inner_phi_step(phi)
         #del psi  # might cause memory issues
         psi = toPsi(phi, swnf, nthreads=7)
-        psi = scattering_evolve_loop_helper2_inner_psi_step(psi)
+        psi = scattering_evolve_loop_helper2_inner_psi_step(psi,s34)
         t += dt 
         if progress_proxy != None:
             progress_proxy.update(1)                                   
@@ -930,7 +1023,243 @@ total_steps*dt
 ```
 
 ```python
+@njit(parallel=True, cache=True)
+def psi0_just_opposite_double(dr=20,s3=sg,s4=sg,pt=0,a=0,xlin=xlin,zlin=zlin,fuck3=0):
+    dr3 = 0.5 * dr;
+    dr4 = 0.5 * (m3/m4) * dr;
+    dx3 = dr3 * cos(a)
+    dz3 = dr3 * sin(a)
+    dx4 = dr4 * cos(a)
+    dz4 = dr4 * sin(a)
+    ph = 0.5 * pt;
+    px = +ph * cos(a)
+    pz = +ph * sin(a)
+    
+    dx3m = dr3 * cos(-a)
+    dz3m = dr3 * sin(-a)
+    dx4m = dr4 * cos(-a)
+    dz4m = dr4 * sin(-a)
+    pxm = +ph * cos(-a)
+    pzm = +ph * sin(-a)
+    
+    psi = np.zeros((nx,nz,nx,nz),dtype=dtypec)
+    for iz3 in prange(nz):
+        z3 = zlin[iz3]
+        for (ix4, x4) in enumerate(xlin):
+            for (iz4, z4) in enumerate(zlin):
+                psi[:,iz3,ix4,iz4] = \
+                psi0gaussianNN(
+                    xlin-dx3,z3-dz3, x4+dx4,z4+dz4, s3,s3, s4,s4,+fuck3*px,+fuck3*pz,-px,-pz) + \
+                psi0gaussianNN(
+                    xlin-dx3m,z3-dz3m, x4+dx4m,z4+dz4m, s3,s3, s4,s4,+fuck3*pxm,+fuck3*pzm,-pxm,-pzm)
+    normalisation = check_norm(psi)
+    return (psi/sqrt(normalisation)).astype(dtypec)
+```
 
+```python
+output_pre_selp = output_prefix + "scattering_evolve_loop_plot/"
+os.makedirs(output_pre_selp, exist_ok=True)
+def scattering_evolve_loop_plot(t,f,psi,phi, plt_show=True, plt_save=False):
+    t_str = str(round(t,5))
+    if plt_show:
+        print("t = " +t_str+ " \t\t frame =", f, "\t\t memory used: " + 
+              str(round(ram_py_MB(),3)) + "MB  ")
+
+    fig = plt.figure(figsize=(12,7))
+    plt.subplot(2,2,1)
+    plt.imshow(np.flipud(only3(psi).T), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds')
+#     plt.imshow(np.log(np.flipud(only3(psi).T)), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds')
+    plt.xlabel("$x \ (\mu m)$")
+    plt.ylabel("$z \ (\mu m)$")
+    plt.title("$t="+t_str+" \ ms $")
+
+    plt.subplot(2,2,2)
+    plt.imshow(np.flipud(only4(psi).T), extent=[-xmax,xmax,-zmax, zmax],cmap='Blues')
+#     plt.imshow(np.log(np.flipud(only4(psi).T)), extent=[-xmax,xmax,-zmax, zmax],cmap='Blues')
+    plt.xlabel("$x \ (\mu m)$")
+    plt.ylabel("$z \ (\mu m)$")
+
+    plt.subplot(2,2,3)
+    plt.imshow((only3phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds')
+#     plt.imshow(np.log(only3phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds')
+    # plt.colorbar()
+    plt.xlabel("$p_x \ (\hbar k)$")
+    plt.ylabel("$p_z \ (\hbar k)$")
+
+    plt.subplot(2,2,4)
+    plt.imshow((only4phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues')
+#     plt.imshow(np.log(only4phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues')
+    # plt.colorbar()
+    plt.xlabel("$p_x \ (\hbar k)$")
+    plt.xlabel("$p_x \ (\hbar k)$")
+
+    if plt_save:
+        title= "f="+str(f)+",t="+t_str 
+        plt.savefig(output_pre_selp+title+".pdf", dpi=600)
+        plt.savefig(output_pre_selp+title+".png", dpi=600)
+    
+    if plt_show: plt.show() 
+    else:        plt.close(fig) 
+```
+
+```python
+
+```
+
+```python
+output_pre_selpa = output_prefix + "scattering_evolve_loop_plot_alt/"
+os.makedirs(output_pre_selpa, exist_ok=True)
+def scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=True, plt_save=False, logPlus=1,po=1):
+    t_str = str(round(t,5))
+    if plt_show:
+        print("t = " +t_str+ " \t\t frame =", f, "\t\t memory used: " + 
+              str(round(ram_py_MB(),3)) + "MB  ")
+
+    fig = plt.figure(figsize=(12,7))
+    plt.subplot(2,2,1)
+#     plt.imshow(np.flipud(only3(psi).T), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds')
+#     plt.imshow(np.emath.logn(power,np.flipud(only3(psi).T)), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds')
+#     plt.imshow(np.power(np.flipud(only3(psi).T),power), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds')
+    plt.imshow(np.power(np.log(logPlus+np.flipud(only3(psi).T)),po), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds')
+    plt.xlabel("$x \ (\mu m)$")
+    plt.ylabel("$z \ (\mu m)$")
+    plt.title("$t="+t_str+" \ ms $")
+
+    plt.subplot(2,2,2)
+#     plt.imshow(np.flipud(only4(psi).T), extent=[-xmax,xmax,-zmax, zmax],cmap='Blues')
+#     plt.imshow(np.power(np.flipud(only4(psi).T),power), extent=[-xmax,xmax,-zmax, zmax],cmap='Blues')
+#     plt.imshow(np.emath.logn(power,np.flipud(only4(psi).T)), extent=[-xmax,xmax,-zmax, zmax],cmap='Blues')
+    plt.imshow(np.power(np.log(logPlus+np.flipud(only4(psi).T)),po), extent=[-xmax,xmax,-zmax, zmax],cmap='Blues')
+    plt.xlabel("$x \ (\mu m)$")
+    plt.ylabel("$z \ (\mu m)$")
+
+    plt.subplot(2,2,3)
+#     plt.imshow((only3phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds')
+#     plt.imshow(np.power(only3phi(phi).T,power), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds')
+#     plt.imshow(np.emath.logn(power,only3phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds')
+    # plt.colorbar()
+    plt.imshow(np.power(np.log(logPlus+only3phi(phi).T),po), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds')
+    plt.xlabel("$p_x \ (\hbar k)$")
+    plt.ylabel("$p_z \ (\hbar k)$")
+
+    plt.subplot(2,2,4)
+#     plt.imshow((only4phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues')
+#     plt.imshow(np.power(only4phi(phi).T,power), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues')
+#     plt.imshow(np.emath.logn(power,only4phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues')
+    plt.imshow(np.power(np.log(logPlus+only4phi(phi).T),po), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues')
+    # plt.colorbar()
+    plt.xlabel("$p_x \ (\hbar k)$")
+    plt.xlabel("$p_x \ (\hbar k)$")
+
+    if plt_save:
+        title= "f="+str(f)+",t="+t_str+",logPlus="+str(logPlus) 
+        plt.savefig(output_pre_selpa+title+".pdf", dpi=600)
+        plt.savefig(output_pre_selpa+title+".png", dpi=600)
+    
+    if plt_show: plt.show() 
+    else:        plt.close(fig) 
+```
+
+```python
+su = 3
+psi = psi0_just_opposite_double(dr=0,s3=su*(4/3),s4=su,pt=-4.0*hb*k,a=0.5*pi) # 16.37s
+t = 0
+f = 0
+phi, swnf = phiAndSWNF(psi, nthreads=7)
+```
+
+```python
+scattering_evolve_loop_plot(t,f,psi,phi, plt_show=True, plt_save=False)
+```
+
+<!-- #raw -->
+scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=True, plt_save=False, logPlus=10)
+<!-- #endraw -->
+
+```python
+_ = None
+gc.collect()
+%reset -f in
+%reset -f out
+ram_py_log()
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+numba.get_num_threads()
+```
+
+# Simulation Sequence ??? (dev)
+
+```python
+evolve_loop_time_start = datetime.now()
+_ = scattering_evolve_loop_helper2(t,psi,swnf,steps=1,progress_proxy=None,s34=strength34)
+evolve_loop_time_end = datetime.now()
+evolve_loop_time_delta = evolve_loop_time_end - evolve_loop_time_start
+l.info(f"Time to run one evolve_loop_time_start is {evolve_loop_time_delta} (Run again to use cached compile)")
+# need to run this once before looping to cache numba compiles
+```
+
+```python
+gc.collect()
+%reset -f in
+%reset -f out
+ram_py_log()
+```
+
+```python
+print_every = 10
+frames_count = 500
+total_steps = print_every * frames_count
+evolve_loop_time_estimate = total_steps*evolve_loop_time_delta*1.1
+l.info(f"""print_every = {print_every}, \tframes_count = {frames_count}, total_steps = {total_steps}
+Target simulation end time = {frames_count*print_every*dt} ms
+Estimated script runtime = {evolve_loop_time_estimate} which is {datetime.now()+evolve_loop_time_estimate}""")
+```
+
+```python
+evolve_s34 = 1e6
+l.info(f"strength34 = {strength34}, \t evolve_s34 = {evolve_s34}")
+```
+
+```python
+assert False, "just to catch run all"
+```
+
+```python
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
+evolve_many_loops_start = datetime.now()
+loopAccum = 0 
+with ProgressBar(total=total_steps) as progressbar:
+    for f in range(frames_count):
+        evolve_many_loops_inner_now = datetime.now()
+        tE = evolve_many_loops_inner_now - evolve_many_loops_start
+        if loopAccum > 0: 
+            tR = (frames_count-loopAccum)* tE/loopAccum
+            l.info(f"Now l={loopAccum}, t={round(t,6)}, tE={tE}, tR={tR}")
+        scattering_evolve_loop_plot(t,f,psi,phi, plt_show=False, plt_save=True)
+        scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
+        gc.collect()
+        (t,psi,phi) = scattering_evolve_loop_helper2(t,psi,swnf,
+                                                     steps=print_every,progress_proxy=progressbar,s34=evolve_s34)
+        loopAccum += 1
+f += 1
+scattering_evolve_loop_plot(t,f+1,psi,phi, plt_show=False, plt_save=True)
+scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
+```
+
+```python
+l.info(t)
+with pgzip.open(output_prefix+f"psi at t={t}"+output_ext,
+                'wb', thread=8, blocksize=1*10**8) as file:
+    pickle.dump(psi, file) 
 ```
 
 ```python
@@ -949,8 +1278,82 @@ total_steps*dt
 
 ```
 
-```python
+# Exporting to Video (High RAM usage)
 
+```python
+assert False, "just to catch run all"
+```
+
+```python
+# Function to extract frame number from filename
+def extract_frame_number(filename):
+    match = re.search(r'f=(\d+)', filename)
+    return int(match.group(1)) if match else None
+img_alt_list = glob.glob(output_pre_selpa+'*.png')
+img_alt_list.sort(key=lambda x: extract_frame_number(x))
+```
+
+```python
+N_JOBS
+```
+
+```python
+# img_alt_frames = []  # Read and process images, storing them in a list
+# for image in tqdm(img_alt_list, desc="Processing Images"):
+#     img = cv2.imread(image)
+#     img_alt_frames.append(img)  # Append processed frame to list
+img_alt_frames = Parallel(n_jobs=-1)(
+    delayed(lambda image: cv2.imread(image))(image) for image in tqdm(img_alt_list, desc="Processing Images")
+)
+```
+
+```python
+if img_alt_frames:  # Determine the width and height from the first image if not empty
+    height, width, layers = img_alt_frames[0].shape # Define the codec and create VideoWriter object
+    fourcc = cv2.VideoWriter_fourcc(*'hvc1')  # HEVC codec
+    out = cv2.VideoWriter(output_prefix+"scattering_evolve_loop_plot_alt.mov", 
+                          fourcc, 10.0, (width, height), True) # Write img_alt_frames to the video file
+    for frame in tqdm(img_alt_frames, desc="Writing Video"):
+        out.write(frame)  # Write out frame to video
+    out.release()  # Release the video writer
+    del frame, out
+else:
+    print("No images found or processed.")
+del img_alt_frames, frame
+gc.collect()
+```
+
+<!-- #raw -->
+# Create a clip from the images sequence
+clip = ImageSequenceClip(img_alt_list, fps=10)  # fps can be adjusted
+# Write the clip to a video file in MOV format
+clip.write_videofile(output_prefix+"scattering_evolve_loop_plot_alt.mp4",threads=8,fps=10.0)
+# Close the clip to free resources
+clip.close()
+<!-- #endraw -->
+
+<!-- #raw -->
+# Determine the width and height from the first image
+frame = cv2.imread(img_alt_list[0])
+height, width, layers = frame.shape
+
+# Define the codec and create VideoWriter object
+fourcc = cv2.VideoWriter_fourcc(*'hvc1')  # Be sure to use lower case
+out = cv2.VideoWriter(output_prefix+"scattering_evolve_loop_plot_alt.mov", fourcc, 10.0, (width, height))
+
+for image in tqdm(img_alt_list):
+    img = cv2.imread(image)
+    out.write(img)  # Write out frame to video
+
+out.release()  # Release the video writer
+<!-- #endraw -->
+
+```python
+gc.collect()
+%reset -f in
+%reset -f out
+ram_py_log()
+print_ram_usage(globals().items(),10)
 ```
 
 ```python

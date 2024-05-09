@@ -2030,7 +2030,7 @@ plt.show()
 
 ```
 
-```python
+```python editable=true slideshow={"slide_type": ""}
 with pgzip.open(output_prefix+'(t,psi)'+output_ext, 'wb', thread=8, blocksize=1*10**8) as file:
     pickle.dump((t,psi), file) 
 ```
