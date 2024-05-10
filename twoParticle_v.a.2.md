@@ -1220,6 +1220,10 @@ numba.get_num_threads()
 
 # Simulation Sequence ??? (dev)
 
+```python
+assert False, "just to catch run all"
+```
+
 <!-- #region jp-MarkdownHeadingCollapsed=true -->
 ## Scattering from perfect init state
 <!-- #endregion -->
@@ -1310,6 +1314,7 @@ with pgzip.open(output_prefix+f"psi at t={t}"+output_ext,
 ## Scattering generated from Bragg pulse
 
 ```python
+# @njit(parallel=True,cache=True,fastmath=True)
 @njit(parallel=True,cache=True)
 def scattering_evolve_bragg_loop_helper2_inner_psi_step(
         psi_init, s34, tnow,
@@ -1354,7 +1359,9 @@ def scattering_evolve_bragg_loop_helper2_inner_psi_step(
 #     return phi
 
 # @jit(nogil=True, parallel=True, forceobj=True)
-@jit(nogil=True, forceobj=True)
+# @jit(nogil=True, forceobj=True)
+@jit(forceobj=True, cache=True)
+# @jit(nogil=True)
 # @njit(nogil=True, parallel=True)
 def scattering_evolve_bragg_loop_helper2(
         tin, psii, swnf, 
@@ -1375,10 +1382,6 @@ def scattering_evolve_bragg_loop_helper2(
         if progress_proxy != None:
             progress_proxy.update(1)                                   
     return (t, psi, phi)
-```
-
-```python
-
 ```
 
 ```python
@@ -1450,7 +1453,7 @@ scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=False, plt_save=True, logP
 
 ```python
 l.info(t)
-with pgzip.open(output_prefix+f"psi at t={t}"+output_ext,
+with pgzip.open(output_prefix+f"psi at t={round(t,6)}"+output_ext,
                 'wb', thread=8, blocksize=1*10**8) as file:
     pickle.dump(psi, file) 
 ```
@@ -1479,9 +1482,7 @@ with pgzip.open(output_prefix+f"psi at t={t}"+output_ext,
 
 ```
 
-<!-- #region jp-MarkdownHeadingCollapsed=true -->
 # Exporting to Video (Quite high VM RAM usage)
-<!-- #endregion -->
 
 ```python
 assert False, "just to catch run all"
