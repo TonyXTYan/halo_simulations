@@ -1052,7 +1052,7 @@ tPiTFEHSM
 
 ```python
 tPiTFEHSM = 50
-N_JOBS_PLT = 10
+N_JOBS_PLT = 20
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
@@ -1106,7 +1106,7 @@ gc.collect()
 
 ```python editable=true slideshow={"slide_type": ""}
 isDelta = 0.001
-intensityScan = np.arange(0.08,0.12+isDelta,isDelta)
+intensityScan = np.arange(0.08,0.105+isDelta,isDelta)
 l.info(f"""len(intensityScan): {len(intensityScan)}
 intensityScan: {intensityScan}""")
 omegaRabiScan = (linewidth*np.sqrt(intensityScan/intenSat/2))**2 /2/detuning
@@ -1184,11 +1184,11 @@ for (VRi,VRs) in enumerate(VRScan):
     
     # tPiOutputFramesDir = []
     output_prefix_tPiVscan = output_prefix+f"tPiScan ({VRi},{VRs})"
-    os.makedirs(output_prefix_tPiVscan, exist_ok=True)
-    _ = Parallel(n_jobs=N_JOBS_PLT, timeout=1000)(
-        delayed(tPiTestFrameExportHelper)(ti, tPiTest[ti], output_prefix_tPiVscan, skipMod=tPiTFEHSM)
-            for ti in tqdm(range(len(tPiTest)))
-    )
+    # os.makedirs(output_prefix_tPiVscan, exist_ok=True)
+    # _ = Parallel(n_jobs=N_JOBS_PLT, timeout=1000)(
+    #     delayed(tPiTestFrameExportHelper)(ti, tPiTest[ti], output_prefix_tPiVscan, skipMod=tPiTFEHSM)
+    #         for ti in tqdm(range(len(tPiTest)))
+    # )
 
     phiDensityGrid = np.zeros((len(tPiTest), pzlin.size))
     phiDensityGrid_hbark = np.zeros((len(tPiTest),len(hbar_k_transfers)))
@@ -1235,8 +1235,8 @@ for (VRi,VRs) in enumerate(VRScan):
     plt.xlabel("$p_z \ (\hbar k)$ integrated block")
     
     title="mom_dist_at_diff_angle"
-    plt.savefig(output_prefix_tPiVscan+"/"+title+".pdf", dpi=600)
-    plt.savefig(output_prefix_tPiVscan+"/"+title+".png", dpi=600)
+    # plt.savefig(output_prefix_tPiVscan+"/"+title+".pdf", dpi=600)
+    # plt.savefig(output_prefix_tPiVscan+"/"+title+".png", dpi=600)
     plt.savefig(output_prefix_tPiVscan+" "+title+".png", dpi=600)
     # plt.show()
     plt.close()
@@ -1256,8 +1256,8 @@ for (VRi,VRs) in enumerate(VRScan):
     plt.ylabel("$normalised \int |\phi(p)| dp$ around region ($\pm$"+str(cut_p_width)+")")
     plt.xlabel("$t_\pi \ (\mu s)$")
     title = "bragg_pulse_duration_test_labeled"
-    plt.savefig(output_prefix_tPiVscan+"/"+title+".pdf", dpi=600)
-    plt.savefig(output_prefix_tPiVscan+"/"+title+".png", dpi=600)
+    # plt.savefig(output_prefix_tPiVscan+"/"+title+".pdf", dpi=600)
+    # plt.savefig(output_prefix_tPiVscan+"/"+title+".png", dpi=600)
     plt.savefig(output_prefix_tPiVscan+" "+title+".png", dpi=600)
     # plt.show()
     plt.close()

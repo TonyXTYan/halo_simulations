@@ -8,9 +8,9 @@ jupyter:
       format_version: '1.3'
       jupytext_version: 1.16.1
   kernelspec:
-    display_name: py311
+    display_name: Python 3 (ipykernel)
     language: python
-    name: py311
+    name: python3
 ---
 
 # Two Particles
@@ -411,7 +411,7 @@ cosZGrid = np.cos(2*k*zgrid)
 l.info(f"cosZGrid size {round(cosZGrid.nbytes/1000**2,3)} MB")
 ```
 
-```python
+```python jupyter={"source_hidden": true}
 # Parameters from scan 20240506-184909-TFF
 V3pi1 = 0.08*VR # ratio corrent when using intensity=1
 t3pi1 = 49.8e-3 # ms 

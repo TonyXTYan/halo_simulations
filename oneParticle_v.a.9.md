@@ -772,7 +772,7 @@ def scanTauPiInnerEval(tPi,
 ```
 
 ```python
-tPDelta = 4*dt
+tPDelta = 4*dt  # positive +, note I want tPiTest in decending order 
 # tPiTest = np.append(np.arange(0.5,0.1,-tPDelta), 0) # note this is decending
 tPiTest = np.arange(0.06,0.01-tPDelta,-tPDelta)
     # tPiTest = np.arange(dt,3*dt,dt)
@@ -1178,7 +1178,7 @@ for (VRi,VRs) in enumerate(VRScan):
     # tPiOutputFramesDir = []
     output_prefix_tPiVscan = output_prefix+f"tPiScan ({VRi},{VRs})"
     os.makedirs(output_prefix_tPiVscan, exist_ok=True)
-    _ = Parallel(n_jobs=-3, timeout=1000)(
+    _ = Parallel(n_jobs=N_JOBS_PLT, timeout=1000)(
         delayed(tPiTestFrameExportHelper)(ti, tPiTest[ti], output_prefix_tPiVscan, skipMod=tPiTFEHSM)
             for ti in tqdm(range(len(tPiTest)))
     )
