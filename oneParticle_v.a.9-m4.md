@@ -777,10 +777,10 @@ def scanTauPiInnerEval(tPi,
 ```
 
 ```python
-tPDelta = 5*dt  # positive +, note I want tPiTest in decending order 
+tPDelta = 1*dt  # positive +, note I want tPiTest in decending order 
 tPiTFEHSM = 5 # expore only index mod this == 0 
 # tPiTest = np.append(np.arange(0.5,0.1,-tPDelta), 0) # note this is decending
-tPiTest = np.arange(0.150,0.001-tPDelta,-tPDelta)
+tPiTest = np.arange(0.06,0.02-tPDelta,-tPDelta)
     # tPiTest = np.arange(dt,3*dt,dt)
 l.info(f"#tPiTest = {len(tPiTest)}, max={tPiTest[0]*1000}, min={tPiTest[-1]*1000} us")
 l.info(f"tPiTest: {tPiTest}")
@@ -1051,7 +1051,7 @@ tPiTFEHSM
 ```
 
 ```python
-tPiTFEHSM = 20
+tPiTFEHSM = 50
 N_JOBS_PLT = 10
 ```
 
@@ -1105,8 +1105,8 @@ gc.collect()
 <!-- #endregion -->
 
 ```python editable=true slideshow={"slide_type": ""}
-isDelta = 0.01
-intensityScan = np.arange(0.01,1.0+isDelta,isDelta)
+isDelta = 0.001
+intensityScan = np.arange(0.08,0.12+isDelta,isDelta)
 l.info(f"""len(intensityScan): {len(intensityScan)}
 intensityScan: {intensityScan}""")
 omegaRabiScan = (linewidth*np.sqrt(intensityScan/intenSat/2))**2 /2/detuning
