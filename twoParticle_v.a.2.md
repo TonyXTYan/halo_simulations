@@ -427,9 +427,9 @@ V4pi2 = 0.03*VR
 t4pi2 = 66.5e-3
 e4pi2 = (0.4990, 0.4994)
 # 20240509-181745-TFF 
-V4sc = 0.135*VR
-t4sc = 22.8e-3 
-e4sc = 0.4238 
+V3sc = 0.135*VR
+t3sc = 22.8e-3 
+e3sc = 0.4238 
 ```
 
 ```python
@@ -437,7 +437,7 @@ l.info(f"""(V3pi1, t3pi1, e3pi1) = {(V3pi1, t3pi1, e3pi1)}
 (V3pi2, t3pi2, e3pi2) = {(V3pi2, t3pi2, e3pi2)}
 (V4pi1, t4pi1, e4pi1) = {(V4pi1, t4pi1, e4pi1)}
 (V4pi2, t4pi2, e4pi2) = {(V4pi2, t4pi2, e4pi2)}
-(V4sc,  t4sc,  e4sc ) = {(V4sc,  t4sc,  e4sc)}""")
+(V3sc,  t3sc,  e4sc ) = {(V3sc,  t3sc,  e3sc)}""")
 ```
 
 ```python
@@ -1261,20 +1261,20 @@ assert False, "just to catch run all"
 ```python
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 evolve_many_loops_start = datetime.now()
-loopAccum = 0 
+frameAcc = 0 
 with ProgressBar(total=total_steps) as progressbar:
     for f in range(frames_count):
         evolve_many_loops_inner_now = datetime.now()
         tE = evolve_many_loops_inner_now - evolve_many_loops_start
-        if loopAccum > 0: 
-            tR = (frames_count-loopAccum)* tE/loopAccum
-            l.info(f"Now l={loopAccum}, t={round(t,6)}, tE={tE}, tR={tR}")
+        if frameAcc > 0: 
+            tR = (frames_count-frameAcc)* tE/frameAcc
+            l.info(f"Now l={frameAcc}, t={round(t,6)}, tE={tE}, tR={tR}")
         scattering_evolve_loop_plot(t,f,psi,phi, plt_show=False, plt_save=True)
         scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
         gc.collect()
         (t,psi,phi) = scattering_evolve_loop_helper2(t,psi,swnf,
                                                      steps=print_every,progress_proxy=progressbar,s34=evolve_s34)
-        loopAccum += 1
+        frameAcc += 1
 f += 1
 scattering_evolve_loop_plot(t,f+1,psi,phi, plt_show=False, plt_save=True)
 scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
@@ -1322,6 +1322,7 @@ def scattering_evolve_bragg_loop_helper2_inner_psi_step(
         t4mid, t4wid, v4pot,
     ):
     psi = psi_init
+    minus1jhb05dt = -(1j/hb)*0.5*dt
     for iz3 in prange(nz):
         z3 = zlin[iz3]
         for (ix4, x4) in enumerate(xlin):
@@ -1329,7 +1330,7 @@ def scattering_evolve_bragg_loop_helper2_inner_psi_step(
                 # xlin is x3 here in the for loop
                 # a34 contact potential
                 dis = ((xlin-x4)**2 +(z3-z4)**2)**0.5
-                psi[:,iz3,ix4,iz4] *= np.exp(-(1j/hb)*0.5*dt* # this one is unitary time evolution operator
+                psi[:,iz3,ix4,iz4] *= np.exp(minus1jhb05dt * # this one is unitary time evolution operator
                                              s34 * 0.5*(1+np.cos(2*np.pi/a34*( dis ))) * 
                                                  (-0.5*a34 < dis) * (dis < 0.5*a34)
                                         # np.exp(-((xlin-x4)**2 +(z3-z4)**2)/(4*a34**2)) # inside the guassian contact potential
@@ -1338,7 +1339,7 @@ def scattering_evolve_bragg_loop_helper2_inner_psi_step(
                 VS3 = VS(tnow,t3mid,t3wid,v3pot)
                 VS4 = VS(tnow,t4mid,t4wid,v4pot)
                 if VS3 != 0 or VS4 != 0:
-                    psi[:,iz3,ix4,iz4] *= np.exp(-(1j/hb)*0.5*dt*(
+                    psi[:,iz3,ix4,iz4] *= np.exp(minus1jhb05dt * (
                                              VS3*np.cos(2*kx*xlin + 2*kz*z3) + 
                                              VS4*np.cos(2*kx*x4   + 2*kz*z4)
                                             ))
@@ -1428,15 +1429,15 @@ assert False, "just to catch run all"
 ```python
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 evolve_many_loops_start = datetime.now()
-loopAccum = 0 
+frameAcc = 0 
 with ProgressBar(total=total_steps) as progressbar:
     for f in range(frames_count):
         evolve_many_loops_inner_now = datetime.now()
         tP = evolve_many_loops_inner_now - evolve_many_loops_start
-        if loopAccum > 0: 
-            tR = (frames_count-loopAccum)* tP/loopAccum
+        if frameAcc > 0: 
+            tR = (frames_count-frameAcc)* tP/frameAcc
             tE = datetime.now() + tR
-            l.info(f"Now l={loopAccum}, t={round(t,6)}, tP={tP}, tR={tR}, tE = {tE}")
+            l.info(f"Now f={frameAcc}, t={round(t,6)}, tP={tP}, tR={tR}, tE = {tE}")
         scattering_evolve_loop_plot(t,f,psi,phi, plt_show=False, plt_save=True)
         scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
         gc.collect()
@@ -1445,7 +1446,7 @@ with ProgressBar(total=total_steps) as progressbar:
                           t3mid=-3, t3wid=1, v3pot=0, 
                           t4mid=0.5*t4sc, t4wid=t4sc, v4pot=V4sc                        
                           )
-        loopAccum += 1
+        frameAcc += 1
 f += 1
 scattering_evolve_loop_plot(t,f+1,psi,phi, plt_show=False, plt_save=True)
 scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
@@ -1523,7 +1524,7 @@ if img_alt_frames:  # Determine the width and height from the first image if not
     del frame, out
 else:
     print("No images found or processed.")
-del img_alt_frames, frame
+del img_alt_frames
 gc.collect()
 ```
 
