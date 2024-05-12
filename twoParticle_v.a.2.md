@@ -411,7 +411,7 @@ cosZGrid = np.cos(2*k*zgrid)
 l.info(f"cosZGrid size {round(cosZGrid.nbytes/1000**2,3)} MB")
 ```
 
-```python jupyter={"source_hidden": true}
+```python
 # Parameters from scan 20240506-184909-TFF
 V3pi1 = 0.08*VR # ratio corrent when using intensity=1
 t3pi1 = 49.8e-3 # ms 
@@ -430,6 +430,10 @@ e4pi2 = (0.4990, 0.4994)
 V3sc = 0.135*VR
 t3sc = 22.8e-3 
 e3sc = 0.4238 
+#
+V4sc = 0.102*VR
+t4sc = 30.1e-3 
+e4sc = 0.4239 
 ```
 
 ```python
@@ -437,7 +441,8 @@ l.info(f"""(V3pi1, t3pi1, e3pi1) = {(V3pi1, t3pi1, e3pi1)}
 (V3pi2, t3pi2, e3pi2) = {(V3pi2, t3pi2, e3pi2)}
 (V4pi1, t4pi1, e4pi1) = {(V4pi1, t4pi1, e4pi1)}
 (V4pi2, t4pi2, e4pi2) = {(V4pi2, t4pi2, e4pi2)}
-(V3sc,  t3sc,  e4sc ) = {(V3sc,  t3sc,  e3sc)}""")
+(V3sc,  t3sc,  e4sc ) = {(V3sc,  t3sc,  e3sc)}
+(V4sc,  t4sc,  e4sc ) = {(V4sc,  t4sc,  e4sc)}""")
 ```
 
 ```python
@@ -451,6 +456,7 @@ plt.plot(tbtest, VS(tbtest, 0.5*t3pi1, t3pi1, V3pi1),label="$\pi$    pulse for $
 plt.plot(tbtest, VS(tbtest, 0.5*t3pi2, t3pi2, V3pi2),label="$\pi/2$ pulse for ${}^3\mathrm{He}$")
 plt.plot(tbtest, VS(tbtest, 0.5*t4pi1, t4pi1, V4pi1),label="$\pi$    pulse for ${}^4\mathrm{He}$")
 plt.plot(tbtest, VS(tbtest, 0.5*t4pi2, t4pi2, V4pi2),label="$\pi/2$ pulse for ${}^4\mathrm{He}$")
+plt.plot(tbtest, VS(tbtest, 0.5*t3sc,  t3sc,  V3sc),label="scat pulse for ${}^3\mathrm{He}$")
 plt.plot(tbtest, VS(tbtest, 0.5*t4sc,  t4sc,  V4sc),label="scat pulse for ${}^4\mathrm{He}$")
 plt.legend()
 plt.xlabel("t (ms)")
@@ -825,6 +831,7 @@ plt.imshow(np.real(psi[30,:,90,:]))
 @jit(forceobj=True, parallel=True)
 def gx3x4_calc(psi,cut=5.0):
     ind = abs(zlin) < (cut+1e-15)*dz
+    # print(ind)
     gx3x4 = np.trapz(np.abs(psi[:,:,:,ind])**2,zlin[ind],axis=3)
     gx3x4 = np.trapz(gx3x4[:,ind,:],zlin[ind],axis=1)
     return gx3x4
@@ -1073,7 +1080,7 @@ def scattering_evolve_loop_plot(t,f,psi,phi, plt_show=True, plt_save=False):
         print("t = " +t_str+ " \t\t frame =", f, "\t\t memory used: " + 
               str(round(ram_py_MB(),3)) + "MB  ")
 
-    fig = plt.figure(figsize=(12,7))
+    fig = plt.figure(figsize=(8,7))
     plt.subplot(2,2,1)
     plt.imshow(np.flipud(only3(psi).T), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds')
 #     plt.imshow(np.log(np.flipud(only3(psi).T)), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds')
@@ -1123,7 +1130,7 @@ def scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=True, plt_save=False, 
         print("t = " +t_str+ " \t\t frame =", f, "\t\t memory used: " + 
               str(round(ram_py_MB(),3)) + "MB  ")
 
-    fig = plt.figure(figsize=(12,7))
+    fig = plt.figure(figsize=(8,7))
     plt.subplot(2,2,1)
 #     plt.imshow(np.flipud(only3(psi).T), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds')
 #     plt.imshow(np.emath.logn(power,np.flipud(only3(psi).T)), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds')
@@ -1182,7 +1189,7 @@ scattering_evolve_loop_plot(t,f,psi,phi, plt_show=True, plt_save=False)
 ```
 
 ```python
-
+scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=True, plt_save=False, logPlus=1, po=0.1)
 ```
 
 ```python
@@ -1216,6 +1223,22 @@ l.info(f"strength34 = {strength34}, \t evolve_s34 = {evolve_s34}")
 
 ```python
 numba.get_num_threads()
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
 ```
 
 # Simulation Sequence ??? (dev)
@@ -1415,6 +1438,7 @@ print_ram_usage(globals().items(),10)
 ```python
 print_every = 10
 frames_count = 500
+export_every = 30
 total_steps = print_every * frames_count
 evolve_loop_time_estimate = total_steps*evolve_loop_time_delta*1.1
 l.info(f"""print_every = {print_every}, \tframes_count = {frames_count}, total_steps = {total_steps}
@@ -1447,6 +1471,11 @@ with ProgressBar(total=total_steps) as progressbar:
                           t4mid=0.5*t4sc, t4wid=t4sc, v4pot=V4sc                        
                           )
         frameAcc += 1
+        if frameAcc % export_every == 0:
+            with pgzip.open(output_prefix+f"psi at t={round(t,6)}"+output_ext,
+                'wb', thread=8, blocksize=1*10**8) as file:
+                pickle.dump(psi, file) 
+                
 f += 1
 scattering_evolve_loop_plot(t,f+1,psi,phi, plt_show=False, plt_save=True)
 scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
@@ -1483,6 +1512,144 @@ with pgzip.open(output_prefix+f"psi at t={round(t,6)}"+output_ext,
 
 ```
 
+```python
+
+```
+
+```python
+
+```
+
+```python
+# @jit(forceobjd=True, parallel=True)
+def gp3p4_dhalo_calc_noAb(phi,cut=5.0,offset3=0,offset4=0):
+    ind3 = abs(pzlin-offset3) < (cut+1e-15)*dpz
+    ind4 = abs(pzlin-offset4) < (cut+1e-15)*dpz
+    gx3x4 = np.trapz(phi[:,:,:,ind4],pzlin[ind4],axis=3)
+    gx3x4 = np.trapz(gx3x4[:,ind3,:],pzlin[ind3],axis=1)
+    return gx3x4 
+def gp3p4_dhalo_calc(phi,cut=5.0,offset3=0,offset4=0):
+    ind3 = abs(pzlin-offset3) < (cut+1e-15)*dpz
+    ind4 = abs(pzlin-offset4) < (cut+1e-15)*dpz
+    gx3x4 = np.trapz(np.abs(phi[:,:,:,ind4])**2,pzlin[ind4],axis=3)
+    gx3x4 = np.trapz(gx3x4[:,ind3,:],pzlin[ind3],axis=1)
+    return gx3x4 
+```
+
+```python
+def plot_dhalo_gp3p4(gx3x4,cut,offset3=0,offset4=0):
+    xip = pxlin > +0*cut*dpz 
+    xim = pxlin < -0*cut*dpz 
+    gpp = np.trapz(np.trapz(gx3x4[:,xip],pxlin[xip],axis=1)[xip],pxlin[xip],axis=0)
+    gpm = np.trapz(np.trapz(gx3x4[:,xim],pxlin[xim],axis=1)[xip],pxlin[xip],axis=0)
+    gmp = np.trapz(np.trapz(gx3x4[:,xip],pxlin[xip],axis=1)[xim],pxlin[xim],axis=0)
+    gmm = np.trapz(np.trapz(gx3x4[:,xim],pxlin[xim],axis=1)[xim],pxlin[xim],axis=0)
+    E = (gpp+gmm-gpm-gmp)/((gpp+gmm+gpm+gmp))
+    
+    plt.imshow(np.flipud(gx3x4.T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k))
+    plt.title("$g^{(2)}_{\pm\pm}$ of $p_\mathrm{cut} = "+str(cut)+"dpz$ and $E="+str(round(E,4))+"$")
+    plt.xlabel("$p_3$")
+    plt.ylabel("$p_4$")
+    plt.axhline(y=0,color='white',alpha=0.8,linewidth=0.7)
+    plt.axvline(x=0,color='white',alpha=0.8,linewidth=0.7)
+    plt.text(+pxmax*0.6/(hb*k),+pxmax*0.8/(hb*k),"$g^{(2)}_{++}="+str(round(gpp,1))+"$", color='white',ha='center',alpha=0.9)
+    plt.text(-pxmax*0.6/(hb*k),+pxmax*0.8/(hb*k),"$g^{(2)}_{-+}="+str(round(gmp,1))+"$", color='white',ha='center',alpha=0.9)
+    plt.text(+pxmax*0.6/(hb*k),-pxmax*0.8/(hb*k),"$g^{(2)}_{+-}="+str(round(gpm,1))+"$", color='white',ha='center',alpha=0.9)
+    plt.text(-pxmax*0.6/(hb*k),-pxmax*0.8/(hb*k),"$g^{(2)}_{--}="+str(round(gmm,1))+"$", color='white',ha='center',alpha=0.9)
+```
+
+```python
+# https://artmenlope.github.io/plotting-complex-variable-functions/
+from colorsys import hls_to_rgb
+def colorize(fz):
+    """
+    The original colorize function can be found at:
+    https://stackoverflow.com/questions/17044052/mathplotlib-imshow-complex-2d-array
+    by the user nadapez.
+    """
+    r = np.log2(1. + np.abs(fz))
+    h = np.angle(fz)/(2*np.pi)
+    # l = 1 - 0.45**(np.log(1+r)) 
+    # l = 0.75*((np.abs(fz))/np.abs(fz).max())**1.2
+    l = ((np.abs(fz)**2)/((np.abs(fz)**2).max()))
+    s = 1
+    c = np.vectorize(hls_to_rgb)(h,l,s) # --> tuple
+    c = np.array(c)  # -->  array of (3,n,m) shape, but need (m,n,3)
+    c = np.rot90(c.transpose(2,1,0), 1) # Change shape to (m,n,3) and rotate 90 degrees
+    return c
+
+from matplotlib.lines import Line2D
+legend_elements = [Line2D([0], [0], marker='o', color='cyan', label='$Arg=\pm\pi$', markersize=10, lw=0),
+                   Line2D([0], [0], marker='o', color='red', label='$Arg=0$', markersize=10, lw=0)]
+```
+
+```python
+p/dpz
+```
+
+```python
+gx3x4.max()
+```
+
+```python
+plt.figure(figsize=(14,9))
+
+# cut_list = [1, 10, 30]
+cut_list = [1, 2, 5]
+for i in range(3):
+    cut = cut_list[i]
+    gx3x4 = gp3p4_dhalo_calc_noAb(phi,cut=cut,offset3=+p,offset4=+p)
+    plt.subplot(2,len(cut_list),i+1)
+    gx3x4_img = colorize(gx3x4.T)
+    
+    xip = pxlin > +0*cut*dpz 
+    xim = pxlin < -0*cut*dpz 
+    gpp = np.trapz(np.trapz(gx3x4[:,xip],pxlin[xip],axis=1)[xip],pxlin[xip],axis=0)
+    gpm = np.trapz(np.trapz(gx3x4[:,xim],pxlin[xim],axis=1)[xip],pxlin[xip],axis=0)
+    gmp = np.trapz(np.trapz(gx3x4[:,xip],pxlin[xip],axis=1)[xim],pxlin[xim],axis=0)
+    gmm = np.trapz(np.trapz(gx3x4[:,xim],pxlin[xim],axis=1)[xim],pxlin[xim],axis=0)
+    ECHSH = (gpp+gmm-gpm-gmp)/((gpp+gmm+gpm+gmp))
+    
+    plt.imshow(gx3x4_img, extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k))
+#     ax.imshow(np.flipud(gx3x4_img.T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k))
+#     plt.title("$g^{(2)}_{\pm\pm}$ of $p_\mathrm{cut} = "+str(cut)+"dpz$ and $E="+str(round(E,4))+"$")
+    plt.title("$g^{(2)}_{\pm\pm}$ of $p_\mathrm{cut} = "+str(cut)+"dpz$")
+    plt.xlabel("$p_3$")
+    plt.ylabel("$p_4$")
+    plt.axhline(y=0,color='white',alpha=0.8,linewidth=0.7)
+    plt.axvline(x=0,color='white',alpha=0.8,linewidth=0.7)
+#     plt.text(+pxmax*0.6/(hb*k),+pxmax*0.8/(hb*k),"$g^{(2)}_{++}="+str(round(gpp,4))+"$", color='white',ha='center',alpha=0.9)
+#     plt.text(-pxmax*0.6/(hb*k),+pxmax*0.8/(hb*k),"$g^{(2)}_{-+}="+str(round(gmp,4))+"$", color='white',ha='center',alpha=0.9)
+#     plt.text(+pxmax*0.6/(hb*k),-pxmax*0.8/(hb*k),"$g^{(2)}_{+-}="+str(round(gpm,4))+"$", color='white',ha='center',alpha=0.9)
+#     plt.text(-pxmax*0.6/(hb*k),-pxmax*0.8/(hb*k),"$g^{(2)}_{--}="+str(round(gmm,4))+"$", color='white',ha='center',alpha=0.9)
+    # plt.colorbar()
+plt.legend(handles=legend_elements, loc='upper right')    
+
+for i in range(3):
+    cut = cut_list[i]
+    gx3x4 = gp3p4_dhalo_calc(phi,cut=cut,offset3=+p,offset4=+p)
+    plt.subplot(2,len(cut_list),i+1+3)
+    plot_dhalo_gp3p4(gx3x4,cut)
+    # plt.colorbar()
+
+# plt.colorbar()
+    
+plt.tight_layout(pad=0)
+title = "double halo corr with phase"
+plt.savefig("output/"+title+".pdf", dpi=600)
+plt.savefig("output/"+title+".png", dpi=600)
+
+plt.show()
+```
+
+```python
+
+```
+
+```python
+
+```
+
 # Exporting to Video (Quite high VM RAM usage)
 
 ```python
@@ -1494,7 +1661,8 @@ assert False, "just to catch run all"
 def extract_frame_number(filename):
     match = re.search(r'f=(\d+)', filename)
     return int(match.group(1)) if match else None
-img_alt_list = glob.glob(output_pre_selpa+'*.png')
+img_alt_list = glob.glob(output_pre_selp+'*.png')
+# img_alt_list = glob.glob(output_pre_selpa+'*.png')
 img_alt_list.sort(key=lambda x: extract_frame_number(x))
 ```
 
@@ -1516,8 +1684,10 @@ img_alt_frames = Parallel(n_jobs=-1)(
 if img_alt_frames:  # Determine the width and height from the first image if not empty
     height, width, layers = img_alt_frames[0].shape # Define the codec and create VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'hvc1')  # HEVC codec
-    out = cv2.VideoWriter(output_prefix+"scattering_evolve_loop_plot_alt.mov", 
-                          fourcc, 10.0, (width, height), True) # Write img_alt_frames to the video file
+    out = cv2.VideoWriter(
+        output_prefix+"scattering_evolve_loop_plot.mov", 
+        # output_prefix+"scattering_evolve_loop_plot_alt.mov", 
+        fourcc, 10.0, (width, height), True) # Write img_alt_frames to the video file
     for frame in tqdm(img_alt_frames, desc="Writing Video"):
         out.write(frame)  # Write out frame to video
     out.release()  # Release the video writer
@@ -1559,6 +1729,22 @@ gc.collect()
 %reset -f out
 ram_py_log()
 print_ram_usage(globals().items(),10)
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
 ```
 
 ```python
