@@ -419,6 +419,10 @@ e3pi1 = 0.9950  # expected efficiency from scan
 V3pi2 = 0.04*VR
 t3pi2 = 49.9e-3
 e3pi2 = (0.4994, 0.4990)
+# TODO
+V3pi4 = -1
+t3pi4 = -1
+e3pi4 = -1
 # 20240507-212137-TFF
 V4pi1 = 0.06*VR # ratio corrent when using intensity=1
 t4pi1 = 66.4e-3 # ms 
@@ -426,23 +430,56 @@ e4pi1 = 0.9950  # expected efficiency from scan
 V4pi2 = 0.03*VR
 t4pi2 = 66.5e-3
 e4pi2 = (0.4990, 0.4994)
+# TODO
+V4pi4 = -1
+t4pi4 = -1
+e4pi4 = -1
 # 20240509-181745-TFF 
 V3sc = 0.135*VR
 t3sc = 22.8e-3 
 e3sc = 0.4238 
-#
+# 20240511-222534-TFF
 V4sc = 0.102*VR
 t4sc = 30.1e-3 
 e4sc = 0.4239 
-```
 
-```python
+tLongestPulse = max([t3pi1,t3pi2,t4pi1,t4pi2,t4sc])
+tLongestMRPulse = max([t3pi1,t4pi1])
+tLongestBSPulse = max([t3pi2,t4pi2,t3pi4,t4pi4])
+NLongestBSPulse = round(tLongestBSPulse/dt)
+# Interferometer sequence timings
+# 20240512-005555-TFF
+T_a34off = 150e-3 #ms time to turn of scattering potential (can run free particle propagator)
+T_MR = 300e-3 #ms time of centre of mirror pulse
+T_BS = T_MR*2 - t4sc + 0e-3 #ms TODO: find?
+T_END = T_BS + tLongestPulse/2
+
+T_MR_L = T_MR - 0.5*tLongestMRPulse
+T_MR_R = T_MR + 0.5*tLongestMRPulse
+
+T_FREE_DELTA_1 = round(T_MR_L - T_a34off,5)
+T_FREE_DELTA_2 = round(T_BS_L - T_MR_R,5)
+N_FREE_STEPS_1 = round(T_FREE_DELTA_1 / dt)
+N_FREE_STEPS_2 = round(T_FREE_DELTA_2 / dt)
+
+T_BS_L = T_BS - 0.5*tLongestBSPulse
+T_BS_R = T_BS + 0.5*tLongestBSPulse
+
 l.info(f"""(V3pi1, t3pi1, e3pi1) = {(V3pi1, t3pi1, e3pi1)}
 (V3pi2, t3pi2, e3pi2) = {(V3pi2, t3pi2, e3pi2)}
+(V3pi4, t3pi4, e3pi4) = {(V3pi4, t3pi4, e3pi4)}
 (V4pi1, t4pi1, e4pi1) = {(V4pi1, t4pi1, e4pi1)}
 (V4pi2, t4pi2, e4pi2) = {(V4pi2, t4pi2, e4pi2)}
+(V4pi4, t4pi4, e4pi4) = {(V4pi4, t4pi4, e4pi4)}
 (V3sc,  t3sc,  e4sc ) = {(V3sc,  t3sc,  e3sc)}
-(V4sc,  t4sc,  e4sc ) = {(V4sc,  t4sc,  e4sc)}""")
+(V4sc,  t4sc,  e4sc ) = {(V4sc,  t4sc,  e4sc)}
+tLongestPulse = {tLongestPulse}, tLongestBSPulse = {tLongestBSPulse}
+\t\t\tNLongestBSPulse = {NLongestBSPulse}
+T_a34off = {T_a34off}, T_MR = {T_MR}, T_BS = {T_BS}, T_END = {T_END}
+T_MR_L = {T_MR_L}, T_MR_R = {T_MR_R}
+T_FREE_DELTA_1 = {T_FREE_DELTA_1}, T_FREE_DELTA_2 = {T_FREE_DELTA_2}
+N_FREE_STEPS_1 = {N_FREE_STEPS_1}, N_FREE_STEPS_2 = {N_FREE_STEPS_2}
+""")
 ```
 
 ```python
@@ -450,18 +487,45 @@ if (intensity1 != 1) or (intensity2 != 1): l.warning(f"{intensity1}, {intensity2
 ```
 
 ```python
-tbtest = np.arange(0, max([t3pi1,t3pi2,t4pi1,t4pi2,t4sc]),dt)
+tbtest = np.arange(0,tLongestPulse,dt)
 plt.figure()
 plt.plot(tbtest, VS(tbtest, 0.5*t3pi1, t3pi1, V3pi1),label="$\pi$    pulse for ${}^3\mathrm{He}$")
 plt.plot(tbtest, VS(tbtest, 0.5*t3pi2, t3pi2, V3pi2),label="$\pi/2$ pulse for ${}^3\mathrm{He}$")
+plt.plot(tbtest, VS(tbtest, 0.5*t3sc,  t3sc,  V3sc),label="scat pulse for ${}^3\mathrm{He}$")
 plt.plot(tbtest, VS(tbtest, 0.5*t4pi1, t4pi1, V4pi1),label="$\pi$    pulse for ${}^4\mathrm{He}$")
 plt.plot(tbtest, VS(tbtest, 0.5*t4pi2, t4pi2, V4pi2),label="$\pi/2$ pulse for ${}^4\mathrm{He}$")
-plt.plot(tbtest, VS(tbtest, 0.5*t3sc,  t3sc,  V3sc),label="scat pulse for ${}^3\mathrm{He}$")
 plt.plot(tbtest, VS(tbtest, 0.5*t4sc,  t4sc,  V4sc),label="scat pulse for ${}^4\mathrm{He}$")
 plt.legend()
 plt.xlabel("t (ms)")
 plt.ylabel("VS")
 plt.show()
+```
+
+```python
+tbtest = np.arange(0, T_END,dt)
+plt.figure()
+plt.plot(tbtest, VS(tbtest, 0.5*t4sc,  t4sc,  V4sc),label="scat pulse for ${}^4\mathrm{He}$")
+plt.plot(tbtest, VS(tbtest, T_MR, t3pi1, V3pi1),label="$\pi$    pulse for ${}^3\mathrm{He}$")
+plt.plot(tbtest, VS(tbtest, T_MR, t4pi1, V4pi1),label="$\pi$    pulse for ${}^4\mathrm{He}$")
+plt.plot(tbtest, VS(tbtest, T_BS, t3pi2, V3pi2),label="$\pi/2$ pulse for ${}^3\mathrm{He}$")
+plt.plot(tbtest, VS(tbtest, T_BS, t4pi2, V4pi2),label="$\pi/2$ pulse for ${}^4\mathrm{He}$")
+plt.axvline(T_a34off,alpha=0.5); #plt.text(T_a34off + 0.01, V4sc,'T_a34off')
+plt.axvline(T_MR_L,alpha=0.5)
+plt.axvline(T_MR_R,alpha=0.5)
+plt.axvline(T_BS_L,alpha=0.5)
+plt.axvline(T_BS_R,alpha=0.5)
+plt.legend()
+plt.xlabel("t (ms)")
+plt.ylabel("VS")
+plt.show()
+```
+
+```python
+
+```
+
+```python
+
 ```
 
 ```python
@@ -984,15 +1048,17 @@ def scattering_evolve_loop_helper2_inner_psi_step(psi_init, s34=strength34):
 
 @njit(parallel=True,cache=True)
 # @njit
-def scattering_evolve_loop_helper2_inner_phi_step(phi_init):
+def scattering_evolve_loop_helper2_inner_phi_step(phi_init,dtsteps=1):
     phi = phi_init
+    m1jhb05m3 = -(1j/hb) * (0.5/m3) * (dt*dtsteps)
+    m1jhb05m4 = -(1j/hb) * (0.5/m4) * (dt*dtsteps)
     for iz3 in prange(nz):
         pz3 = pzlin[iz3]
 #     for (iz3, pz3) in enumerate(pzlin):
         for (ix4, px4) in enumerate(pxlin):
             for (iz4, pz4) in enumerate(pzlin):
-                phi[:,iz3,ix4,iz4] *= np.exp(-(1j/hb) * (0.5/m3) * (dt) * (pxlin**2 + pz3**2) \
-                                               -(1j/hb) * (0.5/m4) * (dt) * (  px4**2 + pz4**2))
+                phi[:,iz3,ix4,iz4] *= np.exp(m1jhb05m3 * (pxlin**2 + pz3**2) + \
+                                             m1jhb05m4 * (  px4**2 + pz4**2))
     return phi
 
 # @jit(nogil=True, parallel=True, forceobj=True)
@@ -1406,6 +1472,16 @@ def scattering_evolve_bragg_loop_helper2(
         if progress_proxy != None:
             progress_proxy.update(1)                                   
     return (t, psi, phi)
+
+@jit(forceobj=True, parallel=True,cache=True)
+def evolve_free_part(tin, psii, swnf, dtsteps):
+    t = tin
+    psi = psii
+    phi = toPhi(psi, swnf, nthreads=7)
+    phi = scattering_evolve_loop_helper2_inner_phi_step(phi, dtsteps)
+    psi = toPsi(phi, swnf, nthreads=7)
+    t += dtsteps*dt
+    return (t,psi,phi)
 ```
 
 ```python
@@ -1418,6 +1494,30 @@ evolve_loop_time_delta = evolve_loop_time_end - evolve_loop_time_start
 l.info(f"Time to run one evolve_loop_time_start is {evolve_loop_time_delta} (Run again to use cached compile)")
 # need to run this once before looping to cache numba compiles
 ```
+
+
+
+<!-- #region jp-MarkdownHeadingCollapsed=true -->
+### Some Dev testing (usually don't run this)
+<!-- #endregion -->
+
+<!-- #raw -->
+assert False, "just to catch run all"
+<!-- #endraw -->
+
+<!-- #raw -->
+(t,psi,phi) = evolve_free_part(t,psi,swnf,1//dt)
+<!-- #endraw -->
+
+<!-- #raw -->
+scattering_evolve_loop_plot(t,f,psi,phi, plt_show=True, plt_save=False)
+<!-- #endraw -->
+
+```python
+
+```
+
+### Actually running the fucking thing
 
 ```python
 VS(1*dt ,0.5*t4sc, t4sc, V4sc)
@@ -1436,19 +1536,22 @@ print_ram_usage(globals().items(),10)
 ```
 
 ```python
-print_every = 10
-frames_count = 500
+print_every = 10 # every us 
+frames_count = 150 # until T_a34off
 export_every = 30
 total_steps = print_every * frames_count
+t_end_target = frames_count*print_every*dt
 evolve_loop_time_estimate = total_steps*evolve_loop_time_delta*1.1
 l.info(f"""print_every = {print_every}, \tframes_count = {frames_count}, total_steps = {total_steps}
-Target simulation end time = {frames_count*print_every*dt} ms
+Target simulation end time = {t_end_target} ms
 Estimated script runtime = {evolve_loop_time_estimate} which is {datetime.now()+evolve_loop_time_estimate}""")
 ```
 
 ```python
 assert False, "just to catch run all"
 ```
+
+#### Initial Scattering
 
 ```python
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
@@ -1492,8 +1595,161 @@ with pgzip.open(output_prefix+f"psi at t={round(t,6)}"+output_ext,
 
 ```
 
+#### Free Propagator to Mirror
+
+```python
+round(T_MR_L - t_end_target,5)
+```
+
+```python
+round((T_MR_L - t_end_target)/dt)
+```
+
+```python
+N_FREE_STEPS_1
+```
+
+```python
+N_FREE_STEPS_1_actual = round((T_MR_L - t_end_target)/dt - 11)
+t_end_target_free_1 = t_end_target + dt*N_FREE_STEPS_1_actual
+l.info(f"N_FREE_STEPS_1_actual = {N_FREE_STEPS_1_actual}, t_end_target_free_1 = {t_end_target_free_1}")
+```
+
+```python
+t_end_target_free_1
+```
+
+```python
+T_MR_L
+```
+
+```python
+#### ONE STEP COMPUTE !!!!
+(t,psi,phi) = evolve_free_part(t,psi,swnf,N_FREE_STEPS_1_actual)
+```
+
+```python
+l.info(t)
+with pgzip.open(output_prefix+f"psi at t={round(t,6)}"+output_ext,
+                'wb', thread=8, blocksize=1*10**8) as file:
+    pickle.dump(psi, file) 
+```
+
+```python
+scattering_evolve_loop_plot(t,f,psi,phi, plt_show=False, plt_save=True)
+scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
+```
+
 ```python
 
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+round(t_end_target_free_1 + tLongestMRPulse,6)
+```
+
+```python
+T_MR_R
+```
+
+```python
+round((t_end_target_free_1 + tLongestMRPulse)/dt)
+```
+
+```python
+# N_MR_STEPS
+round((t_end_target_free_1 + tLongestMRPulse)/dt + 11)
+```
+
+```python
+
+```
+
+#### Numerical Mirror Pulse
+
+```python
+ceil(NLongestBSPulse/print_every)
+```
+
+```python
+NLongestBSPulse/print_every
+```
+
+```python
+T_MR_R
+```
+
+```python
+ceil((T_MR_R + 11*dt - t_end_target_free_1)/dt/print_every)
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+### THIS CELL IS COPIED CODE FROM INITIAL SCATTERING!!!!! 
+# print_every = 10 # every us 
+# frames_count = ceil(NLongestBSPulse/print_every) # until T_a34off
+frames_count = ceil((T_MR_R + 11*dt - t_end_target_free_1)/dt/print_every)
+export_every = 30
+total_steps = print_every * frames_count
+t_end_target = frames_count*print_every*dt
+evolve_loop_time_estimate = total_steps*evolve_loop_time_delta*1.1
+l.info(f"""print_every = {print_every}, \tframes_count = {frames_count}, total_steps = {total_steps}
+Target simulation end time = {t_end_target} ms
+Estimated script runtime = {evolve_loop_time_estimate} which is {datetime.now()+evolve_loop_time_estimate}""")
+```
+
+```python
+### THIS CELL IS COPIED CODE FROM INITIAL SCATTERING!!!!! 
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
+evolve_many_loops_start = datetime.now()
+frameAcc = 0 
+with ProgressBar(total=total_steps) as progressbar:
+    for f in range(frames_count):
+        evolve_many_loops_inner_now = datetime.now()
+        tP = evolve_many_loops_inner_now - evolve_many_loops_start
+        if frameAcc > 0: 
+            tR = (frames_count-frameAcc)* tP/frameAcc
+            tE = datetime.now() + tR
+            l.info(f"Now f={frameAcc}, t={round(t,6)}, tP={tP}, tR={tR}, tE = {tE}")
+        scattering_evolve_loop_plot(t,f,psi,phi, plt_show=False, plt_save=True)
+        scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
+        gc.collect()
+        (t,psi,phi) = scattering_evolve_bragg_loop_helper2(t,psi,swnf,
+                          steps=print_every,progress_proxy=progressbar,s34=evolve_s34,
+                          t3mid=T_MR, t3wid=t3pi1, v3pot=V3pi1, #### THESE CHANGED, EVERYTHING ELSE COPIED
+                          t4mid=T_MR, t4wid=t4pi1, v4pot=V4pi1  ####                  
+                          )
+        frameAcc += 1
+        if frameAcc % export_every == 0:
+            with pgzip.open(output_prefix+f"psi at t={round(t,6)}"+output_ext,
+                'wb', thread=8, blocksize=1*10**8) as file:
+                pickle.dump(psi, file) 
+                
+f += 1
+scattering_evolve_loop_plot(t,f+1,psi,phi, plt_show=False, plt_save=True)
+scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
+```
+
+```python
+l.info(t)
+with pgzip.open(output_prefix+f"psi at t={round(t,6)}"+output_ext,
+                'wb', thread=8, blocksize=1*10**8) as file:
+    pickle.dump(psi, file) 
 ```
 
 ```python
@@ -1512,13 +1768,7 @@ with pgzip.open(output_prefix+f"psi at t={round(t,6)}"+output_ext,
 
 ```
 
-```python
-
-```
-
-```python
-
-```
+#### Some Correlation Calculations
 
 ```python
 # @jit(forceobjd=True, parallel=True)
@@ -1546,16 +1796,16 @@ def plot_dhalo_gp3p4(gx3x4,cut,offset3=0,offset4=0):
     gmm = np.trapz(np.trapz(gx3x4[:,xim],pxlin[xim],axis=1)[xim],pxlin[xim],axis=0)
     E = (gpp+gmm-gpm-gmp)/((gpp+gmm+gpm+gmp))
     
-    plt.imshow(np.flipud(gx3x4.T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k))
+    plt.imshow(np.flipud(gx3x4.T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Greens')
     plt.title("$g^{(2)}_{\pm\pm}$ of $p_\mathrm{cut} = "+str(cut)+"dpz$ and $E="+str(round(E,4))+"$")
     plt.xlabel("$p_3$")
     plt.ylabel("$p_4$")
-    plt.axhline(y=0,color='white',alpha=0.8,linewidth=0.7)
-    plt.axvline(x=0,color='white',alpha=0.8,linewidth=0.7)
-    plt.text(+pxmax*0.6/(hb*k),+pxmax*0.8/(hb*k),"$g^{(2)}_{++}="+str(round(gpp,1))+"$", color='white',ha='center',alpha=0.9)
-    plt.text(-pxmax*0.6/(hb*k),+pxmax*0.8/(hb*k),"$g^{(2)}_{-+}="+str(round(gmp,1))+"$", color='white',ha='center',alpha=0.9)
-    plt.text(+pxmax*0.6/(hb*k),-pxmax*0.8/(hb*k),"$g^{(2)}_{+-}="+str(round(gpm,1))+"$", color='white',ha='center',alpha=0.9)
-    plt.text(-pxmax*0.6/(hb*k),-pxmax*0.8/(hb*k),"$g^{(2)}_{--}="+str(round(gmm,1))+"$", color='white',ha='center',alpha=0.9)
+    plt.axhline(y=0,color='k',alpha=0.2,linewidth=0.7)
+    plt.axvline(x=0,color='k',alpha=0.2,linewidth=0.7)
+    plt.text(+pxmax*0.6/(hb*k),+pxmax*0.8/(hb*k),"$g^{(2)}_{++}="+str(round(gpp,1))+"$", color='k',ha='center',alpha=0.9)
+    plt.text(-pxmax*0.6/(hb*k),+pxmax*0.8/(hb*k),"$g^{(2)}_{-+}="+str(round(gmp,1))+"$", color='k',ha='center',alpha=0.9)
+    plt.text(+pxmax*0.6/(hb*k),-pxmax*0.8/(hb*k),"$g^{(2)}_{+-}="+str(round(gpm,1))+"$", color='k',ha='center',alpha=0.9)
+    plt.text(-pxmax*0.6/(hb*k),-pxmax*0.8/(hb*k),"$g^{(2)}_{--}="+str(round(gmm,1))+"$", color='k',ha='center',alpha=0.9)
 ```
 
 ```python
@@ -1584,6 +1834,10 @@ legend_elements = [Line2D([0], [0], marker='o', color='cyan', label='$Arg=\pm\pi
 ```
 
 ```python
+
+```
+
+```python
 p/dpz
 ```
 
@@ -1595,20 +1849,20 @@ gx3x4.max()
 plt.figure(figsize=(14,9))
 
 # cut_list = [1, 10, 30]
-cut_list = [1, 2, 5]
+cut_list = [1, 2, 10]
 for i in range(3):
     cut = cut_list[i]
     gx3x4 = gp3p4_dhalo_calc_noAb(phi,cut=cut,offset3=+p,offset4=+p)
     plt.subplot(2,len(cut_list),i+1)
     gx3x4_img = colorize(gx3x4.T)
     
-    xip = pxlin > +0*cut*dpz 
-    xim = pxlin < -0*cut*dpz 
-    gpp = np.trapz(np.trapz(gx3x4[:,xip],pxlin[xip],axis=1)[xip],pxlin[xip],axis=0)
-    gpm = np.trapz(np.trapz(gx3x4[:,xim],pxlin[xim],axis=1)[xip],pxlin[xip],axis=0)
-    gmp = np.trapz(np.trapz(gx3x4[:,xip],pxlin[xip],axis=1)[xim],pxlin[xim],axis=0)
-    gmm = np.trapz(np.trapz(gx3x4[:,xim],pxlin[xim],axis=1)[xim],pxlin[xim],axis=0)
-    ECHSH = (gpp+gmm-gpm-gmp)/((gpp+gmm+gpm+gmp))
+    # xip = pxlin > +0*cut*dpz 
+    # xim = pxlin < -0*cut*dpz 
+    # gpp = np.trapz(np.trapz(gx3x4[:,xip],pxlin[xip],axis=1)[xip],pxlin[xip],axis=0)
+    # gpm = np.trapz(np.trapz(gx3x4[:,xim],pxlin[xim],axis=1)[xip],pxlin[xip],axis=0)
+    # gmp = np.trapz(np.trapz(gx3x4[:,xip],pxlin[xip],axis=1)[xim],pxlin[xim],axis=0)
+    # gmm = np.trapz(np.trapz(gx3x4[:,xim],pxlin[xim],axis=1)[xim],pxlin[xim],axis=0)
+    # ECHSH = (gpp+gmm-gpm-gmp)/((gpp+gmm+gpm+gmp))
     
     plt.imshow(gx3x4_img, extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k))
 #     ax.imshow(np.flipud(gx3x4_img.T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k))
@@ -1643,6 +1897,14 @@ plt.show()
 ```
 
 ```python
+((np.abs(gx3x4)**2).max())
+```
+
+```python
+((np.abs(gx3x4)**2).min())
+```
+
+```python
 
 ```
 
@@ -1650,7 +1912,13 @@ plt.show()
 
 ```
 
+```python
+
+```
+
+<!-- #region jp-MarkdownHeadingCollapsed=true -->
 # Exporting to Video (Quite high VM RAM usage)
+<!-- #endregion -->
 
 ```python
 assert False, "just to catch run all"
@@ -1659,11 +1927,27 @@ assert False, "just to catch run all"
 ```python
 # Function to extract frame number from filename
 def extract_frame_number(filename):
-    match = re.search(r'f=(\d+)', filename)
-    return int(match.group(1)) if match else None
+    match = re.search(r't=([0-9.]+)', filename)
+    # return float(match.group(1)) if match else None
+    if match: # Remove any non-numeric characters after the number
+        number = match.group(1).rstrip('.')
+        return float(number)
+    return None
 img_alt_list = glob.glob(output_pre_selp+'*.png')
 # img_alt_list = glob.glob(output_pre_selpa+'*.png')
-img_alt_list.sort(key=lambda x: extract_frame_number(x))
+img_alt_list.sort(key=extract_frame_number)
+```
+
+```python
+extract_frame_number(img_alt_list[2])
+```
+
+```python
+img_alt_list[2]
+```
+
+```python
+
 ```
 
 ```python
