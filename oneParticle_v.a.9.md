@@ -761,8 +761,8 @@ def scanTauPiInnerEval(tPi,
         print("tauPi =", round(tPi,6), "    \t tauMid =", round(tauMid,6), " \t tauEnd = ", round(tauEnd,6))
     # output = numericalEvolve(0, psi0np(2,2,pmom*np.cos(ang),pmom*np.sin(ang)), 
     output = numericalEvolve(0, 
-                             psi0np(mux=3,muz=3,p0x=0,p0z=0),
-                             # psi0ringNpOffset(5,3,pmom,0,5,0,pmom), 
+                             # psi0np(mux=3,muz=3,p0x=0,p0z=0),
+                             psi0ringNpOffset(5,3,pmom,0,5,0,pmom), 
                              tauEnd, tauPi, tauMid, doppd=doppd, 
                              final_plot=logging,progress_bar=progress_bar,
                              V0FArg=V0FArg,kkx=kkx,kkz=kkz
@@ -772,9 +772,9 @@ def scanTauPiInnerEval(tPi,
 ```
 
 ```python
-tPDelta = 4*dt  # positive +, note I want tPiTest in decending order 
+tPDelta = 10*dt  # positive +, note I want tPiTest in decending order 
 # tPiTest = np.append(np.arange(0.5,0.1,-tPDelta), 0) # note this is decending
-tPiTest = np.arange(0.06,0.01-tPDelta,-tPDelta)
+tPiTest = np.arange(0.10,0.01-tPDelta,-tPDelta)
     # tPiTest = np.arange(dt,3*dt,dt)
 l.info(f"#tPiTest = {len(tPiTest)}, max={tPiTest[0]*1000}, min={tPiTest[-1]*1000} us")
 l.info(f"tPiTest: {tPiTest}")
@@ -848,7 +848,8 @@ plot_mom(psi,5,5)
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
-hbar_k_transfers = np.arange(-4,4+1,+2)
+# hbar_k_transfers = np.arange(-4,4+1,+2)
+hbar_k_transfers = np.arange(-3,3+1,+2)
 # pzlinIndexSet = np.zeros((len(hbar_k_transfers), len(pxlin)), dtype=bool)
 pxlinIndexSet = np.zeros((len(hbar_k_transfers), len(pzlin)), dtype=bool)
 cut_p_width = 1.3*dpz/p
@@ -962,7 +963,7 @@ for (i, hbar_k) in enumerate(hbar_k_transfers):
              label=str(hbar_k)+"$\hbar k$",
             )
 
-plt.legend(loc=1,ncols=3)
+plt.legend(loc=1,ncols=1)
 plt.ylabel("$normalised \int |\phi(p)| dp$ around region ($\pm$"+str(cut_p_width)+")")
 plt.xlabel("$t_\pi \ (\mu s)$")
 # plt.axhline(y=np.cos(pi  )**2,color='gray',linewidth=1,alpha=0.5)  # 2*pi pulse
@@ -1000,13 +1001,13 @@ l.info(f"""max transfer (π) to -1hbk at σt {tPiTest[indPDNPi]*1000} μs
 with efficiency to -1hbk: {phiDensityNormed[indPDNPi,hbarkInd]}""")
 <!-- #endraw -->
 
-```python
+<!-- #raw -->
 SC_searchHelper=np.abs(phiDensityNormed[:,hbarkInA]-0.5)+np.abs(phiDensityNormed[:,hbarkInB]-0.5)
 indPDNSC = np.argmin(SC_searchHelper)
 l.info(f"""max scattering to ±2hbk at σt {round(tPiTest[indPDNSC]*1000,6)} μs 
 with transfer fraction to -2hbk of {phiDensityNormed[indPDNSC,hbarkInA]}
 with transfer fraction to +2hbk of {phiDensityNormed[indPDNSC,hbarkInB]}""")
-```
+<!-- #endraw -->
 
 <!-- #raw -->
 pi2searchHelper=np.abs(phiDensityNormed[:,hbarkInd]-0.5)+np.abs(phiDensityNormed[:,hbarkInI]-0.5)
@@ -1015,6 +1016,30 @@ l.info(f"""max mirror (π/2) between ±1hbk at σt {tPiTest[indPDNPM]*1000} μs
 with transfer fraction to -1hbk of {phiDensityNormed[indPDNPM,hbarkInd]}
 with transfer fraction to +1hbk of {phiDensityNormed[indPDNPM,hbarkInI]}""")
 <!-- #endraw -->
+
+```python
+pi2searchHelper=np.abs(phiDensityNormed[:,hbarkInd]-0.5)+np.abs(phiDensityNormed[:,hbarkInI]-0.5)
+indPDNPM = np.argmin(pi2searchHelper)
+l.info(f"""max mirror (π/2) between ±1hbk at σt {tPiTest[indPDNPM]*1000} μs 
+with transfer fraction to -1hbk of {phiDensityNormed[indPDNPM,hbarkInd]}
+with transfer fraction to +1hbk of {phiDensityNormed[indPDNPM,hbarkInI]}""")
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
 
 ```python
 plt.plot(tPiTest*1000,SC_searchHelper,'.-',alpha=0.7,label='helper')
@@ -1038,6 +1063,14 @@ indPDNPM = {indPDNPM} \ttPiTest[indPDNPM] = {round(tPiTest[indPDNPM]*1000,2)} μ
 <!-- #raw -->
 (indPDNPM, tPiTest[indPDNPM], phiDensityNormed[indPDNPM,hbarkInd], phiDensityNormed[indPDNPM,hbarkInI])
 <!-- #endraw -->
+
+```python
+
+```
+
+```python
+
+```
 
 ```python
 
@@ -1374,11 +1407,13 @@ with pgzip.open(output_prefix+'/intensityWidthGrid'+output_ext, 'wb', thread=8, 
 
 ```
 
-```python
+# Loading previous scans
 
+```python
+assert False, "just to catch run all"
 ```
 
-<!-- #raw -->
+```python
 with pgzip.open('/Volumes/tonyNVME Gold/oneParticleSim/20240502-011818-TFF/VRScanOutput.pgz.pkl'
                 , 'rb', thread=8) as file:
     VRScanOutput = pickle.load(file)
@@ -1390,9 +1425,9 @@ with pgzip.open('/Volumes/tonyNVME Gold/oneParticleSim/20240502-011818-TFF/inten
 with pgzip.open('/Volumes/tonyNVME Gold/oneParticleSim/20240502-011818-TFF/intensityWidthGrid.pgz.pkl'
                 , 'rb', thread=8) as file:
     intensityWidthGrid = pickle.load(file)
-<!-- #endraw -->
+```
 
-<!-- #raw -->
+```python
 VRScanOutputPi = [] 
 VRScanOutputPM = []
 intensityScan2 = []
@@ -1406,19 +1441,19 @@ for (VRi,VRs) in enumerate(VRScan):
     VRScanOutputPi.append((indPDNPi, tPiTest[indPDNPi], phiDensityNormed[indPDNPi,hbarkInd]))
     VRScanOutputPM.append((indPDNPM, tPiTest[indPDNPM], phiDensityNormed[indPDNPM,hbarkInd], phiDensityNormed[indPDNPM,hbarkInI]))
     intensityScan2.append(intensityScan[VRi])
-<!-- #endraw -->
+```
 
-<!-- #raw -->
+```python
 intensityScan2 = np.array(intensityScan2)
-<!-- #endraw -->
+```
 
-<!-- #raw -->
+```python
 np.shape(VRScanOutputPi)
-<!-- #endraw -->
+```
 
-<!-- #raw -->
+```python
 np.shape(intensityScan2)
-<!-- #endraw -->
+```
 
 ```python
 
