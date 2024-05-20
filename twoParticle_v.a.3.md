@@ -1798,10 +1798,10 @@ def gp3p4_dhalo_calc_noAb(phi,cut=5.0,offset3=0,offset4=0):
     gx3x4 = np.trapz(phi[:,:,:,ind4],pzlin[ind4],axis=3)
     gx3x4 = np.trapz(gx3x4[:,ind3,:],pzlin[ind3],axis=1)
     return gx3x4 
-def gp3p4_dhalo_calc(phi,cut=5.0,offset3=0,offset4=0):
+def gp3p4_dhalo_calc(phiHere,cut=5.0,offset3=0,offset4=0):
     ind3 = abs(pzlin-offset3) < (cut+1e-15)*dpz
     ind4 = abs(pzlin-offset4) < (cut+1e-15)*dpz
-    gx3x4 = np.trapz(np.abs(phi[:,:,:,ind4])**2,pzlin[ind4],axis=3)
+    gx3x4 = np.trapz(np.abs(phiHere[:,:,:,ind4])**2,pzlin[ind4],axis=3)
     gx3x4 = np.trapz(gx3x4[:,ind3,:],pzlin[ind3],axis=1)
     xip = pxlin > +0*cut*dpz 
     xim = pxlin < -0*cut*dpz 
@@ -1965,6 +1965,75 @@ assert False, "just to catch run all"
 ```
 
 ```python
+def plot_g34(phiHere, cutPlot=1.5, saveFig=True):
+    gx3px4p = gp3p4_dhalo_calc(phiHere,cut=cutPlot,offset3=+p,offset4=+p)
+    gx3px4m = gp3p4_dhalo_calc(phiHere,cut=cutPlot,offset3=+p,offset4=-p)
+    gx3mx4p = gp3p4_dhalo_calc(phiHere,cut=cutPlot,offset3=-p,offset4=+p)
+    gx3mx4m = gp3p4_dhalo_calc(phiHere,cut=cutPlot,offset3=-p,offset4=-p)
+    
+    gx3x4combined = np.zeros((2*nx,2*nx))
+    gx3x4combined[:nx, :nx] = gx3px4p[0]
+    gx3x4combined[:nx, nx:] = gx3px4m[0]
+    gx3x4combined[nx:, :nx] = gx3mx4p[0]
+    gx3x4combined[nx:, nx:] = gx3mx4m[0]
+    
+    ticks = np.linspace(0, 2*nx, 17)
+    ticksL = np.linspace(0, 2*nx, 9)
+    tick_labels = ["","+3","+2","+1","0","-1","-2","-3","","+3","+2","+1","0","-1","-2","-3",""]
+    # tick_labels = np.concatenate((np.linspace(-4, 4, 5), np.linspace(-4, 4, 5)))
+    # plt.imshow(np.flipud(gx3x4combined.T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Greens')
+    plt.figure(figsize=(11,5))
+    ax = plt.subplot(1,2,1)
+    im = ax.imshow(np.flipud(gx3x4combined.T),cmap='Greens')
+    # ax.set_yticks(ticksL, ["","A↗︎","","A↖︎","","A↘︎","","A↙︎",""])
+    # ax.set_xticks(ticksL, ["","B↗︎","","B↖︎","","B↘︎","","B↙︎",""])
+    ax.set_yticks(ticks, ["","","","A↗︎","","A↖︎","","","","","","A↘︎","","A↙︎","","",""])
+    ax.set_xticks(ticks, ["","","","B↙︎","","B↘︎","","","","","","B↖︎","","B↗","","",""])
+    
+    ax.axhline(y=1.0*nx,color='k',alpha=0.3,linewidth=0.7)
+    ax.axhline(y=0.5*nx,color='k',alpha=0.1,linewidth=0.7)
+    ax.axhline(y=1.5*nx,color='k',alpha=0.1,linewidth=0.7)
+    ax.axvline(x=1.0*nx,color='k',alpha=0.3,linewidth=0.7)
+    ax.axvline(x=0.5*nx,color='k',alpha=0.1,linewidth=0.7)
+    ax.axvline(x=1.5*nx,color='k',alpha=0.1,linewidth=0.7)
+    ax2 = ax.secondary_xaxis('top')
+    ax3 = ax.secondary_yaxis('right')
+    ax2.set_xticks(ticks, tick_labels[::-1])
+    ax3.set_yticks(ticks, tick_labels)
+    plt.title(f"t = {t}")
+    
+    l.info(f"""gx3px4p[1] = {gx3px4p[1]}
+    gx3px4m[1] = {gx3px4m[1]}
+    gx3mx4p[1] = {gx3mx4p[1]}
+    gx3mx4m[1] = {gx3mx4m[1]}""")
+    
+    gx3x4combined = np.zeros((2*2,2*2))
+    gx3x4combined[:2, :2] = [[gx3px4p[1][3],gx3px4p[1][2]],[gx3px4p[1][1],gx3px4p[1][0]]]
+    gx3x4combined[:2, 2:] = [[gx3px4m[1][3],gx3px4m[1][2]],[gx3px4m[1][1],gx3px4m[1][0]]]
+    gx3x4combined[2:, :2] = [[gx3mx4p[1][3],gx3mx4p[1][2]],[gx3mx4p[1][1],gx3mx4p[1][0]]]
+    gx3x4combined[2:, 2:] = [[gx3mx4m[1][3],gx3mx4m[1][2]],[gx3mx4m[1][1],gx3mx4m[1][0]]]
+    gx3x4n = gx3x4combined/sum(sum(gx3x4combined))
+    ax = plt.subplot(1,2,2)
+    im = ax.imshow(np.flipud(gx3x4combined.T),cmap='Greens')
+    ticks=np.arange(0,4,1)
+    ax.set_yticks(ticks, ["A↗︎","A↖︎","A↘︎","A↙︎"])
+    ax.set_xticks(ticks, ["B↙︎","B↘︎","B↖︎","B↗"])
+    # ax2 = ax.secondary_xaxis('top')
+    # ax3 = ax.secondary_yaxis('right')
+    # ax2.set_yticks(ticks, ["A↗︎","A↖︎","A↘︎","A↙︎"])
+    # ax3.set_xticks(ticks, ["B↙︎","B↘︎","B↖︎","B↗"])
+    for i in range(gx3x4n.shape[0]):
+        for j in range(gx3x4n.shape[1]):
+            plt.text(j, i, str(round(np.flipud(gx3x4n.T)[i, j],4)), ha='center', va='center', color='dodgerblue')
+    plt.title(f"cut = {cutPlot}")
+    title = f"CorrE t={round(t,5)}, cut = {cutPlot}"
+    if saveFig:
+        plt.savefig(output_prefix+title+".pdf", dpi=600)
+        plt.savefig(output_prefix+title+".png", dpi=600)
+    plt.show()
+```
+
+```python
 # t=0.15
 # t=0.2657
 # t=0.2957
@@ -1974,82 +2043,11 @@ with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/20240512-232723-TFF/psi 
                 , 'rb', thread=8) as file:
     psi = pickle.load(file)
 phi, swnf = phiAndSWNF(psi, nthreads=7)
+plot_g34(phi, cutPlot=1.5, saveFig=False)
 ```
 
 ```python
-
-```
-
-```python
-
-```
-
-```python
-cutPlot = 1.5
-gx3px4p = gp3p4_dhalo_calc(phi,cut=cutPlot,offset3=+p,offset4=+p)
-gx3px4m = gp3p4_dhalo_calc(phi,cut=cutPlot,offset3=+p,offset4=-p)
-gx3mx4p = gp3p4_dhalo_calc(phi,cut=cutPlot,offset3=-p,offset4=+p)
-gx3mx4m = gp3p4_dhalo_calc(phi,cut=cutPlot,offset3=-p,offset4=-p)
-
-gx3x4combined = np.zeros((2*nx,2*nx))
-gx3x4combined[:nx, :nx] = gx3px4p[0]
-gx3x4combined[:nx, nx:] = gx3px4m[0]
-gx3x4combined[nx:, :nx] = gx3mx4p[0]
-gx3x4combined[nx:, nx:] = gx3mx4m[0]
-
-ticks = np.linspace(0, 2*nx, 17)
-ticksL = np.linspace(0, 2*nx, 9)
-tick_labels = ["","+3","+2","+1","0","-1","-2","-3","","+3","+2","+1","0","-1","-2","-3",""]
-# tick_labels = np.concatenate((np.linspace(-4, 4, 5), np.linspace(-4, 4, 5)))
-# plt.imshow(np.flipud(gx3x4combined.T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Greens')
-plt.figure(figsize=(11,5))
-ax = plt.subplot(1,2,1)
-im = ax.imshow(np.flipud(gx3x4combined.T),cmap='Greens')
-# ax.set_yticks(ticksL, ["","A↗︎","","A↖︎","","A↘︎","","A↙︎",""])
-# ax.set_xticks(ticksL, ["","B↗︎","","B↖︎","","B↘︎","","B↙︎",""])
-ax.set_yticks(ticks, ["","","","A↗︎","","A↖︎","","","","","","A↘︎","","A↙︎","","",""])
-ax.set_xticks(ticks, ["","","","B↙︎","","B↘︎","","","","","","B↖︎","","B↗","","",""])
-
-ax.axhline(y=1.0*nx,color='k',alpha=0.3,linewidth=0.7)
-ax.axhline(y=0.5*nx,color='k',alpha=0.1,linewidth=0.7)
-ax.axhline(y=1.5*nx,color='k',alpha=0.1,linewidth=0.7)
-ax.axvline(x=1.0*nx,color='k',alpha=0.3,linewidth=0.7)
-ax.axvline(x=0.5*nx,color='k',alpha=0.1,linewidth=0.7)
-ax.axvline(x=1.5*nx,color='k',alpha=0.1,linewidth=0.7)
-ax2 = ax.secondary_xaxis('top')
-ax3 = ax.secondary_yaxis('right')
-ax2.set_xticks(ticks, tick_labels[::-1])
-ax3.set_yticks(ticks, tick_labels)
-plt.title(f"t = {t}")
-
-l.info(f"""gx3px4p[1] = {gx3px4p[1]}
-gx3px4m[1] = {gx3px4m[1]}
-gx3mx4p[1] = {gx3mx4p[1]}
-gx3mx4m[1] = {gx3mx4m[1]}""")
-
-gx3x4combined = np.zeros((2*2,2*2))
-gx3x4combined[:2, :2] = [[gx3px4p[1][3],gx3px4p[1][2]],[gx3px4p[1][1],gx3px4p[1][0]]]
-gx3x4combined[:2, 2:] = [[gx3px4m[1][3],gx3px4m[1][2]],[gx3px4m[1][1],gx3px4m[1][0]]]
-gx3x4combined[2:, :2] = [[gx3mx4p[1][3],gx3mx4p[1][2]],[gx3mx4p[1][1],gx3mx4p[1][0]]]
-gx3x4combined[2:, 2:] = [[gx3mx4m[1][3],gx3mx4m[1][2]],[gx3mx4m[1][1],gx3mx4m[1][0]]]
-gx3x4n = gx3x4combined/sum(sum(gx3x4combined))
-ax = plt.subplot(1,2,2)
-im = ax.imshow(np.flipud(gx3x4combined.T),cmap='Greens')
-ticks=np.arange(0,4,1)
-ax.set_yticks(ticks, ["A↗︎","A↖︎","A↘︎","A↙︎"])
-ax.set_xticks(ticks, ["B↙︎","B↘︎","B↖︎","B↗"])
-# ax2 = ax.secondary_xaxis('top')
-# ax3 = ax.secondary_yaxis('right')
-# ax2.set_yticks(ticks, ["A↗︎","A↖︎","A↘︎","A↙︎"])
-# ax3.set_xticks(ticks, ["B↙︎","B↘︎","B↖︎","B↗"])
-for i in range(gx3x4n.shape[0]):
-    for j in range(gx3x4n.shape[1]):
-        plt.text(j, i, str(round(np.flipud(gx3x4n.T)[i, j],4)), ha='center', va='center', color='dodgerblue')
-
-title = f"CorrE t={round(t,5)}"
-plt.savefig(output_prefix+title+".pdf", dpi=600)
-plt.savefig(output_prefix+title+".png", dpi=600)
-plt.show()
+phi.shape
 ```
 
 ```python
@@ -2064,7 +2062,9 @@ plt.show()
 
 ```
 
+<!-- #region jp-MarkdownHeadingCollapsed=true -->
 #### CorrE alt - not good?
+<!-- #endregion -->
 
 ```python
 assert False, "just to catch run all"
