@@ -457,13 +457,13 @@ T_END = T_BS + tLongestPulse/2
 T_MR_L = T_MR - 0.5*tLongestMRPulse
 T_MR_R = T_MR + 0.5*tLongestMRPulse
 
+T_BS_L = T_BS - 0.5*tLongestBSPulse
+T_BS_R = T_BS + 0.5*tLongestBSPulse
+
 T_FREE_DELTA_1 = round(T_MR_L - T_a34off,5)
 T_FREE_DELTA_2 = round(T_BS_L - T_MR_R,5)
 N_FREE_STEPS_1 = round(T_FREE_DELTA_1 / dt)
 N_FREE_STEPS_2 = round(T_FREE_DELTA_2 / dt)
-
-T_BS_L = T_BS - 0.5*tLongestBSPulse
-T_BS_R = T_BS + 0.5*tLongestBSPulse
 
 l.info(f"""(V3pi1, t3pi1, e3pi1) = {(V3pi1, t3pi1, e3pi1)}
 (V3pi2, t3pi2, e3pi2) = {(V3pi2, t3pi2, e3pi2)}
@@ -615,7 +615,7 @@ def only4(psi):
 ```
 
 ```python
-_ = psi0gaussian() # executes in 8.97s 
+# _ = psi0gaussian() # executes in 8.97s 
 ```
 
 ```python
@@ -644,7 +644,7 @@ def psi0_just_opposite(dr=20,s3=sg,s4=sg,pt=0,a=0,xlin=xlin,zlin=zlin):
 
 ```python
 su=5
-_ = psi0_just_opposite(dr=0,s3=su,s4=su,pt=-3*hb*k,a=0*pi)
+# _ = psi0_just_opposite(dr=0,s3=su,s4=su,pt=-3*hb*k,a=0*pi) %7sec
 ```
 
 ```python
@@ -678,7 +678,7 @@ def psi0Pair(dr=20,s3=sg,s4=sg,pt=p,a=0,nx=nx,nz=nz):
 ```
 
 ```python
-_ = psi0Pair() # 5.24s 
+# _ = psi0Pair() # 5.24s 
 ```
 
 ```python
@@ -713,7 +713,7 @@ def psi0ring(dr=20,s3=3,s4=3,pt=p,an=4):
 
 ```python
 # _ = psi0ring_with_logging(dr=20,s3=3,s4=3,pt=p,an=1)
-_ = psi0ring(dr=20,s3=3,s4=3,pt=p,an=1) # 13s
+# _ = psi0ring(dr=20,s3=3,s4=3,pt=p,an=1) # 13s
 ```
 
 ```python
@@ -770,7 +770,7 @@ def toPsi(phi, swnf, nthreads=nthreads) -> np.ndarray:
 ```python
 su = 3
 # psi = psi0gaussian(sx3=su, sz3=su, sx4=su, sz4=su, px3=-100, pz3=-50, px4=100, pz4=50)
-psi = psi0gaussian(sx3=su, sz3=su, sx4=su, sz4=su, px3=0, pz3=0, px4=0, pz4=0)
+psi = psi0gaussian(sx3=su, sz3=su, sx4=su, sz4=su, px3=0, pz3=0, px4=0, pz4=0) # 5sec
 t = 0
 ```
 
@@ -1768,7 +1768,27 @@ with pgzip.open(output_prefix+f"psi at t={round(t,6)}"+output_ext,
 
 ```
 
-#### Some Correlation Calculations
+### Some Correlation Calculations
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
 
 ```python
 # @jit(forceobjd=True, parallel=True)
@@ -1783,7 +1803,29 @@ def gp3p4_dhalo_calc(phi,cut=5.0,offset3=0,offset4=0):
     ind4 = abs(pzlin-offset4) < (cut+1e-15)*dpz
     gx3x4 = np.trapz(np.abs(phi[:,:,:,ind4])**2,pzlin[ind4],axis=3)
     gx3x4 = np.trapz(gx3x4[:,ind3,:],pzlin[ind3],axis=1)
-    return gx3x4 
+    xip = pxlin > +0*cut*dpz 
+    xim = pxlin < -0*cut*dpz 
+    gpp = np.trapz(np.trapz(gx3x4[:,xip],pxlin[xip],axis=1)[xip],pxlin[xip],axis=0)
+    gpm = np.trapz(np.trapz(gx3x4[:,xim],pxlin[xim],axis=1)[xip],pxlin[xip],axis=0)
+    gmp = np.trapz(np.trapz(gx3x4[:,xip],pxlin[xip],axis=1)[xim],pxlin[xim],axis=0)
+    gmm = np.trapz(np.trapz(gx3x4[:,xim],pxlin[xim],axis=1)[xim],pxlin[xim],axis=0)
+    return (gx3x4,[gpp,gpm,gmp,gmm])
+```
+
+```python
+def gp3p4_dhaloUD_calc(phi,cut=5.0,offset3=0,offset4=0):
+    ind3 = abs(pxlin-offset3) < (cut+1e-15)*dpz
+    ind4 = abs(pxlin-offset4) < (cut+1e-15)*dpz
+    # print(ind4)
+    gx3x4 = np.trapz(np.abs(phi[:,:,ind4,:])**2,pxlin[ind4],axis=2)
+    gx3x4 = np.trapz(gx3x4[ind3,:,:],pxlin[ind3],axis=0)
+    xip = pxlin > +0*cut*dpz 
+    xim = pxlin < -0*cut*dpz 
+    gpp = np.trapz(np.trapz(gx3x4[:,xip],pxlin[xip],axis=1)[xip],pxlin[xip],axis=0)
+    gpm = np.trapz(np.trapz(gx3x4[:,xim],pxlin[xim],axis=1)[xip],pxlin[xip],axis=0)
+    gmp = np.trapz(np.trapz(gx3x4[:,xip],pxlin[xip],axis=1)[xim],pxlin[xim],axis=0)
+    gmm = np.trapz(np.trapz(gx3x4[:,xim],pxlin[xim],axis=1)[xim],pxlin[xim],axis=0)
+    return (gx3x4,[gpp,gpm,gmp,gmm])
 ```
 
 ```python
@@ -1890,8 +1932,8 @@ for i in range(3):
     
 plt.tight_layout(pad=0)
 title = "double halo corr with phase"
-plt.savefig("output/"+title+".pdf", dpi=600)
-plt.savefig("output/"+title+".png", dpi=600)
+plt.savefig(output_prefix+title+f" t={round(t,5)}"+".pdf", dpi=600)
+plt.savefig(output_prefix+title+f" t={round(t,5)}"+".png", dpi=600)
 
 plt.show()
 ```
@@ -1902,6 +1944,290 @@ plt.show()
 
 ```python
 ((np.abs(gx3x4)**2).min())
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+### CorrE Visualisation
+
+```python
+assert False, "just to catch run all"
+```
+
+```python
+# t=0.15
+# t=0.2657
+# t=0.2957
+# t=0.3257
+t=0.3347
+with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/20240512-232723-TFF/psi at t={round(t,5)}.pgz.pkl'
+                , 'rb', thread=8) as file:
+    psi = pickle.load(file)
+phi, swnf = phiAndSWNF(psi, nthreads=7)
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+cutPlot = 1.5
+gx3px4p = gp3p4_dhalo_calc(phi,cut=cutPlot,offset3=+p,offset4=+p)
+gx3px4m = gp3p4_dhalo_calc(phi,cut=cutPlot,offset3=+p,offset4=-p)
+gx3mx4p = gp3p4_dhalo_calc(phi,cut=cutPlot,offset3=-p,offset4=+p)
+gx3mx4m = gp3p4_dhalo_calc(phi,cut=cutPlot,offset3=-p,offset4=-p)
+
+gx3x4combined = np.zeros((2*nx,2*nx))
+gx3x4combined[:nx, :nx] = gx3px4p[0]
+gx3x4combined[:nx, nx:] = gx3px4m[0]
+gx3x4combined[nx:, :nx] = gx3mx4p[0]
+gx3x4combined[nx:, nx:] = gx3mx4m[0]
+
+ticks = np.linspace(0, 2*nx, 17)
+ticksL = np.linspace(0, 2*nx, 9)
+tick_labels = ["","+3","+2","+1","0","-1","-2","-3","","+3","+2","+1","0","-1","-2","-3",""]
+# tick_labels = np.concatenate((np.linspace(-4, 4, 5), np.linspace(-4, 4, 5)))
+# plt.imshow(np.flipud(gx3x4combined.T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Greens')
+plt.figure(figsize=(11,5))
+ax = plt.subplot(1,2,1)
+im = ax.imshow(np.flipud(gx3x4combined.T),cmap='Greens')
+# ax.set_yticks(ticksL, ["","A↗︎","","A↖︎","","A↘︎","","A↙︎",""])
+# ax.set_xticks(ticksL, ["","B↗︎","","B↖︎","","B↘︎","","B↙︎",""])
+ax.set_yticks(ticks, ["","","","A↗︎","","A↖︎","","","","","","A↘︎","","A↙︎","","",""])
+ax.set_xticks(ticks, ["","","","B↙︎","","B↘︎","","","","","","B↖︎","","B↗","","",""])
+
+ax.axhline(y=1.0*nx,color='k',alpha=0.3,linewidth=0.7)
+ax.axhline(y=0.5*nx,color='k',alpha=0.1,linewidth=0.7)
+ax.axhline(y=1.5*nx,color='k',alpha=0.1,linewidth=0.7)
+ax.axvline(x=1.0*nx,color='k',alpha=0.3,linewidth=0.7)
+ax.axvline(x=0.5*nx,color='k',alpha=0.1,linewidth=0.7)
+ax.axvline(x=1.5*nx,color='k',alpha=0.1,linewidth=0.7)
+ax2 = ax.secondary_xaxis('top')
+ax3 = ax.secondary_yaxis('right')
+ax2.set_xticks(ticks, tick_labels[::-1])
+ax3.set_yticks(ticks, tick_labels)
+plt.title(f"t = {t}")
+
+l.info(f"""gx3px4p[1] = {gx3px4p[1]}
+gx3px4m[1] = {gx3px4m[1]}
+gx3mx4p[1] = {gx3mx4p[1]}
+gx3mx4m[1] = {gx3mx4m[1]}""")
+
+gx3x4combined = np.zeros((2*2,2*2))
+gx3x4combined[:2, :2] = [[gx3px4p[1][3],gx3px4p[1][2]],[gx3px4p[1][1],gx3px4p[1][0]]]
+gx3x4combined[:2, 2:] = [[gx3px4m[1][3],gx3px4m[1][2]],[gx3px4m[1][1],gx3px4m[1][0]]]
+gx3x4combined[2:, :2] = [[gx3mx4p[1][3],gx3mx4p[1][2]],[gx3mx4p[1][1],gx3mx4p[1][0]]]
+gx3x4combined[2:, 2:] = [[gx3mx4m[1][3],gx3mx4m[1][2]],[gx3mx4m[1][1],gx3mx4m[1][0]]]
+gx3x4n = gx3x4combined/sum(sum(gx3x4combined))
+ax = plt.subplot(1,2,2)
+im = ax.imshow(np.flipud(gx3x4combined.T),cmap='Greens')
+ticks=np.arange(0,4,1)
+ax.set_yticks(ticks, ["A↗︎","A↖︎","A↘︎","A↙︎"])
+ax.set_xticks(ticks, ["B↙︎","B↘︎","B↖︎","B↗"])
+# ax2 = ax.secondary_xaxis('top')
+# ax3 = ax.secondary_yaxis('right')
+# ax2.set_yticks(ticks, ["A↗︎","A↖︎","A↘︎","A↙︎"])
+# ax3.set_xticks(ticks, ["B↙︎","B↘︎","B↖︎","B↗"])
+for i in range(gx3x4n.shape[0]):
+    for j in range(gx3x4n.shape[1]):
+        plt.text(j, i, str(round(np.flipud(gx3x4n.T)[i, j],4)), ha='center', va='center', color='dodgerblue')
+
+title = f"CorrE t={round(t,5)}"
+plt.savefig(output_prefix+title+".pdf", dpi=600)
+plt.savefig(output_prefix+title+".png", dpi=600)
+plt.show()
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+#### CorrE alt - not good?
+
+```python
+assert False, "just to catch run all"
+```
+
+```python
+1/sqrt(2)
+```
+
+```python
+sideP = sqrt((3*m3-m4)/(m3+m4))*hb*k
+l.info(f"sideP = {sideP}")
+```
+
+```python
+cutPlot=1
+gx3px4p = gp3p4_dhaloUD_calc(phi,cut=cutPlot,offset3=+sideP,offset4=+sideP)
+gx3px4m = gp3p4_dhaloUD_calc(phi,cut=cutPlot,offset3=+sideP,offset4=-sideP)
+gx3mx4p = gp3p4_dhaloUD_calc(phi,cut=cutPlot,offset3=-sideP,offset4=+sideP)
+gx3mx4m = gp3p4_dhaloUD_calc(phi,cut=cutPlot,offset3=-sideP,offset4=-sideP)
+gx3x4combined = np.zeros((2*nx,2*nx))
+gx3x4combined[:nx, :nx] = gx3px4p[0]
+gx3x4combined[:nx, nx:] = gx3px4m[0]
+gx3x4combined[nx:, :nx] = gx3mx4p[0]
+gx3x4combined[nx:, nx:] = gx3mx4m[0]
+
+plt.figure(figsize=(11,5))
+ax = plt.subplot(1,2,1)
+ax.imshow(np.flipud(gx3x4combined.T),cmap="Greens")
+ticks = np.linspace(0, 2*nx, 17)
+ticksL = np.linspace(0, 2*nx, 9)
+tick_labels = ["","+3","+2","+1","0","-1","-2","-3","","+3","+2","+1","0","-1","-2","-3",""]
+ax.set_yticks(ticks, ["","","","A↖︎","","A↙︎","","","","","","A↗︎","","A↘︎","","",""]) # ↗︎↘︎↖︎↙︎
+ax.set_xticks(ticks, ["","","","B↘︎","","B↗︎","","","","","","B↙︎","","B↖︎","","",""]) # ↗︎↘︎↖︎↙︎
+
+ax.axhline(y=1.0*nx,color='k',alpha=0.3,linewidth=0.7)
+ax.axhline(y=0.5*nx,color='k',alpha=0.1,linewidth=0.7)
+ax.axhline(y=1.5*nx,color='k',alpha=0.1,linewidth=0.7)
+ax.axvline(x=1.0*nx,color='k',alpha=0.3,linewidth=0.7)
+ax.axvline(x=0.5*nx,color='k',alpha=0.1,linewidth=0.7)
+ax.axvline(x=1.5*nx,color='k',alpha=0.1,linewidth=0.7)
+ax2 = ax.secondary_xaxis('top')
+ax3 = ax.secondary_yaxis('right')
+ax2.set_xticks(ticks, tick_labels[::-1])
+ax3.set_yticks(ticks, tick_labels)
+plt.title(f"t = {t}")
+
+l.info(f"""gx3px4p[1] = {gx3px4p[1]}
+gx3px4m[1] = {gx3px4m[1]}
+gx3mx4p[1] = {gx3mx4p[1]}
+gx3mx4m[1] = {gx3mx4m[1]}""")
+
+gx3x4combined = np.zeros((2*2,2*2))
+gx3x4combined[:2, :2] = [[gx3px4p[1][3],gx3px4p[1][2]],[gx3px4p[1][1],gx3px4p[1][0]]]
+gx3x4combined[:2, 2:] = [[gx3px4m[1][3],gx3px4m[1][2]],[gx3px4m[1][1],gx3px4m[1][0]]]
+gx3x4combined[2:, :2] = [[gx3mx4p[1][3],gx3mx4p[1][2]],[gx3mx4p[1][1],gx3mx4p[1][0]]]
+gx3x4combined[2:, 2:] = [[gx3mx4m[1][3],gx3mx4m[1][2]],[gx3mx4m[1][1],gx3mx4m[1][0]]]
+gx3x4n = gx3x4combined/sum(sum(gx3x4combined))
+ax = plt.subplot(1,2,2)
+im = ax.imshow(np.flipud(gx3x4combined.T),cmap='Greens')
+ticks=np.arange(0,4,1)
+ax.set_yticks(ticks, ["A↖︎","A↙︎","A↗︎","A↘︎"])
+ax.set_xticks(ticks, ["B↘︎","B↗︎","B↙︎","B↖︎"])
+# ax2 = ax.secondary_xaxis('top')
+# ax3 = ax.secondary_yaxis('right')
+# ax2.set_yticks(ticks, ["A↗︎","A↖︎","A↘︎","A↙︎"])
+# ax3.set_xticks(ticks, ["B↙︎","B↘︎","B↖︎","B↗"])
+for i in range(gx3x4n.shape[0]):
+    for j in range(gx3x4n.shape[1]):
+        plt.text(j, i, str(round(np.flipud(gx3x4n.T)[i, j],4)), ha='center', va='center', color='dodgerblue')
+plt.title(f"cut = {cutPlot}")
+title = f"CorrE alt t={round(t,5)}, cut = {cutPlot}"
+plt.savefig(output_prefix+title+".pdf", dpi=600)
+plt.savefig(output_prefix+title+".png", dpi=600)
+plt.show()
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+scattering_evolve_loop_plot(t,f,psi,phi, plt_show=True, plt_save=False)
+```
+
+```python
+scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=True, plt_save=False, logPlus=1, po=0.1)
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
 ```
 
 ```python
