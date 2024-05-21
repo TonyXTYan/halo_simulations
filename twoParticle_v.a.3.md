@@ -2055,7 +2055,7 @@ phi.shape
 ```
 
 ```python
-
+gc.collect()
 ```
 
 ```python
