@@ -130,6 +130,10 @@ l.addHandler(l_console_handler)
 ```
 
 ```python
+l.info(f"This file is {output_prefix}logs.log")
+```
+
+```python
 # if save_debug:
     # with open(output_prefix + "session_info.txt", "wt") as file:
 s = ""
@@ -286,6 +290,17 @@ zmax/v3 = {zmax/v3}
 ```
 
 ```python
+v4scat = m3/(m3+m4)*v4
+v3scat = m4/(m3+m4)*v4
+l.info(f"""v3scat = {v3scat}
+v4scat = {v4scat}""")
+```
+
+```python
+xmax/v3scat
+```
+
+```python
 # V00 = 50000
 # dt=0.01
 # VxExpGrid = np.exp(-(1j/hb) * 0.5*dt * V00 * cosGrid )
@@ -420,9 +435,25 @@ V3pi2 = 0.04*VR
 t3pi2 = 49.9e-3
 e3pi2 = (0.4994, 0.4990)
 # TODO
-V3pi4 = -1
-t3pi4 = -1
-e3pi4 = -1
+# Below form gussing 20240521-013024-TFF and Rabi oscillation relations
+V3pi4  = 0.02*VR
+t3pi4  = 49.9e-3
+e3pi4  = -1
+V3pi34 = 0.06*VR
+t3pi34 = 49.9e-3
+e3pi34 = -1
+V3pi54 = 0.10*VR
+t3pi54 = 49.8e-3
+e3pi54 = -1
+V3pi32 = 0.12*VR
+t3pi32 = 49.8e-3
+e3pi32 = -1
+V3pi74 = 0.14*VR
+t3pi74 = 49.8e-3
+e3pi74 = -1
+V3pi21 = 0.16*VR
+t3pi21 = 49.8e-3
+e3pi21 = -1
 # 20240507-212137-TFF
 V4pi1 = 0.06*VR # ratio corrent when using intensity=1
 t4pi1 = 66.4e-3 # ms 
@@ -431,9 +462,25 @@ V4pi2 = 0.03*VR
 t4pi2 = 66.5e-3
 e4pi2 = (0.4990, 0.4994)
 # TODO
-V4pi4 = -1
-t4pi4 = -1
+# Below form gussing 20240521-013024-TFF and Rabi oscillation relations
+V4pi4 = 0.015*VR
+t4pi4 = 66.5e-3
 e4pi4 = -1
+V4pi34 = 0.045*VR
+t4pi34 = 66.5e-3
+e4pi34 = -1
+V4pi54 = 0.075*VR
+t4pi54 = 66.4e-3
+e4pi54 = -1
+V4pi32 = 0.09*VR
+t4pi32 = 66.4e-3
+e4pi32 = -1
+V4pi74 = 0.105*VR
+t4pi74 = 66.4e-3
+e4pi74 = -1
+V4pi21 = 0.12*VR
+t4pi21 = 66.4e-3
+e4pi21 = -1
 # 20240509-181745-TFF 
 V3sc = 0.135*VR
 t3sc = 22.8e-3 
@@ -450,7 +497,7 @@ NLongestBSPulse = round(tLongestBSPulse/dt)
 # Interferometer sequence timings
 # 20240512-005555-TFF
 T_a34off = 150e-3 #ms time to turn of scattering potential (can run free particle propagator)
-T_MR = 300e-3 #ms time of centre of mirror pulse
+T_MR = 600e-3 #ms time of centre of mirror pulse
 T_BS = T_MR*2 - t4sc + 0e-3 #ms TODO: find?
 T_END = T_BS + tLongestPulse/2
 
@@ -465,21 +512,42 @@ T_FREE_DELTA_2 = round(T_BS_L - T_MR_R,5)
 N_FREE_STEPS_1 = round(T_FREE_DELTA_1 / dt)
 N_FREE_STEPS_2 = round(T_FREE_DELTA_2 / dt)
 
-l.info(f"""(V3pi1, t3pi1, e3pi1) = {(V3pi1, t3pi1, e3pi1)}
-(V3pi2, t3pi2, e3pi2) = {(V3pi2, t3pi2, e3pi2)}
-(V3pi4, t3pi4, e3pi4) = {(V3pi4, t3pi4, e3pi4)}
-(V4pi1, t4pi1, e4pi1) = {(V4pi1, t4pi1, e4pi1)}
-(V4pi2, t4pi2, e4pi2) = {(V4pi2, t4pi2, e4pi2)}
-(V4pi4, t4pi4, e4pi4) = {(V4pi4, t4pi4, e4pi4)}
-(V3sc,  t3sc,  e4sc ) = {(V3sc,  t3sc,  e3sc)}
-(V4sc,  t4sc,  e4sc ) = {(V4sc,  t4sc,  e4sc)}
+l.info(f"""(V3pi4, t3pi4, e3pi4) = \t{(V3pi4, t3pi4, e3pi4)}
+(V3pi2, t3pi2, e3pi2) = \t{(V3pi2, t3pi2, e3pi2)}
+(V3pi34, t3pi34, e3pi34) = \t{(V3pi34, t3pi34, e3pi34)}
+(V3pi1, t3pi1, e3pi1) = \t{(V3pi1, t3pi1, e3pi1)}
+(V3pi54, t3pi54, e3pi54) = \t{(V3pi54, t3pi54, e3pi54)}
+(V3pi32, t3pi32, e3pi32) = \t{(V3pi32, t3pi32, e3pi32)}
+(V3pi74, t3pi74, e3pi74) = \t{(V3pi74, t3pi74, e3pi74)}
+(V3pi21, t3pi21, e3pi21) = \t{(V3pi21, t3pi21, e3pi21)}
+(V3sc, t3sc, e3sc) = \t{(V3sc, t3sc, e3sc)}
+
+(V4pi4, t4pi4, e4pi4) = \t{(V4pi4, t4pi4, e4pi4)}
+(V4pi2, t4pi2, e4pi2) = \t{(V4pi2, t4pi2, e4pi2)}
+(V4pi34, t4pi34, e4pi34) = \t{(V4pi34, t4pi34, e4pi34)}
+(V4pi1, t4pi1, e4pi1) = \t{(V4pi1, t4pi1, e4pi1)}
+(V4pi54, t4pi54, e4pi54) = \t{(V4pi54, t4pi54, e4pi54)}
+(V4pi32, t4pi32, e4pi32) = \t{(V4pi32, t4pi32, e4pi32)}
+(V4pi74, t4pi74, e4pi74) = \t{(V4pi74, t4pi74, e4pi74)}
+(V4pi21, t4pi21, e4pi21) = \t{(V4pi21, t4pi21, e4pi21)}
+(V4sc, t4sc, e4sc) = \t{(V4sc, t4sc, e4sc)}
+
 tLongestPulse = {tLongestPulse}, tLongestBSPulse = {tLongestBSPulse}
 \t\t\tNLongestBSPulse = {NLongestBSPulse}
 T_a34off = {T_a34off}, T_MR = {T_MR}, T_BS = {T_BS}, T_END = {T_END}
 T_MR_L = {T_MR_L}, T_MR_R = {T_MR_R}
 T_FREE_DELTA_1 = {T_FREE_DELTA_1}, T_FREE_DELTA_2 = {T_FREE_DELTA_2}
 N_FREE_STEPS_1 = {N_FREE_STEPS_1}, N_FREE_STEPS_2 = {N_FREE_STEPS_2}
+T_BS={T_BS}, T_BS_L={T_BS_L}, T_BS_R={T_BS_R}
 """)
+```
+
+```python
+v3scat*T_BS_R
+```
+
+```python
+
 ```
 
 ```python
@@ -517,6 +585,7 @@ plt.axvline(T_BS_R,alpha=0.5)
 plt.legend()
 plt.xlabel("t (ms)")
 plt.ylabel("VS")
+pulsetimings = plt.gcf()
 plt.show()
 ```
 
@@ -1595,6 +1664,19 @@ with pgzip.open(output_prefix+f"psi at t={round(t,6)}"+output_ext,
 
 ```
 
+```python
+t=0.15
+with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/20240512-232723-TFF/psi at t={round(t,5)}.pgz.pkl'
+                , 'rb', thread=8) as file:
+    psi = pickle.load(file)
+phi, swnf = phiAndSWNF(psi, nthreads=7)
+gc.collect()
+```
+
+```python
+
+```
+
 #### Free Propagator to Mirror
 
 ```python
@@ -1703,13 +1785,16 @@ ceil((T_MR_R + 11*dt - t_end_target_free_1)/dt/print_every)
 ### THIS CELL IS COPIED CODE FROM INITIAL SCATTERING!!!!! 
 # print_every = 10 # every us 
 # frames_count = ceil(NLongestBSPulse/print_every) # until T_a34off
-frames_count = ceil((T_MR_R + 11*dt - t_end_target_free_1)/dt/print_every)
-export_every = 30
+frames_count = ceil((T_MR_R + 12*dt - t_end_target_free_1)/dt/print_every)
+export_every = 20
 total_steps = print_every * frames_count
 t_end_target = frames_count*print_every*dt
 evolve_loop_time_estimate = total_steps*evolve_loop_time_delta*1.1
-l.info(f"""print_every = {print_every}, \tframes_count = {frames_count}, total_steps = {total_steps}
-Target simulation end time = {t_end_target} ms
+l.info(f"""print_every = {print_every}, 
+frames_count = {frames_count}, 
+export_every = {export_every}, \t {frames_count//export_every}
+total_steps = {total_steps}
+Target simulation end time = {t_end_target} ms, {t_end_target+t}
 Estimated script runtime = {evolve_loop_time_estimate} which is {datetime.now()+evolve_loop_time_estimate}""")
 ```
 
@@ -1743,17 +1828,489 @@ with ProgressBar(total=total_steps) as progressbar:
 f += 1
 scattering_evolve_loop_plot(t,f+1,psi,phi, plt_show=False, plt_save=True)
 scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
-```
-
-```python
-l.info(t)
+l.info(f"t={t}")
 with pgzip.open(output_prefix+f"psi at t={round(t,6)}"+output_ext,
                 'wb', thread=8, blocksize=1*10**8) as file:
     pickle.dump(psi, file) 
+gc.collect()
 ```
 
 ```python
 
+```
+
+```python
+
+```
+
+#### Beam Splitter Pulse
+
+```python
+t=0.6347
+data_folder = "20240521-231755-TFF"
+with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)}.pgz.pkl'
+                , 'rb', thread=8) as file:
+    psi = pickle.load(file)
+phi, swnf = phiAndSWNF(psi, nthreads=7)
+gc.collect()
+```
+
+```python
+# th3, th3p, th4, th4p sets 
+thetaCombo1 = ((0,1),           (V3pi32,t3pi32), (V4pi4, t4pi4),  (V4pi34,t4pi34))
+thetaCombo2 = ((V3pi34,t3pi34), (V3pi4, t3pi4),  (V4pi32,t4pi32), (0,1))
+thetaCombo3 = ((V3pi54,t3pi54), (V3pi34,t3pi34), (V4pi1, t4pi1),  (V4pi32,t4pi32))
+thetaCombo4 = ((V3pi32,t3pi32), (V3pi1, t3pi1),  (V4pi34,t4pi34), (V4pi54,t4pi54))
+```
+
+```python
+def comboSettingsGen(combo):
+    return [(combo[0],combo[2]), (combo[0],combo[3]), 
+            (combo[1],combo[2]), (combo[1],combo[3])]
+```
+
+```python
+comboSett1 = comboSettingsGen(thetaCombo1)
+comboSett2 = comboSettingsGen(thetaCombo2)
+comboSett3 = comboSettingsGen(thetaCombo3)
+comboSett4 = comboSettingsGen(thetaCombo4)
+```
+
+```python
+comboSettSet = [comboSett1, comboSett2, comboSett3, comboSett4]
+```
+
+```python
+T_BS_L
+```
+
+```python
+T_FREE_TO_BS = T_BS_L - 5*dt - t
+# T_FREE_TO_BS = 1.0 - t
+N_FREE_TO_BS = ceil(T_FREE_TO_BS/dt)
+l.info(f"""T_FREE_TO_BS = {T_FREE_TO_BS}
+t+T_FREE_TO_BS = {t+T_FREE_TO_BS}
+N_FREE_TO_BS = {N_FREE_TO_BS}""")
+```
+
+<!-- #region jp-MarkdownHeadingCollapsed=true -->
+##### One Test Run
+<!-- #endregion -->
+
+```python
+(t2,psi2,phi2) = evolve_free_part(t,psi,swnf,N_FREE_TO_BS)
+```
+
+```python
+scattering_evolve_loop_plot(t2,-1,psi2,phi2, plt_show=True, plt_save=False)
+```
+
+```python
+scattering_evolve_loop_plot_alt(t2,-1,psi2,phi2, plt_show=True, plt_save=False, logPlus=1, po=0.1)
+```
+
+```python
+gc.collect()
+%reset -f in
+%reset -f out
+ram_py_log()
+```
+
+<!-- #raw -->
+gridX3, gridX4 = np.meshgrid(xlin,xlin)
+widthFilter = 1
+gridFilter = np.exp(-( (3/5)*gridX + (-4/5)*gridZ )**2 / widthFilter  )
+x0filt = -28
+gridFilter = np.exp(-((gridX3-(-3/4)*x0filt)**2 + (gridX4-x0filt)**2)/ widthFilter )
+plt.imshow(gridFilter)
+plt.imshow(np.flipud(gridFilter.T),cmap="Greens",extent=[-xmax,+xmax,-xmax,+xmax])
+plt.show()
+<!-- #endraw -->
+
+```python
+@jit(forceobj=True, cache=True)
+def plot_bs_l_free_time(psiH, tt, midCutZ=[1,5], pltShow=True, pltSave=True):
+    # midCutZ = 5
+    plt.figure(figsize=(7*len(midCutZ),11))
+    tempReturn = []
+    tempReturn2 = []
+    for mi, mc in enumerate(midCutZ):
+        plt.subplot(2,len(midCutZ),mi+1)
+        ind = abs(zlin-0) < mc
+        # l.info(f"np.sum(ind) = {np.sum(ind)}")
+        midCut = np.trapz(np.abs(psiH[:,:,:,ind])**2,zlin[ind],axis=3)
+        midCut = np.trapz(midCut[:,ind,:],zlin[ind],axis=1)
+        tempReturn2.append(midCut)
+        # plt.imshow(np.log(np.flipud(midCut.T)),cmap="Greens",extent=[-xmax,+xmax,-zmax,+zmax])
+        plt.imshow(np.flipud(midCut.T)**0.5,cmap="Greens",extent=[-xmax,+xmax,-zmax,+zmax])
+        plt.title(f"$t$={tt}, $dz$={mc}, ($s$={np.sum(ind)})")
+        # plt.colorbar()
+        plt.xlabel("$x3$")
+        plt.ylabel("$x4$")
+        plt.axhline(y=0,color='k',alpha=0.2,linewidth=0.7)
+        plt.axvline(x=0,color='k',alpha=0.2,linewidth=0.7)
+
+        plt.subplot(2,len(midCutZ),mi+len(midCutZ)+1)
+        tempDiagIntensity = np.zeros(nx)
+        for (ind, x0filt) in enumerate(xlin):
+            # gridFilter = np.exp(-((gridX3-x0filt)**2 + (gridX4-(-4/3)*x0filt)**2)/mc )
+            gridFilter = np.exp(-((gridX3-(-3/4)*x0filt)**2 + (gridX4-x0filt)**2)/mc )
+            tempDiagIntensity[ind] = np.sum(midCut*gridFilter)
+        plt.axvline(x=+v3scat*tt,alpha=0.2,color='g')
+        plt.axvline(x=-v3scat*tt,alpha=0.2,color='g')
+        plt.axvline(x=+v3scat*(tt-t4sc),alpha=0.2,color='g')
+        plt.axvline(x=-v3scat*(tt-t4sc),alpha=0.2,color='g')
+        plt.axvline(x=+v3scat*(tt-tLongestPulse),alpha=0.2,color='g')
+        plt.axvline(x=-v3scat*(tt-tLongestPulse),alpha=0.2,color='g')
+        plt.plot(xlin,tempDiagIntensity,)
+
+        tempReturn.append(tempDiagIntensity)
+    if pltSave:
+        title = f"BS_L free time at t={round(tt,5)}, dz={midCutZ}"
+        plt.savefig(output_prefix+title+".png",dpi=600)
+        plt.savefig(output_prefix+title+".pdf",dpi=600)
+    if pltShow:
+        plt.show()
+    plt.close()
+    return (tempReturn,tempReturn2)
+```
+
+```python
+# plot_bs_l_free_time(psi2, t2, midCutZ=[1,3,10], pltShow=True, pltSave=True)
+_ = plot_bs_l_free_time(psi2, t2, midCutZ=[1,2,5], pltShow=True, pltSave=False)
+```
+
+<!-- #raw -->
+gridX3, gridX4 = np.meshgrid(xlin,xlin)
+widthFilter = 1
+# gridFilter = np.exp(-( (3/5)*gridX + (-4/5)*gridZ )**2 / widthFilter  )
+x0filt = +10
+gridFilter = np.exp(-((gridX3-x0filt)**2 + (gridX4-(-4/3)*x0filt)**2)/ widthFilter  )
+plt.imshow(np.flipud(gridFilter.T),cmap="Greens",extent=[-xmax,+xmax,-xmax,+xmax])
+plt.show()
+<!-- #endraw -->
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+<!-- #region jp-MarkdownHeadingCollapsed=true -->
+##### BS Timing Scan?
+<!-- #endregion -->
+
+<!-- #raw -->
+plt.figure(pulsetimings.number)
+# pulsetimings
+# plt.axvline(T_BS)
+plt.show()
+<!-- #endraw -->
+
+<!-- #raw -->
+T_BS_SCAN_DELTA = 3*tLongestBSPulse
+<!-- #endraw -->
+
+<!-- #raw -->
+T_BS_SCAN_DT_SKIPS = 30
+2*T_BS_SCAN_DELTA / (T_BS_SCAN_DT_SKIPS*dt)
+<!-- #endraw -->
+
+```python
+np.array([T_BS, T_BS_L, T_BS_R, tLongestBSPulse]) * 1000
+```
+
+```python
+(T_BS-1.5*tLongestBSPulse, T_BS+0.5*tLongestBSPulse)
+```
+
+```python
+# T_BS_L_SCAN_TARGETS = np.arange(T_BS-1.5*tLongestBSPulse, T_BS+0.5*tLongestBSPulse, 50*dt)
+T_BS_L_SCAN_TARGETS = np.arange(1.00,1.30, 20*dt)
+l.info(f"""len(T_BS_L_SCAN_TARGETS) = {len(T_BS_L_SCAN_TARGETS)}
+T_BS_L_SCAN_TARGETS: {T_BS_L_SCAN_TARGETS}""")
+```
+
+```python
+t_bs_scan_diag_result = []
+t_bs_scan_diag_result2 = []
+for (ind, tbs) in tqdm(enumerate(T_BS_L_SCAN_TARGETS),total=len(T_BS_L_SCAN_TARGETS)):
+    N_FREE_TO_BS = ceil((tbs-t)/dt)
+    (t2,psi2,phi2) = evolve_free_part(t,psi,swnf,N_FREE_TO_BS)
+    scattering_evolve_loop_plot(t2,ind,psi2,phi2, plt_show=False, plt_save=True)
+    scattering_evolve_loop_plot_alt(t2,ind,psi2,phi2, plt_show=False, plt_save=True, logPlus=1, po=0.1)
+    (tbs_result, tbs_resul2) = plot_bs_l_free_time(psi2, t2, midCutZ=[1,2,5], pltShow=False, pltSave=True)
+    t_bs_scan_diag_result.append(tbs_result)
+    t_bs_scan_diag_result2.append(tbs_resul2)
+    gc.collect()
+    # print(N_FREE_TO_BS)
+```
+
+```python
+with pgzip.open(output_prefix+f"t_bs_scan_diag_result"+output_ext,'wb', thread=8, blocksize=1*10**8) as file:
+    pickle.dump(t_bs_scan_diag_result, file) 
+with pgzip.open(output_prefix+f"t_bs_scan_diag_result2"+output_ext,'wb', thread=8, blocksize=1*10**8) as file:
+    pickle.dump(t_bs_scan_diag_result2, file) 
+```
+
+```python
+gc.collect()
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+T_MR
+```
+
+```python
+T_MR*2*v3
+```
+
+```python
+T_MR*2*v4
+```
+
+```python
+m3/(m3+m4)*v4*(2*T_MR) #v4
+```
+
+```python
+m4/(m3+m4)*v4*(2*T_MR) #v3
+```
+
+```python
+t_bs_scan_diag_result_bk = t_bs_scan_diag_result
+```
+
+```python
+t_bs_scan_diag_result_np = np.array(t_bs_scan_diag_result)
+```
+
+```python
+((nx-1)//2-middle_mask,(nx-1)//2+1+middle_mask)
+```
+
+```python
+mask = np.ones(t_bs_scan_diag_result_np.shape[1], dtype=bool)
+middle_mask = 6
+mased_bs_scan = None
+mased_bs_scan = np.copy(t_bs_scan_diag_result_np[:,1])
+# mased_bs_scan[:,(nx-1)//2-middle_mask : (nx-1)//2+1+middle_mask] = 0
+
+plt.imshow(np.flipud(mased_bs_scan)**0.001, 
+# plt.imshow(np.flipud(t_bs_scan_diag_result_np[:,0]), 
+           extent=[-xmax,xmax,T_BS_L_SCAN_TARGETS[0],T_BS_L_SCAN_TARGETS[-1]],
+           aspect=2*xmax/(T_BS_L_SCAN_TARGETS[-1]-T_BS_L_SCAN_TARGETS[0]), cmap="Greens"
+          )
+plt.colorbar()
+plt.show()
+```
+
+```python
+T_BS
+```
+
+```python
+mask
+```
+
+```python
+filtered_data
+```
+
+```python
+
+```
+
+```python
+10*dx
+```
+
+```python
+t_bs_scan_diag_result_np.shape
+```
+
+```python
+output_prefix
+```
+
+```python
+psixeqList = []
+psiyeqList = []
+for (ind, tbs) in enumerate(T_BS_L_SCAN_TARGETS):
+    midCut = t_bs_scan_diag_result2[ind]
+    psixeq = np.trapz(midCut[0], xlin, axis=0)
+    psiyeq = np.trapz(midCut[0], zlin, axis=1)
+    psixeqList.append(psixeq)
+    psiyeqList.append(psiyeq)
+psixeqList = np.array(psixeqList)
+psiyeqList = np.array(psiyeqList)
+```
+
+<!-- #raw -->
+plt.imshow(np.flipud(midCut[0].T))
+<!-- #endraw -->
+
+<!-- #raw -->
+plt.plot(psixeq)
+<!-- #endraw -->
+
+<!-- #raw -->
+plt.plot(psixeqList[0,:])
+<!-- #endraw -->
+
+```python
+plt.figure(figsize=(10,10))
+plt.subplot(1,2,1)
+plt.imshow(np.flipud(psixeqList)**0.001,
+           extent=[-xmax,xmax, T_BS_L_SCAN_TARGETS[0], T_BS_L_SCAN_TARGETS[-1]],
+           aspect= 4*xmax/(T_BS_L_SCAN_TARGETS[-1]-T_BS_L_SCAN_TARGETS[0])
+          )
+plt.xlabel("$x_4$")
+plt.yticks(np.linspace(T_BS_L_SCAN_TARGETS[0],T_BS_L_SCAN_TARGETS[-1], 31))
+plt.subplot(1,2,2)
+plt.imshow(np.flipud(psiyeqList)**0.001,
+           extent=[-xmax,xmax, T_BS_L_SCAN_TARGETS[0], T_BS_L_SCAN_TARGETS[-1]],
+           aspect= 4*xmax/(T_BS_L_SCAN_TARGETS[-1]-T_BS_L_SCAN_TARGETS[0])
+          )
+plt.xlabel("$x_3$")
+plt.show()
+```
+
+```python
+1.1*v4scat
+```
+
+```python
+1.1*v3scat
+```
+
+```python
+
+```
+
+##### Actual BS Pulses
+
+```python
+# may 22, oh fuck it, I'm just going to run with whatever
+```
+
+```python
+del psi2, phi2
+```
+
+```python
+(t,psi,phi) = evolve_free_part(t,psi,swnf,N_FREE_TO_BS)
+```
+
+```python
+### THIS CELL IS COPIED CODE FROM INITIAL SCATTERING!!!!! 
+# print_every = 10 # every us 
+# frames_count = ceil(NLongestBSPulse/print_every) # until T_a34off
+frames_count = ceil((T_BS_R + 11*dt - t)/dt/print_every)
+export_every = 30
+total_steps = print_every * frames_count
+t_end_target = frames_count*print_every*dt
+evolve_loop_time_estimate = total_steps*evolve_loop_time_delta*1.1
+l.info(f"""t={t},
+print_every = {print_every}, \tframes_count = {frames_count}, total_steps = {total_steps}
+Target simulation end time = {t_end_target} ms
+Estimated script runtime = {evolve_loop_time_estimate} which is {datetime.now()+evolve_loop_time_estimate}""")
+```
+
+```python
+for combSetH in comboSettSet:
+    print(combSetH)
+    for tCombo in combSetH:
+        (vv3, tt3), (vv4, tt4) = tCombo 
+        # print(((vv3, tt3), (vv4, tt4)))
+        # print(((round(vv3), round(tt3,6)), (round(vv4), round(tt4,6))))
+        # print(((round(vv3/VR/0.02), round(tt3,6)), (round(vv4/VR/0.015), round(tt4,6))))
+        # print(f"{round(vv3/VR/0.02)}π/4, {round(vv4/VR/0.015)}π/4")
+        print(f"{round(vv3/VR/0.02)}-{round(vv4/VR/0.015)}")
+```
+
+```python
+for combSetH in comboSettSet:
+    l.info(combSetH)
+    for tCombo in combSetH:
+        (vv3, tt3), (vv4, tt4) = tCombo 
+        # print(((vv3, tt3), (vv4, tt4)))
+        # settingStr = ((round(vv3), round(tt3,6)), (round(vv4), round(tt4,6)))
+        settingStr = f"{round(vv3/VR/0.02)}-{round(vv4/VR/0.015)}"
+        # l.info(settingStr)
+        l.info(f"{round(vv3/VR/0.02)}π/4, {round(vv4/VR/0.015)}π/4, \t {settingStr}")
+        thispklfile = output_prefix+f"psi at t={round(t,6)} s={settingStr}"+output_ext
+        if os.path.exists(thispklfile): 
+            l.info(f"Skipping due to already have file: {thispklfile}")
+            continue
+
+        t=0.6347
+        data_folder = "20240521-231755-TFF"
+        with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)}.pgz.pkl'
+                        , 'rb', thread=8) as file:
+            psi = pickle.load(file)
+        phi, swnf = phiAndSWNF(psi, nthreads=7)
+        gc.collect()
+        (t,psi,phi) = evolve_free_part(t,psi,swnf,N_FREE_TO_BS)
+        
+        ### THIS CELL IS COPIED CODE FROM INITIAL SCATTERING!!!!! 
+        ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
+        
+        evolve_many_loops_start = datetime.now()
+        frameAcc = 0 
+        with ProgressBar(total=total_steps) as progressbar:
+            for f in range(frames_count):
+                evolve_many_loops_inner_now = datetime.now()
+                tP = evolve_many_loops_inner_now - evolve_many_loops_start
+                # if frameAcc > 0: 
+                #     tR = (frames_count-frameAcc)* tP/frameAcc
+                #     tE = datetime.now() + tR
+                #     l.info(f"Now f={frameAcc}, t={round(t,6)}, tP={tP}, tR={tR}, tE = {tE}")
+                # scattering_evolve_loop_plot(t,f,psi,phi, plt_show=False, plt_save=True)
+                # scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
+                gc.collect()
+                (t,psi,phi) = scattering_evolve_bragg_loop_helper2(t,psi,swnf,
+                                  steps=print_every,progress_proxy=progressbar,s34=evolve_s34,
+                                  t3mid=T_BS, t3wid=tt3, v3pot=vv3, #### THESE CHANGED, EVERYTHING ELSE COPIED
+                                  t4mid=T_BS, t4wid=tt4, v4pot=vv4  ####                  
+                                  )
+                frameAcc += 1
+                # if frameAcc % export_every == 0:
+                #     with pgzip.open(output_prefix+f"psi at t={round(t,6)}"+output_ext,
+                #         'wb', thread=8, blocksize=1*10**8) as file:
+                #         pickle.dump(psi, file) 
+                        
+        f += 1
+        # scattering_evolve_loop_plot(t,f+1,psi,phi, plt_show=False, plt_save=True)
+        # scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
+        with pgzip.open(thispklfile,
+                        'wb', thread=8, blocksize=1*10**8) as file:
+            pickle.dump(psi, file) 
+        gc.collect()
+```
+
+```python
+settingStr = f"{round(vv3/VR/0.02)}-{round(vv4/VR/0.015)}"
+thispklfile = output_prefix+f"psi at t={round(t,6)} s={settingStr}"+output_ext
+os.path.exists(thispklfile)
+```
+
+```python
+os.path.exists(output_prefix+f"psi at t={round(0.6347,6)}"+output_ext)
 ```
 
 ```python
@@ -2038,12 +2595,18 @@ def plot_g34(phiHere, cutPlot=1.5, saveFig=True):
 # t=0.2657
 # t=0.2957
 # t=0.3257
-t=0.3347
-with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/20240512-232723-TFF/psi at t={round(t,5)}.pgz.pkl'
+# t=0.3347
+# t=0.5657
+# t=0.5857
+# t=0.6057
+# t=0.6257
+t=0.6347
+data_folder = "20240521-231755-TFF"
+with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)}.pgz.pkl'
                 , 'rb', thread=8) as file:
     psi = pickle.load(file)
 phi, swnf = phiAndSWNF(psi, nthreads=7)
-plot_g34(phi, cutPlot=1.5, saveFig=False)
+plot_g34(phi, cutPlot=1.5, saveFig=True)
 ```
 
 ```python
@@ -2242,9 +2805,7 @@ scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=True, plt_save=False, logP
 
 ```
 
-<!-- #region jp-MarkdownHeadingCollapsed=true -->
 # Exporting to Video (Quite high VM RAM usage)
-<!-- #endregion -->
 
 ```python
 assert False, "just to catch run all"
@@ -2261,6 +2822,7 @@ def extract_frame_number(filename):
     return None
 img_alt_list = glob.glob(output_pre_selp+'*.png')
 # img_alt_list = glob.glob(output_pre_selpa+'*.png')
+# img_alt_list = glob.glob(output_prefix+'BS_L free time scan ok 3/*.png')
 img_alt_list.sort(key=extract_frame_number)
 ```
 
@@ -2297,6 +2859,7 @@ if img_alt_frames:  # Determine the width and height from the first image if not
     out = cv2.VideoWriter(
         output_prefix+"scattering_evolve_loop_plot.mov", 
         # output_prefix+"scattering_evolve_loop_plot_alt.mov", 
+        # output_prefix+"BS_L free time scan ok 3.mov",
         fourcc, 10.0, (width, height), True) # Write img_alt_frames to the video file
     for frame in tqdm(img_alt_frames, desc="Writing Video"):
         out.write(frame)  # Write out frame to video
