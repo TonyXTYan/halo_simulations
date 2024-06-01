@@ -1928,6 +1928,7 @@ plt.show()
 <!-- #endraw -->
 
 ```python
+gridX3, gridX4 = np.meshgrid(xlin,xlin)
 @jit(forceobj=True, cache=True)
 def plot_bs_l_free_time(psiH, tt, midCutZ=[1,5], pltShow=True, pltSave=True):
     # midCutZ = 5
@@ -2244,18 +2245,31 @@ for combSetH in comboSettSet:
 ```
 
 ```python
-for combSetH in comboSettSet:
-    l.info(combSetH)
+thispklfile
+```
+
+```python
+os.path.exists(thispklfile)
+```
+
+```python
+gc.collect()
+```
+
+```python
+for cind, combSetH in enumerate(comboSettSet):
+    l.info(f"Combo Set ind = {cind}")
     for tCombo in combSetH:
+        t=1.2052
         (vv3, tt3), (vv4, tt4) = tCombo 
         # print(((vv3, tt3), (vv4, tt4)))
         # settingStr = ((round(vv3), round(tt3,6)), (round(vv4), round(tt4,6)))
         settingStr = f"{round(vv3/VR/0.02)}-{round(vv4/VR/0.015)}"
         # l.info(settingStr)
-        l.info(f"{round(vv3/VR/0.02)}π/4, {round(vv4/VR/0.015)}π/4, \t {settingStr}")
+        l.info(f"  Setting: {round(vv3/VR/0.02)}π/4, {round(vv4/VR/0.015)}π/4, \t ShortForm {settingStr}")
         thispklfile = output_prefix+f"psi at t={round(t,6)} s={settingStr}"+output_ext
         if os.path.exists(thispklfile): 
-            l.info(f"Skipping due to already have file: {thispklfile}")
+            l.info(f"    Skipped: {thispklfile}")
             continue
 
         t=0.6347
@@ -2522,7 +2536,9 @@ assert False, "just to catch run all"
 ```
 
 ```python
-def plot_g34(phiHere, cutPlot=1.5, saveFig=True):
+def plot_g34(phiHere, cutPlot=1.5, saveFig=True, 
+             title2="", title2filestr="NA",
+             skipPlot=False):
     gx3px4p = gp3p4_dhalo_calc(phiHere,cut=cutPlot,offset3=+p,offset4=+p)
     gx3px4m = gp3p4_dhalo_calc(phiHere,cut=cutPlot,offset3=+p,offset4=-p)
     gx3mx4p = gp3p4_dhalo_calc(phiHere,cut=cutPlot,offset3=-p,offset4=+p)
@@ -2533,7 +2549,15 @@ def plot_g34(phiHere, cutPlot=1.5, saveFig=True):
     gx3x4combined[:nx, nx:] = gx3px4m[0]
     gx3x4combined[nx:, :nx] = gx3mx4p[0]
     gx3x4combined[nx:, nx:] = gx3mx4m[0]
+
+    gx3x4combined2 = np.zeros((2*2,2*2))
+    gx3x4combined2[:2, :2] = [[gx3px4p[1][3],gx3px4p[1][2]],[gx3px4p[1][1],gx3px4p[1][0]]]
+    gx3x4combined2[:2, 2:] = [[gx3px4m[1][3],gx3px4m[1][2]],[gx3px4m[1][1],gx3px4m[1][0]]]
+    gx3x4combined2[2:, :2] = [[gx3mx4p[1][3],gx3mx4p[1][2]],[gx3mx4p[1][1],gx3mx4p[1][0]]]
+    gx3x4combined2[2:, 2:] = [[gx3mx4m[1][3],gx3mx4m[1][2]],[gx3mx4m[1][1],gx3mx4m[1][0]]]
+    gx3x4n = gx3x4combined2/sum(sum(gx3x4combined2))
     
+    # if not skipPlot: 
     ticks = np.linspace(0, 2*nx, 17)
     ticksL = np.linspace(0, 2*nx, 9)
     tick_labels = ["","+3","+2","+1","0","-1","-2","-3","","+3","+2","+1","0","-1","-2","-3",""]
@@ -2559,19 +2583,13 @@ def plot_g34(phiHere, cutPlot=1.5, saveFig=True):
     ax3.set_yticks(ticks, tick_labels)
     plt.title(f"t = {t}")
     
-    l.info(f"""gx3px4p[1] = {gx3px4p[1]}
-    gx3px4m[1] = {gx3px4m[1]}
-    gx3mx4p[1] = {gx3mx4p[1]}
-    gx3mx4m[1] = {gx3mx4m[1]}""")
+    # l.info(f"""gx3px4p[1] = {gx3px4p[1]}
+    # gx3px4m[1] = {gx3px4m[1]}
+    # gx3mx4p[1] = {gx3mx4p[1]}
+    # gx3mx4m[1] = {gx3mx4m[1]}""")
     
-    gx3x4combined = np.zeros((2*2,2*2))
-    gx3x4combined[:2, :2] = [[gx3px4p[1][3],gx3px4p[1][2]],[gx3px4p[1][1],gx3px4p[1][0]]]
-    gx3x4combined[:2, 2:] = [[gx3px4m[1][3],gx3px4m[1][2]],[gx3px4m[1][1],gx3px4m[1][0]]]
-    gx3x4combined[2:, :2] = [[gx3mx4p[1][3],gx3mx4p[1][2]],[gx3mx4p[1][1],gx3mx4p[1][0]]]
-    gx3x4combined[2:, 2:] = [[gx3mx4m[1][3],gx3mx4m[1][2]],[gx3mx4m[1][1],gx3mx4m[1][0]]]
-    gx3x4n = gx3x4combined/sum(sum(gx3x4combined))
     ax = plt.subplot(1,2,2)
-    im = ax.imshow(np.flipud(gx3x4combined.T),cmap='Greens')
+    im = ax.imshow(np.flipud(gx3x4combined2.T),cmap='Greens')
     ticks=np.arange(0,4,1)
     ax.set_yticks(ticks, ["A↗︎","A↖︎","A↘︎","A↙︎"])
     ax.set_xticks(ticks, ["B↙︎","B↘︎","B↖︎","B↗"])
@@ -2582,15 +2600,19 @@ def plot_g34(phiHere, cutPlot=1.5, saveFig=True):
     for i in range(gx3x4n.shape[0]):
         for j in range(gx3x4n.shape[1]):
             plt.text(j, i, str(round(np.flipud(gx3x4n.T)[i, j],4)), ha='center', va='center', color='dodgerblue')
-    plt.title(f"cut = {cutPlot}")
-    title = f"CorrE t={round(t,5)}, cut = {cutPlot}"
+    plt.title(f"{title2}\ncut = {cutPlot}")
+    title = f"CorrE t={round(t,5)}, cut = {cutPlot}, s={title2filestr}"
     if saveFig:
         plt.savefig(output_prefix+title+".pdf", dpi=600)
         plt.savefig(output_prefix+title+".png", dpi=600)
-    plt.show()
+    if skipPlot:
+        plt.close()
+    else:
+        plt.show()
+    return (gx3px4p, gx3px4m, gx3mx4p, gx3mx4m, gx3x4n)
 ```
 
-```python
+<!-- #raw -->
 # t=0.15
 # t=0.2657
 # t=0.2957
@@ -2600,17 +2622,157 @@ def plot_g34(phiHere, cutPlot=1.5, saveFig=True):
 # t=0.5857
 # t=0.6057
 # t=0.6257
-t=0.6347
-data_folder = "20240521-231755-TFF"
-with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)}.pgz.pkl'
+t=1.2052
+# data_folder = "20240521-231755-TFF"
+data_folder="20240528-224811-TFF"
+(vv3, tt3), (vv4, tt4) = comboSettSet[0][0] 
+settingStr = f"{round(vv3/VR/0.02)}-{round(vv4/VR/0.015)}"
+l.info(f"Loading t={round(t,5)}  s={settingStr}")
+with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)} s={settingStr}.pgz.pkl'
                 , 'rb', thread=8) as file:
     psi = pickle.load(file)
 phi, swnf = phiAndSWNF(psi, nthreads=7)
-plot_g34(phi, cutPlot=1.5, saveFig=True)
+plot_g34(phi, cutPlot=1.5, saveFig=False, 
+         title2=f"$\phi_3$={round(vv3/VR/0.02)}π/4, $\phi_4=${round(vv4/VR/0.02)}π/4",
+         title2filestr=settingStr
+        )
+<!-- #endraw -->
+
+```python
+# assert False, "just to catch run all"
+
+```
+
+```python
+t=1.2052
+outputOfSett = {}
+data_folder = "20240528-224811-TFF"
+for combSetH in comboSettSet:
+    for tCombo in combSetH:
+        (vv3, tt3), (vv4, tt4) = tCombo
+        settingStr = f"{round(vv3/VR/0.02)}-{round(vv4/VR/0.015)}"
+        l.info(f"Loading t={round(t,5)}  s={settingStr}")
+        with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)} s={settingStr}.pgz.pkl'
+                        , 'rb', thread=8) as file:
+            psi = pickle.load(file)
+        phi, swnf = phiAndSWNF(psi, nthreads=7)
+        # (gx3px4p, gx3px4m, gx3mx4p, gx3mx4m, gx3x4n) 
+        tempPlotOutput = plot_g34(
+            phi, cutPlot=1.5, saveFig=True, 
+            title2=f"$\phi_3$={round(vv3/VR/0.02)}π/4, $\phi_4=${round(vv4/VR/0.015)}π/4",
+            title2filestr=settingStr, skipPlot=True
+            )
+        outputOfSett[settingStr] = tempPlotOutput
+        gc.collect()
+```
+
+```python
+outputOfSett["0-1"][4]
+```
+
+```python
+outputOfSett["0-1"][4].T
+```
+
+```python
+np.flipud(outputOfSett["0-1"][4].T)
 ```
 
 ```python
 phi.shape
+```
+
+```python
+gx3px4p
+```
+
+```python
+def corrE(g):
+    return (g[0,2]+g[2,0]-g[0,0]-g[2,2])/(g[0,2]+g[2,0]+g[0,0]+g[2,2])
+```
+
+```python
+corrE(np.flipud(outputOfSett["0-1"][4].T))
+```
+
+```python
+1/sqrt(2)
+```
+
+```python
+corrE(np.flipud(outputOfSett["0-1"][4].T))\
++corrE(np.flipud(outputOfSett["6-3"][4].T))\
++corrE(np.flipud(outputOfSett["6-1"][4].T))\
+-corrE(np.flipud(outputOfSett["0-3"][4].T))
+```
+
+```python
+corrE(np.flipud(outputOfSett["3-6"][4].T))\
++corrE(np.flipud(outputOfSett["1-0"][4].T))\
++corrE(np.flipud(outputOfSett["1-6"][4].T))\
+-corrE(np.flipud(outputOfSett["3-0"][4].T))
+```
+
+```python
+corrE(np.flipud(outputOfSett["5-4"][4].T))\
++corrE(np.flipud(outputOfSett["3-6"][4].T))\
++corrE(np.flipud(outputOfSett["3-4"][4].T))\
+-corrE(np.flipud(outputOfSett["5-6"][4].T))
+```
+
+```python
+corrE(np.flipud(outputOfSett["6-3"][4].T))\
++corrE(np.flipud(outputOfSett["4-5"][4].T))\
++corrE(np.flipud(outputOfSett["4-3"][4].T))\
+-corrE(np.flipud(outputOfSett["6-5"][4].T))
+```
+
+```python
+2*sqrt(2)
+```
+
+```python
+corrE(np.flipud(outputOfSett["6-1"][4].T))
+```
+
+```python
+corrE(np.flipud(outputOfSett["6-3"][4].T))
+```
+
+```python
+corrE(np.flipud(outputOfSett["0-3"][4].T))
+```
+
+```python
+np.flipud(outputOfSett["0-3"][4].T)
+```
+
+```python
+
+```
+
+```python
+outputOfSett["0-1"][4][0,1]
+```
+
+```python
+np.flipud(outputOfSett["0-1"][4].T)[0,2]
+```
+
+```python
+np.flipud(outputOfSett["0-1"][4].T)[2,0]
+```
+
+```python
+np.flipud(outputOfSett["0-1"][4].T)[0,0]
+```
+
+```python
+np.flipud(outputOfSett["0-1"][4].T)[2,2]
+```
+
+```python
+0.2+0.2-0.03-0.03
 ```
 
 ```python
