@@ -8,9 +8,9 @@ jupyter:
       format_version: '1.3'
       jupytext_version: 1.16.1
   kernelspec:
-    display_name: Python 3 (ipykernel)
+    display_name: py311
     language: python
-    name: python3
+    name: py311
 ---
 
 # Two Particles
@@ -1566,9 +1566,8 @@ l.info(f"Time to run one evolve_loop_time_start is {evolve_loop_time_delta} (Run
 
 
 
-<!-- #region jp-MarkdownHeadingCollapsed=true -->
+
 ### Some Dev testing (usually don't run this)
-<!-- #endregion -->
 
 <!-- #raw -->
 assert False, "just to catch run all"
