@@ -142,9 +142,9 @@ N_JOBS = {N_JOBS}""")
 ```
 
 ```python
-nx = 2000+1
-nz = 2000+1
-xmax = 100 #Micrometers
+nx = 3000+1
+nz = 3000+1
+xmax = 50 #Micrometers
 # zmax = (nz/nx)*xmax
 zmax = xmax
 dt = 1e-4 # Milliseconds
