@@ -286,7 +286,7 @@ dpz = {dpz} """)
 ###  These frequencies are in Hz, 
 #### This simulation uses time in ms, 1Hz = 0.001 /ms
 a4 = 0.007512 # scattering length µm
-intensity1 = 0.1 # mW/mm^2 of beam 1
+intensity1 = 1 # mW/mm^2 of beam 1
 intensity2 = intensity1
 intenSat = 0.0017 # mW/mm^2
 linewidth = 2*pi*1.6e6 # rad * Hz
@@ -1190,6 +1190,29 @@ for (ti, tt) in tqdm(enumerate(tPiTest), total=len(tPiTest)):
     momAngResults = np.array(momAngResults)
     momAngPiScan[ti] = momAngResults
 
+```
+
+```python
+plt.plot(momAngList*180/pi, momAngPiScan[81,:,0])
+plt.plot(momAngList*180/pi, momAngPiScan[81,:,3])
+plt.xlabel("deg")
+plt.ylabel("P")
+plt.show()
+```
+
+```python
+plt.plot(tPiTest*1000,momAngPiScan[:,90,0], label="UR at 90", color='b', linestyle='-', alpha=0.7)
+plt.plot(tPiTest*1000,momAngPiScan[:,90,3], label="DR at 90", color='r', linestyle='-', alpha=0.7)
+plt.plot(tPiTest*1000,momAngPiScan[:,75,0], label="UR at 75", color='b', linestyle='--', alpha=0.7)
+plt.plot(tPiTest*1000,momAngPiScan[:,75,3], label="DR at 75", color='r', linestyle='--', alpha=0.7)
+plt.xlabel("$\mu s$")
+plt.ylabel("$P$")
+plt.legend(loc=7)
+plt.show()
+```
+
+```python
+momAngList[90]*180/pi
 ```
 
 ```python
