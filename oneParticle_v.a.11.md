@@ -8,9 +8,9 @@ jupyter:
       format_version: '1.3'
       jupytext_version: 1.16.1
   kernelspec:
-    display_name: py311
+    display_name: Python 3 (ipykernel)
     language: python
-    name: py311
+    name: python3
 ---
 
 <!-- #region editable=true slideshow={"slide_type": ""} -->
@@ -32,6 +32,7 @@ from scipy.stats import chi2
 import scipy
 from matplotlib import gridspec
 import matplotlib
+from matplotlib.colors import ListedColormap
 import pandas as pd
 import sys
 import statsmodels.api as sm
@@ -59,6 +60,12 @@ plt.rcParams["figure.figsize"] = (8, 5)
 plt.rcParams["font.family"] = "serif" 
 plt.rcParams["mathtext.fontset"] = "dejavuserif" 
 plt.close("all") # close all existing matplotlib plots
+```
+
+```python
+# from numba import njit, jit, prange, objmode, vectorize
+# import numba
+# numba.set_num_threads(8)
 ```
 
 ```python
@@ -217,7 +224,8 @@ v3 = 2*hb*k/m3
 # sanity check
 # assert (pxmax > p*2.5 or pzmax > p*2.5), "momentum resolution too small"
 # dopd = 60.1025 # 1/ms Doppler detuning (?)
-dopd = v3**2 * m3 / hb
+# dopd = v3**2 * m3 / hb
+dopd = v4**2 / m4 / hb
 ```
 
 ```python
@@ -300,10 +308,6 @@ tBraggEnd = tBraggPi * 10
 V0F = 50*1000
 ```
 
-```python
-
-```
-
 ```python editable=true slideshow={"slide_type": ""}
 l.info(f"""a4 = {a4} µm
 intensity1 = {intensity1}  # mW/mm^2 of beam 1
@@ -318,9 +322,9 @@ omega = {omega}
 VR = {VR}
 V0 = {V0}
 V0F = {V0F}
-tBraggPi = {tBraggPi}
-tBraggCenter = {tBraggCenter}
-tBraggEnd = {tBraggEnd}
+tBraggPi = {tBraggPi} ms
+tBraggCenter = {tBraggCenter} ms
+tBraggEnd = {tBraggEnd} ms
 """)
 ```
 
@@ -354,6 +358,7 @@ l.info(f"max(V) {1j*(dt/hb)*V(tBraggCenter)}")
 ```
 
 ```python
+# @njit(cache=True)
 def VS(ttt, mid, wid, V0=VR):
     return V0 * 0.5 * (1 + np.cos(2*np.pi/wid*(ttt-mid))) * \
             (-0.5*wid+mid<ttt) * (ttt<0.5*wid+mid)
@@ -363,6 +368,7 @@ def VS(ttt, mid, wid, V0=VR):
 tbtest = np.arange(tBraggCenter-5*tBraggPi,tBraggCenter+5*tBraggPi,dt)
 plt.plot(tbtest, VBF(tbtest,tBraggPi*5,tBraggPi))
 plt.plot(tbtest, VS(tbtest,tBraggPi/2,tBraggPi,0.3*V0F))
+plt.plot(tbtest, VS(tbtest,tBraggPi/2+0.4,tBraggPi,0.3*VR))
 plt.show()
 l.info(f"max(V) {1j*(dt/hb)*VBF(tBraggCenter,tBraggPi*5,tBraggPi)}")
 ```
@@ -417,7 +423,9 @@ plt.subplot(2,2,3)
 plt.plot(cosGrid[0,:],alpha=0.9,linewidth=0.1)
 
 plt.subplot(2,2,4)
-plt.plot(cosGrid[0,:ncrop],alpha=0.9,linewidth=0.5)
+plt.plot(xlin[:ncrop],cosGrid[0,:ncrop],alpha=0.9,linewidth=0.5)
+plt.plot(xlin[:ncrop],cosGrid[0,1:ncrop+1],alpha=0.9,linewidth=0.5)
+plt.plot(xlin[:ncrop],cosGrid[0,10:ncrop+10],alpha=0.9,linewidth=0.5)
 
 title="bragg_potential_grid"
 # plt.savefig("output/"+title+".pdf", dpi=600)
@@ -427,7 +435,7 @@ plt.show()
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
-
+dopd*dt/dx
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
@@ -574,9 +582,9 @@ def psi0ringUnNormOffset(x,z,pr=p,mur=10,sg=sg,xo=0,zo=0,pxo=0,pzo=0):
             * np.exp(+(1j/hb) * (((x-xo)**2 + (z-zo)**2)**0.5 * pr + x*pxo+z*pzo))
 def psi0ringNpOffset(mur=1,sg=1,pr=p,xo=0,zo=0,pxo=0,pzo=0):
     psi = np.zeros((nx,nz),dtype=np.complex128)
-    for ix in range(1,nx-1):
+    for ix in range(0,nx):
         x = xlin[ix]
-        psi[ix][1:-1] = psi0ringUnNormOffset(x,zlin[1:-1],pr,mur,sg,xo,zo,pxo,pzo)
+        psi[ix,:] = psi0ringUnNormOffset(x,zlin,pr,mur,sg,xo,zo,pxo,pzo)
     norm = np.sum(np.abs(psi)**2)*dx*dz
     psi *= 1/sqrt(norm)
     return psi
@@ -596,6 +604,7 @@ def psi0ringNpOffset(mur=1,sg=1,pr=p,xo=0,zo=0,pxo=0,pzo=0):
 # psi = psi0np(1,1,p,p)
 # psi = psi0np(1,1,0,0)
 
+# @jit(cache=True, forceobj=True)
 def phiAndSWNF(psi):
     phiUN = np.fliplr(np.fft.fftshift(pyfftw.interfaces.numpy_fft.fft2(psi,threads=nthreads,norm='ortho')))
     # superWeirdNormalisationFactorSq = np.trapz(np.trapz(np.abs(phiUN)**2, pxlin, axis=0), pzlin)
@@ -609,7 +618,7 @@ def phiAndSWNF(psi):
 # psi = psi0np(2,2,0.5*p*np.cos(0),0.5*p*np.sin(0))
 # psi = psi0np(mux=3,muz=3,p0x=0,p0z=0)
 # psi = psi0ringNpOffset(5,3,p,0,5,0,p)
-psi = psi0ringNpOffset(30,3,p,0,30,0,p)
+psi = psi0ringNpOffset(10,3,p,0,20,0,p)
 (swnf, phi) = phiAndSWNF(psi)
 
 t = 0
@@ -623,7 +632,7 @@ title="init_ring_psi"
 # plt.savefig("output/"+title+".png", dpi=600)
 plt.show()
 
-plot_mom(psi,4,4,False)
+plot_mom(psi,20,20,False)
 title="init_ring_phi"
 # plt.savefig("output/"+title+".pdf", dpi=600)
 # plt.savefig("output/"+title+".png", dpi=600)
@@ -636,7 +645,11 @@ plt.show()
 ```
 
 ```python
-5/v3
+5/v4
+```
+
+```python
+v4*0.2
 ```
 
 ```python
@@ -644,8 +657,10 @@ plt.show()
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
+# @jit(cache=True, forceobj=True)
 def toMomentum(psi, swnf):
     return np.fliplr(np.fft.fftshift(pyfftw.interfaces.numpy_fft.fft2(psi,threads=nthreads,norm='ortho')))/swnf
+# @jit(cache=True, forceobj=True)
 def toPosition(phi, swnf):
     return pyfftw.interfaces.numpy_fft.ifft2(np.fft.ifftshift(np.fliplr(phi*swnf)),threads=nthreads,norm='ortho')
 ```
@@ -658,6 +673,7 @@ def plotNow(t, psi):
         plot_psi(psi)
         plot_mom(psi)
 
+# @jit(forceobj=True, cache=True)
 def numericalEvolve(
         t_init, 
         psi_init, 
@@ -715,7 +731,54 @@ def numericalEvolve(
 ```
 
 ```python
-_ = numericalEvolve(0, psi0np(1,1,0,0), dt, final_plot=False, progress_bar=False)
+%timeit _ = numericalEvolve(0, psi0np(1,1,0,0), dt, final_plot=False, progress_bar=False)
+```
+
+<!-- #raw -->
+# @njit
+# @jit(cache=True, forceobj=True)
+def numericalEvolveNumba(
+        t_init = 0, 
+        psi_init = np.array([]), 
+        t_final =0, 
+        tauPi  = tBraggPi, 
+        tauMid = tBraggPi*5, 
+        phase  = 0,
+        doppd=dopd,
+        print_every_t=-1, 
+        final_plot=True,
+        progress_bar=True, 
+        V0FArg=V0F,
+        kkx=kx,
+        kkz=kz
+    ):
+    assert (print_every_t > dt or print_every_t <= 0), "print_every_t cannot be smaller than dt"
+    steps = ceil((t_final - t_init) / dt) 
+    t = t_init
+    psi = psi_init.copy()
+    (swnf, phi) = phiAndSWNF(psi)
+    
+    for step in range(steps):
+        # cosGrid = np.cos(2*kkx*xlin[:,np.newaxis] + 2*kkz*zlin + doppd*(t-tauMid) + phase)
+        VxExpGrid = np.exp(-(1j/hb) * 0.5*dt * VS(t,tauMid,tauPi,V0FArg) * 
+                           np.cos(2*kkx*xlin[:,np.newaxis] + 2*kkz*zlin + doppd*(t-tauMid) + phase))
+        # VxExpGrid = np.exp(-(1j/hb) * 0.5*dt * V0FArg * 
+        #                    np.cos(2*kkx*xlin[:,np.newaxis] + 2*kkz*zlin + doppd*(t-tauMid) + phase))
+        psi *= VxExpGrid
+        phi = toMomentum(psi,swnf)
+        phi *= expPGrid
+        psi = toPosition(phi,swnf)
+        psi *= VxExpGrid
+    
+    return (t,psi,phi)
+<!-- #endraw -->
+
+<!-- #raw -->
+%timeit _ = numericalEvolveNumba(0, psi0np(1,1,0,0), dt, final_plot=False, progress_bar=False)
+<!-- #endraw -->
+
+```python
+
 ```
 
 ```python
@@ -756,6 +819,10 @@ _ = freeEvolve(0,psi0np(1,1,0,0),0.1,final_plot=False,logging=True)
 
 ```
 
+```python
+
+```
+
 ## Pulse Scan Test Run
 
 ```python
@@ -766,7 +833,9 @@ _ = numericalEvolve(0, psi0np(3,3,0.5*p,0), 2*dt,progress_bar=False,final_plot=F
 ```python editable=true slideshow={"slide_type": ""}
 def scanTauPiInnerEval(tPi, 
                        logging=True, progress_bar=True, 
-                       ang=0, pmom=p, doppd=dopd, V0FArg=V0F, kkx=kx, kkz=kz):
+                       ang=0, pmom=p, doppd=dopd, V0FArg=V0F, kkx=kx, kkz=kz,
+                       halo_xr=10
+                      ):
     tauPi  = tPi
     tauMid = tauPi / 2 
     tauEnd = tauPi 
@@ -776,7 +845,8 @@ def scanTauPiInnerEval(tPi,
     # output = numericalEvolve(0, psi0np(2,2,pmom*np.cos(ang),pmom*np.sin(ang)), 
     output = numericalEvolve(0, 
                              # psi0np(mux=3,muz=3,p0x=0,p0z=0),
-                             psi0ringNpOffset(5,3,pmom,0,5,0,pmom), 
+                             # psi0ringNpOffset(5,3,pmom,0,5,0,pmom), 
+                             psi0ringNpOffset(halo_xr,3,pmom,0,halo_xr,0,pmom), 
                              tauEnd, tauPi, tauMid, doppd=doppd, 
                              final_plot=logging,progress_bar=progress_bar,
                              V0FArg=V0FArg,kkx=kkx,kkz=kkz
@@ -786,19 +856,30 @@ def scanTauPiInnerEval(tPi,
 ```
 
 ```python
-tPDelta = 5*dt  # positive +, note I want tPiTest in decending order 
+tPiScanTime1usStart = datetime.now()
+_ = scanTauPiInnerEval(0.001, False, True,0,p,0*dopd,VR)
+tPiScanTime1usEnd = datetime.now()
+tPiScanTime1usDelta = tPiScanTime1usEnd - tPiScanTime1usStart
+l.info(f"""Time to simulate 1us: {tPiScanTime1usDelta}""")
+```
+
+```python
+tPDelta = 10*dt  # positive +, note I want tPiTest in decending order 
 # tPiTest = np.append(np.arange(0.5,0.1,-tPDelta), 0) # note this is decending
-tPiTest = np.arange(0.20,0.001-tPDelta,-tPDelta)
+tPiTest = np.arange(0.02,0.001-tPDelta,-tPDelta)
     # tPiTest = np.arange(dt,3*dt,dt)
 l.info(f"#tPiTest = {len(tPiTest)}, max={tPiTest[0]*1000}, min={tPiTest[-1]*1000} us")
 l.info(f"tPiTest: {tPiTest}")
 
+
 plt.figure(figsize=(12,5))
 def plot_inner_helper():
+    tPiScanTotalSimMS = 0
     for (i, tauPi) in enumerate(tPiTest):
         if tauPi == 0: continue
         tauMid = tauPi / 2 
         tauEnd = tauPi * 1
+        tPiScanTotalSimMS += tauEnd
         tlinspace = np.arange(0,tauEnd,dt)
         # plt.plot(tlinspace, VBF(tlinspace, tauMid, tauPi),
         #          linewidth=0.5,alpha=0.9
@@ -806,8 +887,10 @@ def plot_inner_helper():
         plt.plot(tlinspace, VS(tlinspace, tauMid, tauPi),
                  linewidth=0.5,alpha=0.9
             )
+    return tPiScanTotalSimMS
+
 plt.subplot(2,1,1)
-plot_inner_helper()
+tPiScanTotalSimMS = plot_inner_helper()
 plt.ylabel("$V(t)$")
 
 plt.subplot(2,1,2)
@@ -821,11 +904,11 @@ title="bragg_strength_V0"
 # plt.savefig("output/"+title+".pdf", dpi=600)
 # plt.savefig("output/"+title+".png", dpi=600)
 
-plt.show()
+
 ```
 
 ```python
-
+(tPiScanTime1msDelta*tPiScanTotalSimMS*1000).total_seconds()/3600
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
@@ -840,21 +923,29 @@ l.info(f"""Time to run one scan: {tPiScanTimeDelta}""")
 ```
 
 ```python
+tPiOutput[30][0]
+```
+
+```python
 tPiOutput[30][1][0]
 ```
 
 ```python
-tPiTest[0]
+tPiTest[30]
+```
+
+```python
+tPiTest[94]
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
 # psi = tPiOutput[-30][1][1]
-psi = tPiOutput[0][1][1]
-# psi = tPiTestRun[1]
+psi = tPiOutput[90][1][1]
+# psi = tPiTestRun[1]L
 # psi = testFreeEv1[1]
 plot_psi(psi)
-# (swnf, phi) = phiAndSWNF(psi)
-plot_mom(psi,5,5)
+(swnf, phi) = phiAndSWNF(psi)
+plot_mom(psi,20,20)
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
@@ -863,10 +954,10 @@ plot_mom(psi,5,5)
 
 ```python editable=true slideshow={"slide_type": ""}
 # hbar_k_transfers = np.arange(-4,4+1,+2)
-hbar_k_transfers = np.arange(-3,3+1,+2)
+hbar_k_transfers = np.arange(-20-1,20+2,+2)
 # pzlinIndexSet = np.zeros((len(hbar_k_transfers), len(pxlin)), dtype=bool)
 pxlinIndexSet = np.zeros((len(hbar_k_transfers), len(pzlin)), dtype=bool)
-cut_p_width = 1.3*dpz/p
+cut_p_width = 5*dpz/p
 for (j, hbar_k) in enumerate(hbar_k_transfers):
     # pzlinIndexSet[j] = abs(pxlin/(hb*k) - hbar_k) <= cut_p_width
     pxlinIndexSet[j] = abs(pzlin/p + hbar_k) <= cut_p_width
@@ -877,7 +968,7 @@ np.sum(pxlinIndexSet,axis=1) = {np.sum(pxlinIndexSet,axis=1)}""")
 
 ```python editable=true slideshow={"slide_type": ""}
 plt.figure(figsize=(4,4))
-plt.imshow(pxlinIndexSet.T,interpolation='none',aspect=0.5,extent=[-2,2,-pzmax/p,pzmax/p])
+plt.imshow(pxlinIndexSet.T,interpolation='none',aspect=0.1,extent=[-2,2,-pzmax/p,pzmax/p])
 # plt.imshow(pzlinIndexSet,interpolation='none',aspect=5)
 # plt.axvline(x=1001, linewidth=1, alpha=0.7)
 
@@ -1001,26 +1092,121 @@ plt.show()
 ```
 
 ```python
-hbarkInd = 1  # Index of target state
-hbarkInA = 1  # target -2hbk for initial scattering
-hbarkInB = 3  # target +2hbk
-hbarkInI = 2  # Index of original state 
-l.info(f"""target state {hbar_k_transfers[hbarkInd]}, original state {hbar_k_transfers[hbarkInI]}
-target A {hbar_k_transfers[hbarkInA]}, target B {hbar_k_transfers[hbarkInB]} """)
+hbarkInI = next(iter(np.where(hbar_k_transfers == +1)[0]), None)  # Index of original state 
+hbarkInd = next(iter(np.where(hbar_k_transfers == -1)[0]), None)  # Index of target state
+hbarkInA = next(iter(np.where(hbar_k_transfers == -2)[0]), None)  # target -2hbk for initial scattering
+hbarkInB = next(iter(np.where(hbar_k_transfers == +2)[0]), None)  # target +2hbk
+
+l.info(f"""target state: {hbar_k_transfers[hbarkInd] if hbarkInd is not None else 'NA'}, original state: {hbar_k_transfers[hbarkInI] if hbarkInI is not None else 'NA'}
+target A: {hbar_k_transfers[hbarkInA] if hbarkInA is not None else 'NA'}, target B: {hbar_k_transfers[hbarkInB] if hbarkInB is not None else 'NA'} """)
 # currently (May 2024), by design, only one set will get used at a time. 
 ```
 
 ```python
-thetaList = np.arange(0,5,1)*pi/4
+
+```
+
+```python
+# momAngMask = np.zeros((nx,nz))
+# for (xi, px) in enumerate(pxlin):
+#     momAngMask[xi,:] = np.exp(  -((px - p*sin(mA))**2 + (-pzlin - p - p*cos(mA))**2) / (2*5*dpz)**2 )
+```
+
+```python
+def momAngMaskCombo(mA,pwid=3*dpz):
+    momAngMaskUR = np.exp(-((pxlin[:,np.newaxis] - p*sin(mA))**2 + (-pzlin[np.newaxis,:] - p - p*cos(mA))**2) / (pwid)**2)
+    momAngMaskUL = np.exp(-((pxlin[:,np.newaxis] + p*sin(mA))**2 + (-pzlin[np.newaxis,:] - p + p*cos(mA))**2) / (pwid)**2)
+    momAngMaskDR = np.exp(-((pxlin[:,np.newaxis] - p*sin(mA))**2 + (-pzlin[np.newaxis,:] + p - p*cos(mA))**2) / (pwid)**2)
+    momAngMaskDL = np.exp(-((pxlin[:,np.newaxis] + p*sin(mA))**2 + (-pzlin[np.newaxis,:] + p + p*cos(mA))**2) / (pwid)**2)
+    return (momAngMaskUR, momAngMaskUL, momAngMaskDR, momAngMaskDL)
+```
+
+```python
+def ct_cmap(base_cmap):
+    cmap = matplotlib.colormaps[base_cmap]
+    colors = cmap(np.arange(cmap.N))
+    colors[:, -1] = np.linspace(0, 1, cmap.N)  # Set transparency gradient
+    return ListedColormap(colors)
+```
+
+```python
+def momAngFVal(mA,pwid,phi):
+    (maUR, maUL, maDR, maDL) = momAngMaskCombo(mA, pwid)
+    return (
+        np.sum(np.abs(phi)**2 * maUR * dpz * dpx),
+        np.sum(np.abs(phi)**2 * maUL * dpz * dpx),
+        np.sum(np.abs(phi)**2 * maDR * dpz * dpx),
+        np.sum(np.abs(phi)**2 * maDL * dpz * dpx)
+    )
+```
+
+```python
+momAngList = np.arange(0,180,1)*pi/180
+# mA = momAngList[45]
+# momAngMask = np.exp(-((pxlin[:,np.newaxis] - p*np.sin(mA))**2 + (-pzlin[np.newaxis, :] - p - p*np.cos(mA))**2) / (2 * 5 * dpz)**2)
+(maUR, maUL, maDR, maDL) = momAngMaskCombo(momAngList[45], pwid=5*dpz)
+maTemp = momAngFVal(momAngList[45],pwid=5*dpz, phi=phi)
+l.info(maTemp)
+
+# momAngResults = np.zeros((momAngList.shape[0], 4))
+# for (mAi, mAv) in tqdm(enumerate(momAngList), total=momAngList.shape[0]):
+#     momAngResults[mAi] = np.array(momAngFVal(mAv, pwid=5*dpz, phi=phi))
+momAngResults = Parallel(n_jobs=-2)( 
+        delayed(lambda mAv: np.array(momAngFVal(mAv, pwid=5*dpz, phi=phi)))(mAv)
+        for mAv in tqdm(momAngList)
+    )
+momAngResults = np.array(momAngResults)
+```
+
+```python
+plt.figure(figsize=(14,6))
+plt.subplot(1,2,1)
+plt.imshow(np.abs(phi.T)**2, cmap='Greys', alpha=0.6, extent=np.array([-pxmax,+pxmax,-pzmax,+pzmax])/p, interpolation='none')
+plt.imshow(maUR.T, cmap=ct_cmap('Greens'), alpha=0.9, extent=np.array([-pxmax,+pxmax,-pzmax,+pzmax])/p, interpolation='none')
+plt.imshow(maUL.T, cmap=ct_cmap('Oranges'), alpha=0.9, extent=np.array([-pxmax,+pxmax,-pzmax,+pzmax])/p, interpolation='none')
+plt.imshow(maDR.T, cmap=ct_cmap('Blues'), alpha=0.9, extent=np.array([-pxmax,+pxmax,-pzmax,+pzmax])/p, interpolation='none')
+plt.imshow(maDL.T, cmap=ct_cmap('Purples'), alpha=0.9, extent=np.array([-pxmax,+pxmax,-pzmax,+pzmax])/p, interpolation='none')
+
+plt.xlim([-3, +3])
+plt.ylim([-3, +3])
+
+plt .subplot(1,2,2)
+plt.imshow(momAngResults.T, extent=[momAngList[0], momAngList[-1],-0.5,3.5],interpolation='none',aspect='auto')
+plt.yticks(range(4), labels=["UR","UL","DR","DL"])
+plt.xticks([i*pi/12 for i in range(13)], labels=[f"{i}" for i in range(13)])
+plt.grid(axis='x',alpha=0.5,linewidth=0.5)
+plt.show()
+```
+
+```python
+momAngPiScan = np.zeros((len(tPiTest), len(momAngList), 4))
+for (ti, tt) in tqdm(enumerate(tPiTest), total=len(tPiTest)):
+    item = tPiOutput[ti]
+    (swnf, phi) = phiAndSWNF(item[1][1])
+    momAngResults = Parallel(n_jobs=-4)( 
+        delayed(lambda mAv: np.array(momAngFVal(mAv, pwid=5*dpz, phi=phi)))(mAv)
+        for mAv in momAngList
+    )
+    momAngResults = np.array(momAngResults)
+    momAngPiScan[ti] = momAngResults
+
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+thetaList = np.arange(0,16+1,1)*pi/4
 popTarList = np.sin(thetaList/2)**2
 popIniList = np.cos(thetaList/2)**2
 l.info(f"""thetaList = {thetaList}
 popTarList = {popTarList}
 popIniList = {popIniList}""")
-```
-
-```python
-
 ```
 
 ```python
@@ -1214,8 +1400,8 @@ tPiScanOutputTimeDelta = timedelta(0)
 <!-- #endregion -->
 
 ```python editable=true slideshow={"slide_type": ""}
-isDelta = 0.003
-intensityScan = np.arange(0.003,0.6+isDelta,isDelta)
+isDelta = 0.1
+intensityScan = np.arange(0.05,1+isDelta,isDelta)
 l.info(f"""len(intensityScan): {len(intensityScan)}
 intensityScan: {intensityScan}""")
 omegaRabiScan = (linewidth*np.sqrt(intensityScan/intenSat/2))**2 /2/detuning
@@ -1286,7 +1472,7 @@ for (VRi,VRs) in enumerate(VRScan):
     tE = VRScanTimeNow - VRScanTimeStart
     if VRi != 0 :
         tR = (len(VRScan)-VRi)* tE/VRi
-        l.info(f"Computing VRi={VRi}, VRs={round(VRs,2)}, tE {tE} tR {tR}")
+        l.info(f"Computing VRi={VRi}, VRs={round(VRs,2)}, tE {tE} tR {tR}")    
     tPiOutput = Parallel(n_jobs=N_JOBS)(
         delayed(lambda i: (i, scanTauPiInnerEval(i, False, False,0,p,0*dopd,VRs)[:2],ksz,ksx) )(i) 
         for i in tqdm(tPiTest)
