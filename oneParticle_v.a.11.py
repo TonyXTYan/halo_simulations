@@ -1,29 +1,26 @@
----
-jupyter:
-  jupytext:
-    formats: ipynb,md
-    text_representation:
-      extension: .md
-      format_name: markdown
-      format_version: '1.3'
-      jupytext_version: 1.16.1
-  kernelspec:
-    display_name: Python 3 (ipykernel)
-    language: python
-    name: python3
----
+# ---
+# jupyter:
+#   jupytext:
+#     text_representation:
+#       extension: .py
+#       format_name: light
+#       format_version: '1.5'
+#       jupytext_version: 1.16.1
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
+# ---
 
-<!-- #region editable=true slideshow={"slide_type": ""} -->
-# One Particle
-<!-- #endregion -->
+# + [markdown] editable=true slideshow={"slide_type": ""}
+# # One Particle
+# -
 
-## Setup
+# ## Setup
 
-```python
-!python -V
-```
+# !python -V
 
-```python editable=true jupyter={"is_executing": true} slideshow={"slide_type": ""}
+# + editable=true jupyter={"is_executing": true} slideshow={"slide_type": ""}
 import matplotlib.pyplot as plt
 import numpy as np
 from math import *
@@ -54,31 +51,26 @@ import time
 import pyfftw
 
 
-%config InlineBackend.figure_format = 'retina'
-%matplotlib inline
+# %config InlineBackend.figure_format = 'retina'
+# %matplotlib inline
 plt.rcParams["figure.figsize"] = (8, 5)
 plt.rcParams["font.family"] = "serif" 
 plt.rcParams["mathtext.fontset"] = "dejavuserif" 
 plt.close("all") # close all existing matplotlib plots
-```
 
-```python
+# +
 # from numba import njit, jit, prange, objmode, vectorize
 # import numba
 # numba.set_num_threads(8)
-```
+# -
 
-```python
 N_JOBS=6
 nthreads=2
-```
 
-```python
 import gc
 gc.enable()
-```
 
-```python
+# +
 use_cache = False
 save_cache = False
 save_debug = True 
@@ -95,13 +87,10 @@ output_prefix = "output/oneParticleSim/"+\
 output_ext = ".pgz.pkl"
 os.makedirs(output_prefix, exist_ok=True)
 print(output_prefix)
-```
+# -
 
-```python
 plt.set_loglevel("warning")
-```
 
-```python
 l = logging.getLogger()
 l.setLevel(logging.NOTSET)
 l_formatter = logging.Formatter('%(asctime)s - %(levelname)s - \n%(message)s')
@@ -112,9 +101,7 @@ l_console_handler = logging.StreamHandler(sys.stdout)
 l_console_handler.setLevel(logging.INFO)
 l_console_handler.setFormatter(logging.Formatter('%(message)s'))
 l.addHandler(l_console_handler)
-```
 
-```python
 # if save_debug:
     # with open(output_prefix + "session_info.txt", "wt") as file:
 s = ""
@@ -133,28 +120,21 @@ s +=  f"CPU Counts: {os.cpu_count()} \n"
         # file.write(string)
     # print(string)
 l.info(s)
-```
 
-```python
 l.info(f"This file is {output_prefix}logs.log")
-```
 
+#
 
-
-```python
 l.info(f"""nthreads = {nthreads}
 N_JOBS = {N_JOBS}""")
-```
 
-```python
+# +
 #test 4
-```
 
-```python
+# +
 # np.show_config()
-```
 
-```python
+# +
 nx = 3000+1
 nz = 3000+1
 xmax = 50 #Micrometers
@@ -171,9 +151,8 @@ pxmax = 2*pi*hb/dx/2
 pzmax = 2*pi*hb/dz/2
 # pxmax= (nx+1)/2 * 2*pi/(2*xmax)*hb # want this to be greater than p
 # pzmax= (nz+1)/2 * 2*pi/(2*zmax)*hb
-```
+# -
 
-```python
 s = f"""nx = {nx}
 nz = {nz} 
 xmax = {xmax}
@@ -188,17 +167,15 @@ pxmax = {pxmax}
 pymax = {pzmax}
 """
 l.info(s)
-```
 
-```python editable=true slideshow={"slide_type": ""}
+# + editable=true slideshow={"slide_type": ""}
 l.info(f"""rotate phase per dt for m3 = {1j*hb*dt/(2*m3*dx*dz)} \t #want this to be small
 rotate phase per dt for m4 = {1j*hb*dt/(2*m4*dx*dz)} 
 number of grid points = {round(nx*nz/1000/1000,3)} (million)
 minutes per grid op = {round((nx*nz)*0.001*0.001/60, 3)} \t(for 1μs/element_op)
 """)
-```
 
-```python editable=true slideshow={"slide_type": ""}
+# + editable=true slideshow={"slide_type": ""}
 wavelength = 1.083 #Micrometers
 beam_angle = 90
 k = sin(beam_angle*pi/180/2) * 2*pi / wavelength # effective wavelength
@@ -232,13 +209,11 @@ v3 = 2*hb*k/m3
 # dopd = 60.1025 # 1/ms Doppler detuning (?)
 # dopd = v3**2 * m3 / hb
 dopd = v4**2 / m4 / hb
-```
+# -
 
-```python
 xmax**2 * m3 * 6 / (hb*pi*(nx-1))
-```
 
-```python editable=true slideshow={"slide_type": ""}
+# + editable=true slideshow={"slide_type": ""}
 l.info(f"""wavelength = {wavelength} µm
 beam_angle = {beam_angle}
 k = {k} 1/µm
@@ -256,19 +231,16 @@ dopd = {dopd}
 """)
 if not (pxmax > p*2.5): l.warning(f"p={p} not << pmax={pxmax} momentum resolution too small!")
 if not 2*pi/(2*k)/dx > 1:  l.warning(f"2*pi/(2*k)/dx = {2*pi/(2*k)/dx} aliasing will happen")
-```
+# -
 
-```python
 hb*pi*(nx-1) / (2*m3*xmax*6)
-```
 
-```python editable=true slideshow={"slide_type": ""}
+# + editable=true slideshow={"slide_type": ""}
 l.info(f"""xmax/v3 = {xmax/v3} ms is the time to reach boundary
 zmax/v3 = {zmax/v3}
 """)
-```
+# -
 
-```python
 # V00 = 50000
 # dt=0.01
 # VxExpGrid = np.exp(-(1j/hb) * 0.5*dt * V00 * cosGrid )
@@ -281,13 +253,11 @@ if abs(dpx - (pxlin[1]-pxlin[0])) > 0.0001: l.error("AHHHHH px is messed up (?!)
 if abs(dpz - (pzlin[1]-pzlin[0])) > 0.0001: l.error("AHHHHH pz")
 l.info(f"""dpx = {dpx} uµm/m
 dpz = {dpz} """)
-```
 
-```python editable=true slideshow={"slide_type": ""}
+# + editable=true slideshow={"slide_type": ""}
 
-```
 
-```python
+# +
 #### WARNING:
 ###  These frequencies are in Hz, 
 #### This simulation uses time in ms, 1Hz = 0.001 /ms
@@ -312,9 +282,8 @@ tBraggCenter = tBraggPi * 5
 tBraggEnd = tBraggPi * 10
 
 V0F = 50*1000
-```
 
-```python editable=true slideshow={"slide_type": ""}
+# + editable=true slideshow={"slide_type": ""}
 l.info(f"""a4 = {a4} µm
 intensity1 = {intensity1}  # mW/mm^2 of beam 1
 intensity2 = {intensity2}  
@@ -332,9 +301,8 @@ tBraggPi = {tBraggPi} ms
 tBraggCenter = {tBraggCenter} ms
 tBraggEnd = {tBraggEnd} ms
 """)
-```
+# -
 
-```python
 l.info(f"""hb*k**2/(2*m3) = {hb*k**2/(2*m3)} \t/ms
 hb*k**2/(2*m4) = {hb*k**2/(2*m4)}
 (hb*k**2/(2*m3))**-1 = {(hb*k**2/(2*m3))**-1} \tms
@@ -344,9 +312,9 @@ hb*k**2/(2*m4) = {hb*k**2/(2*m4)}
 omegaRabi = {omegaRabi*0.001} \t/ms
 tBraggPi = {tBraggPi} ms
 """)
-```
 
-```python editable=true slideshow={"slide_type": ""}
+
+# + editable=true slideshow={"slide_type": ""}
 def V(t):
     return V0 * (2*pi)**-0.5 * tBraggPi**-1 * np.exp(-0.5*(t-tBraggCenter)**2 * tBraggPi**-2)
 
@@ -356,46 +324,38 @@ def VB(t, tauMid, tauPi):
 V0F = 50*1000
 def VBF(t, tauMid, tauPi, V0FArg=V0F):
     return V0FArg * (2*pi)**-0.5 * np.exp(-0.5*(t-tauMid)**2 * tauPi**-2)
-```
 
-```python editable=true slideshow={"slide_type": ""}
+
+# + editable=true slideshow={"slide_type": ""}
 l.info(f"term infront of Bragg potential {1j*(dt/hb)}")
 l.info(f"max(V) {1j*(dt/hb)*V(tBraggCenter)}")
-```
 
-```python
+
+# -
+
 # @njit(cache=True)
 def VS(ttt, mid, wid, V0=VR):
     return V0 * 0.5 * (1 + np.cos(2*np.pi/wid*(ttt-mid))) * \
             (-0.5*wid+mid<ttt) * (ttt<0.5*wid+mid)
-```
 
-```python
+
 tbtest = np.arange(tBraggCenter-5*tBraggPi,tBraggCenter+5*tBraggPi,dt)
 plt.plot(tbtest, VBF(tbtest,tBraggPi*5,tBraggPi))
 plt.plot(tbtest, VS(tbtest,tBraggPi/2,tBraggPi,0.3*V0F))
 plt.plot(tbtest, VS(tbtest,tBraggPi/2+0.4,tBraggPi,0.3*VR))
 plt.show()
 l.info(f"max(V) {1j*(dt/hb)*VBF(tBraggCenter,tBraggPi*5,tBraggPi)}")
-```
 
-```python
 tBraggPi
-```
 
-```python editable=true slideshow={"slide_type": ""}
+# + editable=true slideshow={"slide_type": ""}
 V(tBraggCenter)
-```
+# -
 
-```python
 VBF(tBraggCenter,tBraggPi*5,tBraggPi)
-```
 
-```python
 np.trapz(V(tbtest),tbtest) # this should be V0
-```
 
-```python
 xlin = np.linspace(-xmax,+xmax, nx)
 zlin = np.linspace(-zmax,+zmax, nz)
 psi=np.zeros((nx,nz),dtype=complex)
@@ -403,18 +363,14 @@ zones = np.ones(nz)
 xgrid = np.tensordot(xlin,zones,axes=0)
 # cosGrid = np.cos(2*k*xgrid)
 cosGrid = np.cos(2 * kx * xlin[:, np.newaxis] + 2 * kz * zlin)
-```
 
-```python
 if abs(dx - (xlin[1]-xlin[0])) > 0.0001: l.error("AHHHHx")
 if abs(dz - (zlin[1]-zlin[0])) > 0.0001: l.error("AHHHHz")
-```
 
-```python editable=true slideshow={"slide_type": ""}
+# + editable=true slideshow={"slide_type": ""}
 l.info(f"{round(psi.nbytes/1000/1000 ,3)} MB of data used to store psi")
-```
 
-```python editable=true slideshow={"slide_type": ""}
+# + editable=true slideshow={"slide_type": ""}
 ncrop = 30
 plt.figure(figsize=(10,10))
 plt.subplot(2,2,1)
@@ -438,13 +394,12 @@ title="bragg_potential_grid"
 # plt.savefig("output/"+title+".png", dpi=600)
 
 plt.show()
-```
 
-```python editable=true slideshow={"slide_type": ""}
+# + editable=true slideshow={"slide_type": ""}
 dopd*dt/dx
-```
 
-```python editable=true slideshow={"slide_type": ""}
+
+# + editable=true slideshow={"slide_type": ""}
 def plot_psi(psi, plt_show=True):
     """Plots $\psi$ of position wavefunction
 
@@ -471,9 +426,9 @@ def plot_psi(psi, plt_show=True):
     plt.title("$\mathrm{Im}(\psi)$")
     
     if plt_show: plt.show()
-```
 
-```python
+
+# +
 def plot_mom(psi, zoom_div2=15, zoom_div3=6, plt_show=True):
     """Plots momentum wavefunction
 
@@ -541,9 +496,8 @@ def plot_mom(psi, zoom_div2=15, zoom_div3=6, plt_show=True):
     
     if plt_show: plt.show()
         
-```
 
-```python
+# +
 sg=0.2
 
 def psi0(x,z,sx=sg,sz=sg,px=0,pz=0):
@@ -556,15 +510,15 @@ def psi0ringUnNorm(x,z,pr=p,mur=10,sg=sg):
     return 1 \
             * np.exp(-0.5*( mur - np.sqrt(x**2 + z**2) )**2 / sg**2) \
             * np.exp(+(1j/hb) * (x**2 + z**2)**0.5 * pr)
-```
 
-```python
+
+# -
+
 expPGrid = np.zeros((nx,nz),dtype=complex)
 for indx in range(nx):
     expPGrid[indx, :] = np.exp(-(1j/hb) * (0.5/m3) * (dt) * (pxlin[indx]**2 + pzlin**2))  
-```
 
-```python
+
 def psi0np(mux=10,muz=10,p0x=0,p0z=0):
     psi=np.zeros((nx,nz),dtype=complex)
     for ix in range(1,nx-1):
@@ -579,9 +533,9 @@ def psi0ringNp(mur=1,sg=1,pr=p):
     norm = np.sum(np.abs(psi)**2)*dx*dz
     psi *= 1/sqrt(norm)
     return psi
-```
 
-```python editable=true slideshow={"slide_type": ""}
+
+# + editable=true slideshow={"slide_type": ""}
 def psi0ringUnNormOffset(x,z,pr=p,mur=10,sg=sg,xo=0,zo=0,pxo=0,pzo=0):
     return 1 \
             * np.exp(-0.5*( mur - np.sqrt((x-xo)**2 + (z-zo)**2) )**2 / sg**2) \
@@ -594,17 +548,14 @@ def psi0ringNpOffset(mur=1,sg=1,pr=p,xo=0,zo=0,pxo=0,pzo=0):
     norm = np.sum(np.abs(psi)**2)*dx*dz
     psi *= 1/sqrt(norm)
     return psi
-```
+# -
 
-```python
 
-```
 
-```python editable=true slideshow={"slide_type": ""}
+# + editable=true slideshow={"slide_type": ""}
 
-```
 
-```python editable=true slideshow={"slide_type": ""}
+# + editable=true slideshow={"slide_type": ""}
 # psi = psi0np(5,5,0,0)
 # psi = psi0np(5,5,-0.5*p,0)
 # psi = psi0np(1,1,p,p)
@@ -644,34 +595,26 @@ title="init_ring_phi"
 # plt.savefig("output/"+title+".png", dpi=600)
 plt.show()
 
-```
+# -
 
-```python
 
-```
 
-```python
 5/v4
-```
 
-```python
 v4*0.2
-```
 
-```python
 
-```
 
-```python editable=true slideshow={"slide_type": ""}
+# + editable=true slideshow={"slide_type": ""}
 # @jit(cache=True, forceobj=True)
 def toMomentum(psi, swnf):
     return np.fliplr(np.fft.fftshift(pyfftw.interfaces.numpy_fft.fft2(psi,threads=nthreads,norm='ortho')))/swnf
 # @jit(cache=True, forceobj=True)
 def toPosition(phi, swnf):
     return pyfftw.interfaces.numpy_fft.ifft2(np.fft.ifftshift(np.fliplr(phi*swnf)),threads=nthreads,norm='ortho')
-```
 
-```python editable=true slideshow={"slide_type": ""}
+
+# + editable=true slideshow={"slide_type": ""}
 def plotNow(t, psi):
         print("time =", round(t*1000,4), "µs")
         print(np.sum(np.abs(psi)**2)*dx*dz,"|psi|^2")
@@ -734,60 +677,54 @@ def numericalEvolve(
         print("ALL DONE")
         plotNow(t,psi)
     return (t,psi,phi)
-```
+# -
 
-```python
-%timeit _ = numericalEvolve(0, psi0np(1,1,0,0), dt, final_plot=False, progress_bar=False)
-```
+# %timeit _ = numericalEvolve(0, psi0np(1,1,0,0), dt, final_plot=False, progress_bar=False)
 
-<!-- #raw -->
-# @njit
-# @jit(cache=True, forceobj=True)
-def numericalEvolveNumba(
-        t_init = 0, 
-        psi_init = np.array([]), 
-        t_final =0, 
-        tauPi  = tBraggPi, 
-        tauMid = tBraggPi*5, 
-        phase  = 0,
-        doppd=dopd,
-        print_every_t=-1, 
-        final_plot=True,
-        progress_bar=True, 
-        V0FArg=V0F,
-        kkx=kx,
-        kkz=kz
-    ):
-    assert (print_every_t > dt or print_every_t <= 0), "print_every_t cannot be smaller than dt"
-    steps = ceil((t_final - t_init) / dt) 
-    t = t_init
-    psi = psi_init.copy()
-    (swnf, phi) = phiAndSWNF(psi)
-    
-    for step in range(steps):
-        # cosGrid = np.cos(2*kkx*xlin[:,np.newaxis] + 2*kkz*zlin + doppd*(t-tauMid) + phase)
-        VxExpGrid = np.exp(-(1j/hb) * 0.5*dt * VS(t,tauMid,tauPi,V0FArg) * 
-                           np.cos(2*kkx*xlin[:,np.newaxis] + 2*kkz*zlin + doppd*(t-tauMid) + phase))
-        # VxExpGrid = np.exp(-(1j/hb) * 0.5*dt * V0FArg * 
-        #                    np.cos(2*kkx*xlin[:,np.newaxis] + 2*kkz*zlin + doppd*(t-tauMid) + phase))
-        psi *= VxExpGrid
-        phi = toMomentum(psi,swnf)
-        phi *= expPGrid
-        psi = toPosition(phi,swnf)
-        psi *= VxExpGrid
-    
-    return (t,psi,phi)
-<!-- #endraw -->
+# + active=""
+# # @njit
+# # @jit(cache=True, forceobj=True)
+# def numericalEvolveNumba(
+#         t_init = 0, 
+#         psi_init = np.array([]), 
+#         t_final =0, 
+#         tauPi  = tBraggPi, 
+#         tauMid = tBraggPi*5, 
+#         phase  = 0,
+#         doppd=dopd,
+#         print_every_t=-1, 
+#         final_plot=True,
+#         progress_bar=True, 
+#         V0FArg=V0F,
+#         kkx=kx,
+#         kkz=kz
+#     ):
+#     assert (print_every_t > dt or print_every_t <= 0), "print_every_t cannot be smaller than dt"
+#     steps = ceil((t_final - t_init) / dt) 
+#     t = t_init
+#     psi = psi_init.copy()
+#     (swnf, phi) = phiAndSWNF(psi)
+#     
+#     for step in range(steps):
+#         # cosGrid = np.cos(2*kkx*xlin[:,np.newaxis] + 2*kkz*zlin + doppd*(t-tauMid) + phase)
+#         VxExpGrid = np.exp(-(1j/hb) * 0.5*dt * VS(t,tauMid,tauPi,V0FArg) * 
+#                            np.cos(2*kkx*xlin[:,np.newaxis] + 2*kkz*zlin + doppd*(t-tauMid) + phase))
+#         # VxExpGrid = np.exp(-(1j/hb) * 0.5*dt * V0FArg * 
+#         #                    np.cos(2*kkx*xlin[:,np.newaxis] + 2*kkz*zlin + doppd*(t-tauMid) + phase))
+#         psi *= VxExpGrid
+#         phi = toMomentum(psi,swnf)
+#         phi *= expPGrid
+#         psi = toPosition(phi,swnf)
+#         psi *= VxExpGrid
+#     
+#     return (t,psi,phi)
 
-<!-- #raw -->
-%timeit _ = numericalEvolveNumba(0, psi0np(1,1,0,0), dt, final_plot=False, progress_bar=False)
-<!-- #endraw -->
+# + active=""
+# %timeit _ = numericalEvolveNumba(0, psi0np(1,1,0,0), dt, final_plot=False, progress_bar=False)
+# -
 
-```python
 
-```
 
-```python
 def freeEvolve(
     t_init,
     psi,
@@ -811,32 +748,23 @@ def freeEvolve(
         plotNow(t_final,psi)
         
     return (t_final, psi, phi)
-```
 
-```python
+
 _ = freeEvolve(0,psi0np(1,1,0,0),0.1,final_plot=False,logging=True)
-```
 
-```python
 (tBraggCenter,tBraggEnd,tBraggPi)
-```
 
-```python
 
-```
 
-```python
 
-```
 
-## Pulse Scan Test Run
+# ## Pulse Scan Test Run
 
-```python
 # short test run
 _ = numericalEvolve(0, psi0np(3,3,0.5*p,0), 2*dt,progress_bar=False,final_plot=False)
-```
 
-```python editable=true slideshow={"slide_type": ""}
+
+# + editable=true slideshow={"slide_type": ""}
 def scanTauPiInnerEval(tPi, 
                        logging=True, progress_bar=True, 
                        ang=0, pmom=p, doppd=dopd, V0FArg=V0F, kkx=kx, kkz=kz,
@@ -859,17 +787,17 @@ def scanTauPiInnerEval(tPi,
                             )
 #     if pbar != None: pbar.update(1)
     return output
-```
 
-```python
+
+# -
+
 tPiScanTime1usStart = datetime.now()
 _ = scanTauPiInnerEval(0.001, False, True,0,p,0*dopd,VR)
 tPiScanTime1usEnd = datetime.now()
 tPiScanTime1usDelta = tPiScanTime1usEnd - tPiScanTime1usStart
 l.info(f"""Time to simulate 1us: {tPiScanTime1usDelta}""")
-```
 
-```python
+# +
 tPDelta = 10*dt  # positive +, note I want tPiTest in decending order 
 # tPiTest = np.append(np.arange(0.5,0.1,-tPDelta), 0) # note this is decending
 tPiTest = np.arange(0.03,0.001-tPDelta,-tPDelta)
@@ -911,13 +839,11 @@ title="bragg_strength_V0"
 # plt.savefig("output/"+title+".png", dpi=600)
 
 
-```
+# -
 
-```python
 (tPiScanTime1usDelta*tPiScanTotalSimMS*1000).total_seconds()/3600
-```
 
-```python editable=true slideshow={"slide_type": ""}
+# + editable=true slideshow={"slide_type": ""}
 tPiScanTimeStart = datetime.now()
 tPiOutput = Parallel(n_jobs=N_JOBS)(
     delayed(lambda i: (i, scanTauPiInnerEval(i, False, False,0,p,0*dopd,VR)[:2]) )(i) 
@@ -926,25 +852,17 @@ tPiOutput = Parallel(n_jobs=N_JOBS)(
 tPiScanTimeEnd = datetime.now()
 tPiScanTimeDelta = tPiScanTimeEnd-tPiScanTimeStart
 l.info(f"""Time to run one scan: {tPiScanTimeDelta}""")
-```
+# -
 
-```python
 tPiOutput[10][0]
-```
 
-```python
 tPiOutput[10][1][0]
-```
 
-```python
 tPiTest[10]
-```
 
-```python
 tPiTest[10]
-```
 
-```python editable=true slideshow={"slide_type": ""}
+# + editable=true slideshow={"slide_type": ""}
 # psi = tPiOutput[-30][1][1]
 psi = tPiOutput[16][1][1]
 # psi = tPiTestRun[1]L
@@ -952,13 +870,11 @@ psi = tPiOutput[16][1][1]
 plot_psi(psi)
 (swnf, phi) = phiAndSWNF(psi)
 plot_mom(psi,20,20)
-```
 
-```python editable=true slideshow={"slide_type": ""}
+# + editable=true slideshow={"slide_type": ""}
 
-```
 
-```python editable=true slideshow={"slide_type": ""}
+# + editable=true slideshow={"slide_type": ""}
 # hbar_k_transfers = np.arange(-4,4+1,+2)
 hbar_k_transfers = np.arange(-20-1,20+2,+2)
 # pzlinIndexSet = np.zeros((len(hbar_k_transfers), len(pxlin)), dtype=bool)
@@ -970,9 +886,8 @@ for (j, hbar_k) in enumerate(hbar_k_transfers):
     # print(i,hbar_k)
 l.info(f"""hbar_k_transfers = {hbar_k_transfers}
 np.sum(pxlinIndexSet,axis=1) = {np.sum(pxlinIndexSet,axis=1)}""")
-```
 
-```python editable=true slideshow={"slide_type": ""}
+# + editable=true slideshow={"slide_type": ""}
 plt.figure(figsize=(4,4))
 plt.imshow(pxlinIndexSet.T,interpolation='none',aspect=0.1,extent=[-2,2,-pzmax/p,pzmax/p])
 # plt.imshow(pzlinIndexSet,interpolation='none',aspect=5)
@@ -982,9 +897,8 @@ title="hbar_k_pxlin_integration_range"
 # plt.savefig("output/"+title+".pdf", dpi=600)
 # plt.savefig("output/"+title+".png", dpi=600)
 plt.show()
-```
 
-```python editable=true slideshow={"slide_type": ""}
+# + editable=true slideshow={"slide_type": ""}
 # phiDensityGrid = np.zeros((len(tPiTest), pxlin.size))
 phiDensityGrid = np.zeros((len(tPiTest), pzlin.size))
 phiDensityGrid_hbark = np.zeros((len(tPiTest),len(hbar_k_transfers)))
@@ -1004,9 +918,8 @@ for i in tqdm(range(len(tPiTest))):
         # phiDensityGrid_hbark[i,j] = np.trapz(phiX[index], pxlin[index])
         # phiDensityGrid_hbark[i,j] = np.trapz(phiZ[index], pzlin[index])
         phiDensityGrid_hbark[i,j] = np.sum(phiZ[index])
-```
 
-```python editable=true slideshow={"slide_type": ""}
+# + editable=true slideshow={"slide_type": ""}
 plt.figure(figsize=(12,5))
 plt.subplot(1,2,1)
 
@@ -1043,26 +956,22 @@ title="mom_dist_at_diff_angle"
 plt.savefig("output/"+title+".pdf", dpi=600)
 plt.savefig("output/"+title+".png", dpi=600)
 plt.show()
-```
 
-```python editable=true slideshow={"slide_type": ""}
+# + editable=true slideshow={"slide_type": ""}
 # phiDensityNormFactor = np.sum(phiDensityGrid_hbark,axis=1)
 phiDensityNormFactor = np.trapz(phiDensityGrid_hbark,axis=1)
 # phiDensityNormed = np.zeros(phiDensityGrid_hbark.shape)
 # for i in range(len(hbar_k_transfers)):
 #     phiDensityNormed[:,i] = phiDensityGrid_hbark[:,i]/phiDensityNormFactor[i]
 phiDensityNormed = phiDensityGrid_hbark / phiDensityNormFactor[:, np.newaxis]
-```
 
-```python
+# +
 # phiDensityNormFactor
-```
 
-```python editable=true slideshow={"slide_type": ""}
+# + editable=true slideshow={"slide_type": ""}
 os.makedirs(output_prefix+"tPiScan", exist_ok=True)
-```
 
-```python editable=true slideshow={"slide_type": ""}
+# + editable=true slideshow={"slide_type": ""}
 plt.figure(figsize=(11,5))
 for (i, hbar_k) in enumerate(hbar_k_transfers):
     if abs(hbar_k) >4: continue
@@ -1095,9 +1004,8 @@ plt.savefig(output_prefix+"/tPiScan/"+title+".pdf", dpi=600)
 plt.savefig(output_prefix+"/tPiScan/"+title+".png", dpi=600)
 
 plt.show()
-```
 
-```python
+# +
 hbarkInI = next(iter(np.where(hbar_k_transfers == +1)[0]), None)  # Index of original state 
 hbarkInd = next(iter(np.where(hbar_k_transfers == -1)[0]), None)  # Index of target state
 hbarkInA = next(iter(np.where(hbar_k_transfers == -2)[0]), None)  # target -2hbk for initial scattering
@@ -1106,36 +1014,31 @@ hbarkInB = next(iter(np.where(hbar_k_transfers == +2)[0]), None)  # target +2hbk
 l.info(f"""target state: {hbar_k_transfers[hbarkInd] if hbarkInd is not None else 'NA'}, original state: {hbar_k_transfers[hbarkInI] if hbarkInI is not None else 'NA'}
 target A: {hbar_k_transfers[hbarkInA] if hbarkInA is not None else 'NA'}, target B: {hbar_k_transfers[hbarkInB] if hbarkInB is not None else 'NA'} """)
 # currently (May 2024), by design, only one set will get used at a time. 
-```
+# -
 
-```python
 
-```
 
-```python
+# +
 # momAngMask = np.zeros((nx,nz))
 # for (xi, px) in enumerate(pxlin):
 #     momAngMask[xi,:] = np.exp(  -((px - p*sin(mA))**2 + (-pzlin - p - p*cos(mA))**2) / (2*5*dpz)**2 )
-```
+# -
 
-```python
 def momAngMaskCombo(mA,pwid=3*dpz):
     momAngMaskUR = np.exp(-((pxlin[:,np.newaxis] - p*sin(mA))**2 + (-pzlin[np.newaxis,:] - p - p*cos(mA))**2) / (pwid)**2)
     momAngMaskUL = np.exp(-((pxlin[:,np.newaxis] + p*sin(mA))**2 + (-pzlin[np.newaxis,:] - p + p*cos(mA))**2) / (pwid)**2)
     momAngMaskDR = np.exp(-((pxlin[:,np.newaxis] - p*sin(mA))**2 + (-pzlin[np.newaxis,:] + p - p*cos(mA))**2) / (pwid)**2)
     momAngMaskDL = np.exp(-((pxlin[:,np.newaxis] + p*sin(mA))**2 + (-pzlin[np.newaxis,:] + p + p*cos(mA))**2) / (pwid)**2)
     return (momAngMaskUR, momAngMaskUL, momAngMaskDR, momAngMaskDL)
-```
 
-```python
+
 def ct_cmap(base_cmap):
     cmap = matplotlib.colormaps[base_cmap]
     colors = cmap(np.arange(cmap.N))
     colors[:, -1] = np.linspace(0, 1, cmap.N)  # Set transparency gradient
     return ListedColormap(colors)
-```
 
-```python
+
 def momAngFVal(mA,pwid,phi):
     (maUR, maUL, maDR, maDL) = momAngMaskCombo(mA, pwid)
     return (
@@ -1144,9 +1047,9 @@ def momAngFVal(mA,pwid,phi):
         np.sum(np.abs(phi)**2 * maDR * dpz * dpx),
         np.sum(np.abs(phi)**2 * maDL * dpz * dpx)
     )
-```
 
-```python
+
+# +
 momAngList = np.arange(0,180,1)*pi/180
 # mA = momAngList[45]
 # momAngMask = np.exp(-((pxlin[:,np.newaxis] - p*np.sin(mA))**2 + (-pzlin[np.newaxis, :] - p - p*np.cos(mA))**2) / (2 * 5 * dpz)**2)
@@ -1162,9 +1065,8 @@ momAngResults = Parallel(n_jobs=-2)(
         for mAv in tqdm(momAngList)
     )
 momAngResults = np.array(momAngResults)
-```
 
-```python
+# +
 plt.figure(figsize=(14,6))
 plt.subplot(1,2,1)
 plt.imshow(np.abs(phi.T)**2, cmap='Greys', alpha=0.6, extent=np.array([-pxmax,+pxmax,-pzmax,+pzmax])/p, interpolation='none')
@@ -1182,9 +1084,8 @@ plt.yticks(range(4), labels=["DL","DR","UL","UR"])
 plt.xticks([i*pi/12 for i in range(13)], labels=[f"{i}" for i in range(13)])
 plt.grid(axis='x',alpha=0.5,linewidth=0.5)
 plt.show()
-```
+# -
 
-```python
 momAngPiScan = np.zeros((len(tPiTest), len(momAngList), 4))
 for (ti, tt) in tqdm(enumerate(tPiTest), total=len(tPiTest)):
     item = tPiOutput[ti]
@@ -1196,17 +1097,13 @@ for (ti, tt) in tqdm(enumerate(tPiTest), total=len(tPiTest)):
     momAngResults = np.array(momAngResults)
     momAngPiScan[ti] = momAngResults
 
-```
 
-```python
 plt.plot(momAngList*180/pi, momAngPiScan[16,:,0])
 plt.plot(momAngList*180/pi, momAngPiScan[16,:,3])
 plt.xlabel("deg")
 plt.ylabel("P")
 plt.show()
-```
 
-```python
 plt.plot(tPiTest*1000,momAngPiScan[:,90,0], label="UR at 90", color='b', linestyle='-', alpha=0.7)
 plt.plot(tPiTest*1000,momAngPiScan[:,90,3], label="DR at 90", color='r', linestyle='-', alpha=0.7)
 plt.plot(tPiTest*1000,momAngPiScan[:,75,0], label="UR at 75", color='b', linestyle='--', alpha=0.7)
@@ -1215,30 +1112,21 @@ plt.xlabel("$\mu s$")
 plt.ylabel("$P$")
 plt.legend(loc=7)
 plt.show()
-```
 
-```python
 momAngList[90]*180/pi
-```
 
-```python
 
-```
 
-```python
 
-```
 
-```python
 thetaList = np.arange(0,16+1,1)*pi/4
 popTarList = np.sin(thetaList/2)**2
 popIniList = np.cos(thetaList/2)**2
 l.info(f"""thetaList = {thetaList}
 popTarList = {popTarList}
 popIniList = {popIniList}""")
-```
 
-```python
+
 def find_pulses(phiDN, thetaLis, makeFig=False):
     peaks_ind = {}
     peaks_time = {}
@@ -1265,170 +1153,137 @@ def find_pulses(phiDN, thetaLis, makeFig=False):
             plt.xlabel("$t_\pi \ (\mu s)$")
             plt.show()
     return (peaks_ind, peaks_time, peaks_helper)
-```
 
-```python
+
 find_pulses(phiDensityNormed, thetaList, makeFig=True)
-```
 
-```python
 l.info(find_pulses(phiDensityNormed, thetaList))
-```
 
-```python
 
-```
 
-```python
 
-```
 
-```python
 
-```
 
-```python
 
-```
 
-#### Some old code
+# #### Some old code
 
-<!-- #raw -->
-indPDNPi = np.argmax(phiDensityNormed[:,hbarkInd])
-l.info(f"""max transfer (π) to -1hbk at σt {tPiTest[indPDNPi]*1000} μs 
-with efficiency to -1hbk: {phiDensityNormed[indPDNPi,hbarkInd]}""")
-<!-- #endraw -->
+# + active=""
+# indPDNPi = np.argmax(phiDensityNormed[:,hbarkInd])
+# l.info(f"""max transfer (π) to -1hbk at σt {tPiTest[indPDNPi]*1000} μs 
+# with efficiency to -1hbk: {phiDensityNormed[indPDNPi,hbarkInd]}""")
 
-<!-- #raw -->
-SC_searchHelper=np.abs(phiDensityNormed[:,hbarkInA]-0.5)+np.abs(phiDensityNormed[:,hbarkInB]-0.5)
-indPDNSC = np.argmin(SC_searchHelper)
-l.info(f"""max scattering to ±2hbk at σt {round(tPiTest[indPDNSC]*1000,6)} μs 
-with transfer fraction to -2hbk of {phiDensityNormed[indPDNSC,hbarkInA]}
-with transfer fraction to +2hbk of {phiDensityNormed[indPDNSC,hbarkInB]}""")
-<!-- #endraw -->
+# + active=""
+# SC_searchHelper=np.abs(phiDensityNormed[:,hbarkInA]-0.5)+np.abs(phiDensityNormed[:,hbarkInB]-0.5)
+# indPDNSC = np.argmin(SC_searchHelper)
+# l.info(f"""max scattering to ±2hbk at σt {round(tPiTest[indPDNSC]*1000,6)} μs 
+# with transfer fraction to -2hbk of {phiDensityNormed[indPDNSC,hbarkInA]}
+# with transfer fraction to +2hbk of {phiDensityNormed[indPDNSC,hbarkInB]}""")
 
-<!-- #raw -->
-pi2searchHelper=np.abs(phiDensityNormed[:,hbarkInd]-0.5)+np.abs(phiDensityNormed[:,hbarkInI]-0.5)
-indPDNPM = np.argmin(pi2searchHelper)
-l.info(f"""max mirror (π/2) between ±1hbk at σt {tPiTest[indPDNPM]*1000} μs 
-with transfer fraction to -1hbk of {phiDensityNormed[indPDNPM,hbarkInd]}
-with transfer fraction to +1hbk of {phiDensityNormed[indPDNPM,hbarkInI]}""")
-<!-- #endraw -->
+# + active=""
+# pi2searchHelper=np.abs(phiDensityNormed[:,hbarkInd]-0.5)+np.abs(phiDensityNormed[:,hbarkInI]-0.5)
+# indPDNPM = np.argmin(pi2searchHelper)
+# l.info(f"""max mirror (π/2) between ±1hbk at σt {tPiTest[indPDNPM]*1000} μs 
+# with transfer fraction to -1hbk of {phiDensityNormed[indPDNPM,hbarkInd]}
+# with transfer fraction to +1hbk of {phiDensityNormed[indPDNPM,hbarkInI]}""")
 
-<!-- #raw -->
-pi2searchHelper=np.abs(phiDensityNormed[:,hbarkInd]-0.5)+np.abs(phiDensityNormed[:,hbarkInI]-0.5)
-indPDNPM = np.argmin(pi2searchHelper)
-l.info(f"""max mirror (π/2) between ±1hbk at σt {tPiTest[indPDNPM]*1000} μs 
-with transfer fraction to -1hbk of {phiDensityNormed[indPDNPM,hbarkInd]}
-with transfer fraction to +1hbk of {phiDensityNormed[indPDNPM,hbarkInI]}""")
-<!-- #endraw -->
+# + active=""
+# pi2searchHelper=np.abs(phiDensityNormed[:,hbarkInd]-0.5)+np.abs(phiDensityNormed[:,hbarkInI]-0.5)
+# indPDNPM = np.argmin(pi2searchHelper)
+# l.info(f"""max mirror (π/2) between ±1hbk at σt {tPiTest[indPDNPM]*1000} μs 
+# with transfer fraction to -1hbk of {phiDensityNormed[indPDNPM,hbarkInd]}
+# with transfer fraction to +1hbk of {phiDensityNormed[indPDNPM,hbarkInI]}""")
+# -
 
-```python
 
-```
 
-<!-- #raw -->
-plt.plot(tPiTest*1000,SC_searchHelper,'.-',alpha=0.7,label='helper')
-plt.plot(tPiTest*1000,np.abs(phiDensityNormed[:,hbarkInA]-0.5),'x-',alpha=0.3,label="-1")
-plt.plot(tPiTest*1000,np.abs(phiDensityNormed[:,hbarkInB]-0.5),'+-',alpha=0.3,label="+1")
-plt.legend(ncols=3)
-plt.ylabel("fraction")
-plt.xlabel("$t_\pi \ (\mu s)$")
-plt.show()
-<!-- #endraw -->
+# + active=""
+# plt.plot(tPiTest*1000,SC_searchHelper,'.-',alpha=0.7,label='helper')
+# plt.plot(tPiTest*1000,np.abs(phiDensityNormed[:,hbarkInA]-0.5),'x-',alpha=0.3,label="-1")
+# plt.plot(tPiTest*1000,np.abs(phiDensityNormed[:,hbarkInB]-0.5),'+-',alpha=0.3,label="+1")
+# plt.legend(ncols=3)
+# plt.ylabel("fraction")
+# plt.xlabel("$t_\pi \ (\mu s)$")
+# plt.show()
 
-<!-- #raw -->
-l.info(f"""indPDNPi = {indPDNPi} \ttPiTest[indPDNPi] = {round(tPiTest[indPDNPi]*1000,2)} μs \teff {round(phiDensityNormed[indPDNPi,hbarkInd],4)}
-indPDNPM = {indPDNPM} \ttPiTest[indPDNPM] = {round(tPiTest[indPDNPM]*1000,2)} μs \tef- {round(phiDensityNormed[indPDNPM,hbarkInd],4)} \tef+ {round(phiDensityNormed[indPDNPM,hbarkInI],4)}""")
-<!-- #endraw -->
+# + active=""
+# l.info(f"""indPDNPi = {indPDNPi} \ttPiTest[indPDNPi] = {round(tPiTest[indPDNPi]*1000,2)} μs \teff {round(phiDensityNormed[indPDNPi,hbarkInd],4)}
+# indPDNPM = {indPDNPM} \ttPiTest[indPDNPM] = {round(tPiTest[indPDNPM]*1000,2)} μs \tef- {round(phiDensityNormed[indPDNPM,hbarkInd],4)} \tef+ {round(phiDensityNormed[indPDNPM,hbarkInI],4)}""")
 
-<!-- #raw -->
-(indPDNPi, tPiTest[indPDNPi], phiDensityNormed[indPDNPi,hbarkInd])
-<!-- #endraw -->
+# + active=""
+# (indPDNPi, tPiTest[indPDNPi], phiDensityNormed[indPDNPi,hbarkInd])
 
-<!-- #raw -->
-(indPDNPM, tPiTest[indPDNPM], phiDensityNormed[indPDNPM,hbarkInd], phiDensityNormed[indPDNPM,hbarkInI])
-<!-- #endraw -->
+# + active=""
+# (indPDNPM, tPiTest[indPDNPM], phiDensityNormed[indPDNPM,hbarkInd], phiDensityNormed[indPDNPM,hbarkInI])
+# -
 
-```python
 
-```
 
-<!-- #raw -->
-np.flip(scipy.signal.find_peaks(-SC_searchHelper)[0])
-<!-- #endraw -->
+# + active=""
+# np.flip(scipy.signal.find_peaks(-SC_searchHelper)[0])
 
-<!-- #raw -->
-tPiTest[np.flip(scipy.signal.find_peaks(-SC_searchHelper)[0])]
-<!-- #endraw -->
+# + active=""
+# tPiTest[np.flip(scipy.signal.find_peaks(-SC_searchHelper)[0])]
 
-<!-- #raw -->
-SC_searchHelper[np.flip(scipy.signal.find_peaks(-SC_searchHelper)[0])]
-<!-- #endraw -->
+# + active=""
+# SC_searchHelper[np.flip(scipy.signal.find_peaks(-SC_searchHelper)[0])]
+# -
 
-```python
 
-```
 
-```python
 
-```
 
-#### Export frames run test
+# #### Export frames run test
 
-```python
 def tPiTestFrameExportHelper(ti, tPi, output_prefix_tPiVscan, skipMod=1):
     return (None, None)
-```
 
-<!-- #raw editable=true slideshow={"slide_type": ""} -->
-tPiScanOutputTimeStart = datetime.now()
-os.makedirs(output_prefix+"tPiScan", exist_ok=True)
-tPiTFEHSM = 100000000
-N_JOBS_PLT = -3
-l.info(f"tPiTFEHSM = {tPiTFEHSM}, f={len(tPiTest)//tPiTFEHSM}, N_JOBS_PLT = {N_JOBS_PLT}")
-def tPiTestFrameExportHelper(ti, tPi, output_prefix_tPiVscan, skipMod=1):
-    if ti % skipMod != 0: return (None, None)
-    psi = tPiOutput[ti][1][1]
-    plot_psi(psi, False)
-    plt.savefig(output_prefix_tPiVscan+f"/psi-({ti},{tPi}).png",dpi=600)
-    # tPiOutputFramesDir.append(output_prefix+f"tPiScan/psi-({ti},{tPi}).png")
-    plt.close()
-    plot_mom(psi,5,5,False)
-    plt.savefig(output_prefix_tPiVscan+f"/phi-({ti},{tPi}).png",dpi=600)
-    plt.close()
-    plt.cla() 
-    plt.clf() 
-    plt.close('all')
-    # plt.ioff() # idk, one of these should clear memroy issues?
-    time.sleep(0.01)
-    # gc.collect()
-    return(output_prefix_tPiVscan+f"/psi-({ti},{tPi}).png", 
-           output_prefix_tPiVscan+f"/phi-({ti},{tPi}).png")
 
-tPiOutputFramesDir = Parallel(n_jobs=N_JOBS_PLT)(
-    delayed(tPiTestFrameExportHelper)(ti, tPiTest[ti], output_prefix+"tPiScan", skipMod=tPiTFEHSM)
-    for ti in tqdm(range(len(tPiTest)))
-)
-tPiScanOutputTimeEnd = datetime.now()
-tPiScanOutputTimeDelta = tPiScanOutputTimeEnd-tPiScanOutputTimeStart
-l.info(f"""Time to output one scan: {tPiScanOutputTimeDelta}""")
-gc.collect()
-<!-- #endraw -->
+# + editable=true slideshow={"slide_type": ""} active=""
+# tPiScanOutputTimeStart = datetime.now()
+# os.makedirs(output_prefix+"tPiScan", exist_ok=True)
+# tPiTFEHSM = 100000000
+# N_JOBS_PLT = -3
+# l.info(f"tPiTFEHSM = {tPiTFEHSM}, f={len(tPiTest)//tPiTFEHSM}, N_JOBS_PLT = {N_JOBS_PLT}")
+# def tPiTestFrameExportHelper(ti, tPi, output_prefix_tPiVscan, skipMod=1):
+#     if ti % skipMod != 0: return (None, None)
+#     psi = tPiOutput[ti][1][1]
+#     plot_psi(psi, False)
+#     plt.savefig(output_prefix_tPiVscan+f"/psi-({ti},{tPi}).png",dpi=600)
+#     # tPiOutputFramesDir.append(output_prefix+f"tPiScan/psi-({ti},{tPi}).png")
+#     plt.close()
+#     plot_mom(psi,5,5,False)
+#     plt.savefig(output_prefix_tPiVscan+f"/phi-({ti},{tPi}).png",dpi=600)
+#     plt.close()
+#     plt.cla() 
+#     plt.clf() 
+#     plt.close('all')
+#     # plt.ioff() # idk, one of these should clear memroy issues?
+#     time.sleep(0.01)
+#     # gc.collect()
+#     return(output_prefix_tPiVscan+f"/psi-({ti},{tPi}).png", 
+#            output_prefix_tPiVscan+f"/phi-({ti},{tPi}).png")
+#
+# tPiOutputFramesDir = Parallel(n_jobs=N_JOBS_PLT)(
+#     delayed(tPiTestFrameExportHelper)(ti, tPiTest[ti], output_prefix+"tPiScan", skipMod=tPiTFEHSM)
+#     for ti in tqdm(range(len(tPiTest)))
+# )
+# tPiScanOutputTimeEnd = datetime.now()
+# tPiScanOutputTimeDelta = tPiScanOutputTimeEnd-tPiScanOutputTimeStart
+# l.info(f"""Time to output one scan: {tPiScanOutputTimeDelta}""")
+# gc.collect()
 
-<!-- #raw -->
-tPiOutputFramesDir
-<!-- #endraw -->
+# + active=""
+# tPiOutputFramesDir
 
-```python editable=true slideshow={"slide_type": ""}
+# + editable=true slideshow={"slide_type": ""}
 tPiScanOutputTimeDelta = timedelta(0)
-```
 
-<!-- #region editable=true slideshow={"slide_type": ""} -->
-## Intensity Scan
-<!-- #endregion -->
+# + [markdown] editable=true slideshow={"slide_type": ""}
+# ## Intensity Scan
 
-```python editable=true slideshow={"slide_type": ""}
+# + editable=true slideshow={"slide_type": ""}
 isDelta = 0.1
 intensityScan = np.arange(0.05,1+isDelta,isDelta)
 l.info(f"""len(intensityScan): {len(intensityScan)}
@@ -1438,27 +1293,20 @@ l.info(f"omegaRabiScan: {omegaRabiScan}")
 VRScan = 2*hb*omegaRabiScan*0.001
 l.info(f"VRScan: {VRScan}")
 l.info(f"VRScan/VR: {VRScan/VR}")
-```
+# -
 
-```python
 l.info(f"""len(intensityScan) = {len(intensityScan)}
 Each scan takes time roughtly {tPiScanTimeDelta.seconds}s + {tPiScanOutputTimeDelta.seconds}s  
 Estimate total scan time: {(tPiScanTimeDelta+tPiScanOutputTimeDelta)*len(intensityScan)}""")
-```
 
-```python
 intensityScanParamNotes = []
 for i in range(len(intensityScan)):
     intensityScanParamNotes.append((i, intensityScan[i], omegaRabiScan[i], VRScan[i]))
-```
 
-```python
 l.info(f"""intensityScanParamNotes
 (i, intensityScan[i], omegaRabiScan[i], VRScan[i]): 
 {intensityScanParamNotes}""".replace("), (", "),\n("))
-```
 
-```python
 intensityWidthGrid = []
 for (VRi,VRs) in enumerate(VRScan):
     tempTRow = []
@@ -1469,25 +1317,15 @@ VRs_grid, tP_grid = np.meshgrid(VRScan, tPiTest, indexing='ij')
 intensityWidthGrid = np.stack((VRs_grid, tP_grid), axis=-1)
 # (row, column)
 # (VRs, timePulse)
-```
 
-```python
 intensityWidthGrid[:,0] # VRScan , tPiTest[0] 
-```
 
-```python
 intensityWidthGrid[0,:] # VRScan[0], tPiTest
-```
 
-```python
 
-```
 
-```python
 
-```
 
-```python
 ksz=kz
 ksx=kx
 VRScanOutput = []
@@ -1599,9 +1437,7 @@ l.info("""
 ==================================================================================
 ==================================================================================
 """)
-```
 
-```python
 with pgzip.open(output_prefix+'/_VRScanOutput'+output_ext, 'wb', thread=8, blocksize=1*10**8) as file:
     pickle.dump(VRScanOutput, file) 
 with pgzip.open(output_prefix+'/_intensityScan'+output_ext, 'wb', thread=8, blocksize=1*10**8) as file:
@@ -1610,17 +1446,11 @@ with pgzip.open(output_prefix+'/_intensityWidthGrid'+output_ext, 'wb', thread=8,
     pickle.dump(intensityWidthGrid, file) 
 with pgzip.open(output_prefix+'/_multiPulses'+output_ext, 'wb', thread=8, blocksize=1*10**8) as file:
     pickle.dump(multiPulses, file) 
-```
 
-```python
 
-```
 
-```python
 
-```
 
-```python
 # hbarkInd = 2
 vtSliceM1 = np.empty((len(VRScan),len(tPiTest)))
 for (VRi,VRs) in enumerate(VRScan):
@@ -1632,23 +1462,17 @@ for (VRi,VRs) in enumerate(VRScan):
     vtSliceM1[VRi] = phiDensityGrid_hbark[:,hbarkInd]/phiDensityNormFactor
     # vtSliceM1[VRi] = SC_searchHelper
 print(hbar_k_transfers[hbarkInd])
-```
 
-```python
 vtSliceM1.shape
-```
 
-```python
 VRScanOutputPi
-```
 
-```python
+# +
 # VRSOPi = np.array(VRScanOutputPi)
 # VRSOPM = np.array(VRScanOutputPM)
 # VRSOSC = np.array(VRScanOutputSC)
-```
+# -
 
-```python
 pi04list = []
 pi14list = [] 
 pi24list = [] 
@@ -1682,43 +1506,33 @@ pi14list = np.array(pi14list)
 pi24list = np.array(pi24list)
 pi34list = np.array(pi34list)
 pi44list = np.array(pi44list)
-```
 
-```python
 pulseOutput = pd.DataFrame(rowList, columns=["V","I","x","i","t","e"])
-```
 
-<!-- #raw -->
-this_result
-<!-- #endraw -->
+# + active=""
+# this_result
 
-<!-- #raw -->
-pi_lists = [[] for _ in range(len(thetaList))]
-for VRi, VRs in enumerate(VRScan):
-    peaks_ind, peaks_time, peaks_helper = multiPulses[VRi]
-    for i in range(5):
-        pi_lists[i].extend([(VRs, ptime, peaks_helper[i][ind]) for ind, ptime in enumerate(peaks_time[i])])    
-pi_arrays = [np.array(pi_list) for pi_list in pi_lists]
-pi04list, pi14list, pi24list, pi34list, pi44list = pi_arrays
-<!-- #endraw -->
+# + active=""
+# pi_lists = [[] for _ in range(len(thetaList))]
+# for VRi, VRs in enumerate(VRScan):
+#     peaks_ind, peaks_time, peaks_helper = multiPulses[VRi]
+#     for i in range(5):
+#         pi_lists[i].extend([(VRs, ptime, peaks_helper[i][ind]) for ind, ptime in enumerate(peaks_time[i])])    
+# pi_arrays = [np.array(pi_list) for pi_list in pi_lists]
+# pi04list, pi14list, pi24list, pi34list, pi44list = pi_arrays
+# -
 
-```python
 pi04list
-```
 
-```python
 pi04list[:,1]
-```
 
-<!-- #raw -->
-plt.scatter(pi04list[:,1], pi04list[:,0])
-<!-- #endraw -->
+# + active=""
+# plt.scatter(pi04list[:,1], pi04list[:,0])
+# -
 
-```python
 np.linspace(tPiTest[-1],tPiTest[0],11)
-```
 
-```python editable=true slideshow={"slide_type": ""}
+# + editable=true slideshow={"slide_type": ""}
 cmapS = plt.get_cmap('viridis', 20).copy()
 cmapS.set_bad(color='black')
 plt.close()
@@ -1747,70 +1561,49 @@ plt.title(title)
 # plt.savefig(output_prefix+"/"+title+".pdf", dpi=600)
 # plt.savefig(output_prefix+"/"+title+".png", dpi=600)
 plt.show()
-```
+# -
 
-```python
 
-```
 
-<!-- #raw -->
-rowList = []
-for (i,v) in enumerate(VRSOPi):
-    u = VRSOPM[i]
-    # print(f"{i}, {round(intensityScan[i],4)}, {round(VRScan[i],1)} \t"
-    #       +f"{v[0]}, {round(v[1],3)}, {round(v[2],4)} \t"
-    #       +f"{u[0]}, {round(u[1],3)}, {round(u[2],4)}, {round(u[3],4)}"
-    #  )
-    rowList.append((i,intensityScan[i],VRScan[i],v[0],v[1],v[2],u[0],u[1],u[2],u[3]))
-pulseOutput = pd.DataFrame(rowList, columns=["i","I","V","Pi","ts","ef","PM","ts","e-","e+"])
-<!-- #endraw -->
+# + active=""
+# rowList = []
+# for (i,v) in enumerate(VRSOPi):
+#     u = VRSOPM[i]
+#     # print(f"{i}, {round(intensityScan[i],4)}, {round(VRScan[i],1)} \t"
+#     #       +f"{v[0]}, {round(v[1],3)}, {round(v[2],4)} \t"
+#     #       +f"{u[0]}, {round(u[1],3)}, {round(u[2],4)}, {round(u[3],4)}"
+#     #  )
+#     rowList.append((i,intensityScan[i],VRScan[i],v[0],v[1],v[2],u[0],u[1],u[2],u[3]))
+# pulseOutput = pd.DataFrame(rowList, columns=["i","I","V","Pi","ts","ef","PM","ts","e-","e+"])
 
-<!-- #raw -->
-rowList = []
-for (i,v) in enumerate(VRSOSC):
-    rowList.append((i,intensityScan[i],VRScan[i],v[0],v[1],v[2],v[3]))
-pulseOutput = pd.DataFrame(rowList, columns=["i","I","V","isc","tsc","e-","e+"])
-<!-- #endraw -->
+# + active=""
+# rowList = []
+# for (i,v) in enumerate(VRSOSC):
+#     rowList.append((i,intensityScan[i],VRScan[i],v[0],v[1],v[2],v[3]))
+# pulseOutput = pd.DataFrame(rowList, columns=["i","I","V","isc","tsc","e-","e+"])
+# -
 
-```python
 pulseOutput
-```
 
-```python
 pulseOutput.to_csv(output_prefix+"VRScanPulseDuration.csv")
-```
 
-```python
 
-```
 
-```python
 
-```
 
-```python
 
-```
 
-```python
 
-```
 
-```python
 
-```
 
-```python
 
-```
 
-# Loading previous scans
+# # Loading previous scans
 
-```python
 assert False, "just to catch run all"
-```
 
-```python
+# +
 folder_to_import = '20240503-154711-TFF'
 with pgzip.open(f'/Volumes/tonyNVME Gold/oneParticleSim/{folder_to_import}/VRScanOutput.pgz.pkl'
                 , 'rb', thread=8) as file:
@@ -1823,25 +1616,16 @@ with pgzip.open(f'/Volumes/tonyNVME Gold/oneParticleSim/{folder_to_import}/inten
 with pgzip.open(f'/Volumes/tonyNVME Gold/oneParticleSim/{folder_to_import}/intensityWidthGrid.pgz.pkl'
                 , 'rb', thread=8) as file:
     intensityWidthGrid = pickle.load(file)
-```
+# -
 
-```python
 intensityScan = intensityScan[:88]
-```
 
-```python
 VRScan = intensityWidthGrid[:,0][:,0][:88]
-```
 
-```python
 isDelta = VRScan[1]-VRScan[0]
-```
 
-```python
 tPiTest = intensityWidthGrid[0,:][:,1]
-```
 
-```python
 VRScanOutputPi = [] 
 VRScanOutputPM = []
 intensityScan2 = []
@@ -1855,100 +1639,51 @@ for (VRi,VRs) in enumerate(VRScan):
     VRScanOutputPi.append((indPDNPi, tPiTest[indPDNPi], phiDensityNormed[indPDNPi,hbarkInd]))
     VRScanOutputPM.append((indPDNPM, tPiTest[indPDNPM], phiDensityNormed[indPDNPM,hbarkInd], phiDensityNormed[indPDNPM,hbarkInI]))
     intensityScan2.append(intensityScan[VRi])
-```
 
-```python
 intensityScan2 = np.array(intensityScan2)
-```
 
-```python
 np.shape(VRScanOutputPi)
-```
 
-```python
 np.shape(intensityScan2)
-```
 
-```python
 
-```
 
-```python
 VRSOPi.shape 
-```
 
-```python
 intensityScan.shape
-```
 
-```python
 
-```
 
-```python
 
-```
 
-```python
 
-```
 
-```python
 
-```
 
-```python
 
-```
 
-```python
 
-```
 
-```python
 
-```
 
-```python
 
-```
 
-```python
 
-```
 
-```python
 
-```
 
-```python
 
-```
 
-```python
 
-```
 
-```python
 
-```
 
-```python
 
-```
 
-```python
 
-```
 
-```python
 
-```
 
-```python
 
-```
 
-```python
 
-```

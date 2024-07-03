@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"window.zoomLevel": -0.5,
+		"emeraldwalk.runonsave": {
+			"commands": [
+				{
+					"match": "\\.ipynb$",
+					// "isAsync": true,
+					"cmd": "jupytext ${file} --to py",
+				},
+			]
+		},
+	}
+}
