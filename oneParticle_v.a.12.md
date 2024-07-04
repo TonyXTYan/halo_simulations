@@ -144,7 +144,8 @@ l.info(f"This file is {output_prefix}logs.log")
 
 ```python
 l.info(f"""nthreads = {nthreads}
-N_JOBS = {N_JOBS}""")
+N_JOBS = {N_JOBS}
+N_JOB2 = {N_JOB2}""")
 ```
 
 ```python
@@ -175,8 +176,8 @@ print_ram_usage()
 ```
 
 ```python
-nx = 3000+1
-nz = 3000+1
+nx = 1500+1
+nz = 1500+1
 xmax = 50 #Micrometers
 # zmax = (nz/nx)*xmax
 zmax = xmax
@@ -432,8 +433,9 @@ dopd*dt {dopd*dt}""")
 
 ```python
 plt.plot(zlin, np.cos(2*kz*zlin))
-plt.plot(zlin, np.cos(2*kz*zlin + dopd*dt))
+plt.plot(zlin, np.cos(2*kz*zlin + dopd*dt*1))
 plt.plot(zlin, np.cos(2*kz*zlin + dopd*dt*2))
+plt.plot(zlin, np.cos(2*kz*zlin + dopd*dt*3))
 plt.xlim(-1,1)
 plt.show()
 ```
@@ -671,7 +673,7 @@ title="init_ring_psi"
 # plt.savefig("output/"+title+".png", dpi=600)
 plt.show()
 
-plot_mom(psi,20,20,False)
+plot_mom(psi,10,10,False)
 title="init_ring_phi"
 # plt.savefig("output/"+title+".pdf", dpi=600)
 # plt.savefig("output/"+title+".png", dpi=600)
@@ -898,7 +900,7 @@ l.info(f"""Time to simulate 1us: {tPiScanTime1usDelta}""")
 ```python
 tPDelta = 2*dt  # positive +, note I want tPiTest in decending order 
 # tPiTest = np.append(np.arange(0.5,0.1,-tPDelta), 0) # note this is decending
-tPiTest = np.arange(0.03,0.001-tPDelta,-tPDelta)
+tPiTest = np.arange(0.03,0.0006-tPDelta,-tPDelta)
     # tPiTest = np.arange(dt,3*dt,dt)
 l.info(f"#tPiTest = {len(tPiTest)}, max={tPiTest[0]*1000}, min={tPiTest[-1]*1000} us")
 l.info(f"tPiTest: {tPiTest}")
@@ -927,7 +929,7 @@ plt.ylabel("$V(t)$")
 
 plt.subplot(2,1,2)
 plot_inner_helper()
-plt.xlim([0,0.02])
+plt.xlim([0,0.002])
 plt.xlabel("$t \ (ms)$ ")
 plt.ylabel("$V(t)$")
 
@@ -964,7 +966,8 @@ l.info(f"""Time to run one scan: {tPiScanTimeDelta}""")
 ```
 
 ```python
-with pgzip.open(output_prefix+"tPiScan/"+f"tPiOutput1VR"+output_ext,'wb', thread=4, blocksize=2*10**8) as file:
+os.makedirs(output_prefix+"tPiScan", exist_ok=True)
+with pgzip.open(output_prefix+"tPiScan/"+f"tPiOutput"+output_ext,'wb', thread=4, blocksize=2*10**8) as file:
     pickle.dump(tPiOutput, file) 
 gc.collect()
 ```
@@ -991,7 +994,7 @@ psi = tPiOutput[110][1][1]
 # psi = tPiTestRun[1]L
 # psi = testFreeEv1[1]
 # plot_psi(psi)
-# (swnf, phi) = phiAndSWNF(psi)
+(swnf, phi) = phiAndSWNF(psi)
 plot_mom(psi,8,8)
 ```
 
@@ -1001,7 +1004,7 @@ plot_mom(psi,8,8)
 
 ```python editable=true slideshow={"slide_type": ""}
 # hbar_k_transfers = np.arange(-4,4+1,+2)
-hbar_k_transfers = np.arange(-20-1,20+2,+2)
+hbar_k_transfers = np.arange(-10-1,10+2,+2)
 # pzlinIndexSet = np.zeros((len(hbar_k_transfers), len(pxlin)), dtype=bool)
 pxlinIndexSet = np.zeros((len(hbar_k_transfers), len(pzlin)), dtype=bool)
 cut_p_width = 5*dpz/p
@@ -1276,19 +1279,19 @@ gc.collect()
 
 plt.figure(figsize=(11,4))
 plt.subplot(1,2,1)
-plt.plot(momAngList*180/pi, momAngPiScan[80,:,3], label=f"DR {round(tPiTest[80]*1000,1)}$\mu s, \pi$", color='r', linestyle='-', alpha=0.5)
-plt.plot(momAngList*180/pi, momAngPiScan[80,:,0], label=f"UR {round(tPiTest[80]*1000,1)}$\mu s, \pi$", color='b', linestyle='-', alpha=0.5)
-plt.plot(momAngList*180/pi, momAngPiScan[85,:,0], label=f"UR {round(tPiTest[85]*1000,1)}$\mu s, 3\pi/4$", color='b', linestyle='--', alpha=0.5)
-plt.plot(momAngList*180/pi, momAngPiScan[85,:,3], label=f"DR {round(tPiTest[85]*1000,1)}$\mu s, 3\pi/4$", color='r', linestyle='--', alpha=0.5)
-plt.plot(momAngList*180/pi, momAngPiScan[91,:,0], label=f"UR {round(tPiTest[91]*1000,1)}$\mu s, \pi/2$", color='b', linestyle='-.', alpha=0.5)
-plt.plot(momAngList*180/pi, momAngPiScan[91,:,3], label=f"DR {round(tPiTest[91]*1000,1)}$\mu s, \pi/2$", color='r', linestyle='-.', alpha=0.5)
-plt.plot(momAngList*180/pi, momAngPiScan[97,:,0], label=f"UR {round(tPiTest[97]*1000,1)}$\mu s, \pi/4$", color='b', linestyle=':', alpha=0.5)
-plt.plot(momAngList*180/pi, momAngPiScan[97,:,3], label=f"DR {round(tPiTest[97]*1000,1)}$\mu s, \pi/4$", color='r', linestyle=':', alpha=0.5)
+plt.plot(momAngList*180/pi, momAngPiScan[110,:,0], label=f"UR {round(tPiTest[110]*1000,1)}$\mu s$", color='b', linestyle='-', alpha=0.5)
+plt.plot(momAngList*180/pi, momAngPiScan[110,:,3], label=f"DR {round(tPiTest[110]*1000,1)}$\mu s$", color='r', linestyle='-', alpha=0.5)
+plt.plot(momAngList*180/pi, momAngPiScan[115,:,0], label=f"UR {round(tPiTest[115]*1000,1)}$\mu s$", color='b', linestyle='--', alpha=0.5)
+plt.plot(momAngList*180/pi, momAngPiScan[115,:,3], label=f"DR {round(tPiTest[115]*1000,1)}$\mu s$", color='r', linestyle='--', alpha=0.5)
+# plt.plot(momAngList*180/pi, momAngPiScan[91,:,0], label=f"UR {round(tPiTest[91]*1000,1)}$\mu s, \pi/2$", color='b', linestyle='-.', alpha=0.5)
+# plt.plot(momAngList*180/pi, momAngPiScan[91,:,3], label=f"DR {round(tPiTest[91]*1000,1)}$\mu s, \pi/2$", color='r', linestyle='-.', alpha=0.5)
+# plt.plot(momAngList*180/pi, momAngPiScan[97,:,0], label=f"UR {round(tPiTest[97]*1000,1)}$\mu s, \pi/4$", color='b', linestyle=':', alpha=0.5)
+# plt.plot(momAngList*180/pi, momAngPiScan[97,:,3], label=f"DR {round(tPiTest[97]*1000,1)}$\mu s, \pi/4$", color='r', linestyle=':', alpha=0.5)
 plt.xlabel("Polar angle (deg) from halo north pole")
 plt.ylabel("Population overlap")
 plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=5))
 plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=0.0005))
-plt.legend(loc='upper center',fontsize='x-small', ncol=4,bbox_to_anchor=(0.5,1.13))
+plt.legend(loc='upper center',fontsize='x-small', ncol=2,bbox_to_anchor=(0.5,1.13))
 # plt.tight_layout()
 
 plt.subplot(1,2,2)
