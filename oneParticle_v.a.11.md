@@ -918,6 +918,15 @@ title="bragg_strength_V0"
 l.info(f"roughtly can finish in {round((tPiScanTime1usDelta*tPiScanTotalSimUS*1000).total_seconds()/3600, 3)} hours")
 ```
 
+```python
+l.info(f"""psi size is {round(sys.getsizeof(psi)/1024**2,3)} MB
+need {round(sys.getsizeof(psi)/1024**3 * len(tPiTest),3)} GB RAM to tPiOutput""")
+```
+
+```python
+
+```
+
 ```python editable=true slideshow={"slide_type": ""}
 tPiScanTimeStart = datetime.now()
 tPiOutput = Parallel(n_jobs=N_JOB2)(
@@ -1068,20 +1077,20 @@ os.makedirs(output_prefix+"tPiScan", exist_ok=True)
 ```
 
 ```python editable=true slideshow={"slide_type": ""}
-plt.figure(figsize=(11,5))
+plt.figure(figsize=(11,4))
 for (i, hbar_k) in enumerate(hbar_k_transfers):
-    if abs(hbar_k) >4: continue
+    if abs(hbar_k) >5: continue
     if   hbar_k > 0: style = '+-'
     elif hbar_k < 0: style = 'x-'
     else:            style = '.-'
     plt.plot(tPiTest*1000, phiDensityNormed[:,i],
-             style, linewidth=1,alpha=0.5, markersize=5,
+             style, linewidth=1,alpha=0.4, markersize=5,
              label=str(hbar_k)+"$\hbar k$",
             )
 
-plt.legend(loc=1,ncols=1)
-plt.ylabel("$normalised \int |\phi(p)| dp$ around region ($\pm$"+str(cut_p_width)+")")
-plt.xlabel("$t_\pi \ (\mu s)$")
+plt.legend(loc=2,ncols=2)
+plt.ylabel("Population Fraction (Normalised by \n $\int |\phi(p)|^2 dp$ integrating cuts ($\pm$"+str(round(cut_p_width,3))+"$\hbar k$))")
+plt.xlabel("Pulse width $(\mu s)$")
 # plt.axhline(y=np.cos(pi  )**2,color='gray',linewidth=1,alpha=0.5)  # 2*pi pulse
 # plt.axhline(y=np.cos(pi/2)**2,color='c',linewidth=1,alpha=0.5)     # pi   pulse
 # plt.axhline(y=np.cos(pi/4)**2,color='violet',linewidth=1,alpha=0.5) # pi/2 pulse
@@ -1095,9 +1104,15 @@ plt.xlabel("$t_\pi \ (\mu s)$")
 # plt.text((1+21)*dt*1000, 1, "$\pi/2$",color='violet')
 # plt.text((1+ 9)*dt*1000, 1, "$\pi/4$",color='orange')
 
+plt.gca().xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=1))
+plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=1/4))
+plt.gca().yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=0.1))
+plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=0.1/4))
+plt.xlim([0,30.5])
+
 title = "bragg_pulse_duration_test_labeled"
-plt.savefig(output_prefix+"tPiScan/"+title+".pdf", dpi=600)
-plt.savefig(output_prefix+"tPiScan/"+title+".png", dpi=600)
+plt.savefig(output_prefix+"tPiScan/"+title+".pdf", dpi=600,bbox_inches='tight')
+plt.savefig(output_prefix+"tPiScan/"+title+".png", dpi=600,bbox_inches='tight')
 
 plt.show()
 ```
@@ -1170,25 +1185,44 @@ momAngResults = np.array(momAngResults)
 ```
 
 ```python
-plt.figure(figsize=(14,6))
+plt.figure(figsize=(11,4))
 plt.subplot(1,2,1)
-plt.imshow(np.abs(phi.T)**2, cmap='Greys', alpha=0.6, extent=np.array([-pxmax,+pxmax,-pzmax,+pzmax])/p, interpolation='none')
-plt.imshow(maUR.T, cmap=ct_cmap('Greens'), alpha=0.9, extent=np.array([-pxmax,+pxmax,-pzmax,+pzmax])/p, interpolation='none')
-plt.imshow(maUL.T, cmap=ct_cmap('Oranges'), alpha=0.9, extent=np.array([-pxmax,+pxmax,-pzmax,+pzmax])/p, interpolation='none')
-plt.imshow(maDR.T, cmap=ct_cmap('Blues'), alpha=0.9, extent=np.array([-pxmax,+pxmax,-pzmax,+pzmax])/p, interpolation='none')
-plt.imshow(maDL.T, cmap=ct_cmap('Purples'), alpha=0.9, extent=np.array([-pxmax,+pxmax,-pzmax,+pzmax])/p, interpolation='none')
+plt.imshow(np.abs(phi.T)**2, cmap='Greys', alpha=0.6, extent=np.array([-pxmax,+pxmax,-pzmax,+pzmax])/p, interpolation='None')
+plt.imshow(maUR.T, cmap=ct_cmap('Greens'), alpha=0.9, extent=np.array([-pxmax,+pxmax,-pzmax,+pzmax])/p, interpolation='None')
+plt.imshow(maUL.T, cmap=ct_cmap('Oranges'), alpha=0.9, extent=np.array([-pxmax,+pxmax,-pzmax,+pzmax])/p, interpolation='None')
+plt.imshow(maDR.T, cmap=ct_cmap('Blues'), alpha=0.9, extent=np.array([-pxmax,+pxmax,-pzmax,+pzmax])/p, interpolation='None')
+plt.imshow(maDL.T, cmap=ct_cmap('Purples'), alpha=0.9, extent=np.array([-pxmax,+pxmax,-pzmax,+pzmax])/p, interpolation='None',label="DL")
 
 plt.xlim([-3, +3])
 plt.ylim([-3, +3])
+plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=1/4))
+plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=1/4))
+plt.xlabel("$p_x (\hbar k)$")
+plt.ylabel("$p_z (\hbar k)$")
+plt.text(+0.80,+1.80,"|UR⟩")
+plt.text(+0.80,-0.20,"|DR⟩")
+plt.text(-1.45,+0.10,"|UL⟩")
+plt.text(-1.45,-1.85,"|DL⟩")
 
-plt .subplot(1,2,2)
-plt.imshow(momAngResults.T, extent=[momAngList[0], momAngList[-1],-0.5,3.5],interpolation='none',aspect='auto')
+
+plt.subplot(1,2,2)
+plt.imshow(momAngResults.T, extent=[momAngList[0]*180/pi, momAngList[-1]*180/pi,-0.5,3.5],interpolation='None',aspect='auto', rasterized=True)
+# plt.gca().set_rasterized(True)
 plt.yticks(range(4), labels=["DL","DR","UL","UR"])
-plt.xticks([i*pi/12 for i in range(13)], labels=[f"{i}" for i in range(13)])
-plt.grid(axis='x',alpha=0.5,linewidth=0.5)
+# plt.xticks([180/6 for i in range(7)], labels=[f"{round(i*180/6)}" for i in range(7)])
+# plt.grid(axis='x',alpha=0.5,linewidth=0.5)
+# below line sets the minor ticks =
+plt.gca().xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=30))
+plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=5))
+plt.xlabel("Polar angle (deg) from halo north pole")
+plt.ylabel("Population overlap $|⟨XY|\psi⟩|^2$ \n($|\psi_\mathrm{total}|^2=1$ normalisation)")
+plt.colorbar()
+# plt.xlim([0,pi])
+
+
 title = "halo_mom_ang_labels"
-plt.savefig(output_prefix+"tPiScan/"+title+".pdf", dpi=600)
-plt.savefig(output_prefix+"tPiScan/"+title+".png", dpi=600)
+plt.savefig(output_prefix+"tPiScan/"+title+".pdf", dpi=600,bbox_inches='tight')
+plt.savefig(output_prefix+"tPiScan/"+title+".png", dpi=600,bbox_inches='tight')
 plt.show()
 ```
 
@@ -1208,15 +1242,26 @@ gc.collect()
 ```
 
 ```python
-plt.figure(figsize=(14,6))
+
+plt.figure(figsize=(11,4))
 plt.subplot(1,2,1)
-plt.plot(momAngList*180/pi, momAngPiScan[80,:,0])
-plt.plot(momAngList*180/pi, momAngPiScan[80,:,3])
-plt.xlabel("deg")
-plt.ylabel("P")
+plt.plot(momAngList*180/pi, momAngPiScan[80,:,3], label=f"DR {round(tPiTest[80]*1000,1)}$\mu s, \pi$", color='r', linestyle='-', alpha=0.5)
+plt.plot(momAngList*180/pi, momAngPiScan[80,:,0], label=f"UR {round(tPiTest[80]*1000,1)}$\mu s, \pi$", color='b', linestyle='-', alpha=0.5)
+plt.plot(momAngList*180/pi, momAngPiScan[85,:,0], label=f"UR {round(tPiTest[85]*1000,1)}$\mu s, 3\pi/4$", color='b', linestyle='--', alpha=0.5)
+plt.plot(momAngList*180/pi, momAngPiScan[85,:,3], label=f"DR {round(tPiTest[85]*1000,1)}$\mu s, 3\pi/4$", color='r', linestyle='--', alpha=0.5)
+plt.plot(momAngList*180/pi, momAngPiScan[91,:,0], label=f"UR {round(tPiTest[91]*1000,1)}$\mu s, \pi/2$", color='b', linestyle='-.', alpha=0.5)
+plt.plot(momAngList*180/pi, momAngPiScan[91,:,3], label=f"DR {round(tPiTest[91]*1000,1)}$\mu s, \pi/2$", color='r', linestyle='-.', alpha=0.5)
+plt.plot(momAngList*180/pi, momAngPiScan[97,:,0], label=f"UR {round(tPiTest[97]*1000,1)}$\mu s, \pi/4$", color='b', linestyle=':', alpha=0.5)
+plt.plot(momAngList*180/pi, momAngPiScan[97,:,3], label=f"DR {round(tPiTest[97]*1000,1)}$\mu s, \pi/4$", color='r', linestyle=':', alpha=0.5)
+plt.xlabel("Polar angle (deg) from halo north pole")
+plt.ylabel("Population overlap")
+plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=5))
+plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=0.0005))
+plt.legend(loc='upper center',fontsize='x-small', ncol=4,bbox_to_anchor=(0.5,1.13))
+# plt.tight_layout()
 
 plt.subplot(1,2,2)
-plt.plot(tPiTest*1000,momAngPiScan[:,90,0], label="UR at 90", color='b', linestyle='-', alpha=0.5)
+plt.plot(tPiTest*1000,momAngPiScan[:,90,0], label="UR at 90$^\circ$", color='b', linestyle='-', alpha=0.5)
 plt.plot(tPiTest*1000,momAngPiScan[:,90,3], label="DR at 90", color='r', linestyle='-', alpha=0.5)
 plt.plot(tPiTest*1000,momAngPiScan[:,75,0], label="UR at 75", color='b', linestyle='--', alpha=0.5)
 plt.plot(tPiTest*1000,momAngPiScan[:,75,3], label="DR at 75", color='r', linestyle='--', alpha=0.5)
@@ -1224,14 +1269,43 @@ plt.plot(tPiTest*1000,momAngPiScan[:,60,0], label="UR at 60", color='b', linesty
 plt.plot(tPiTest*1000,momAngPiScan[:,60,3], label="DR at 60", color='r', linestyle='-.', alpha=0.5)
 plt.plot(tPiTest*1000,momAngPiScan[:,45,0], label="UR at 45", color='b', linestyle=':', alpha=0.5)
 plt.plot(tPiTest*1000,momAngPiScan[:,60,3], label="DR at 45", color='r', linestyle=':', alpha=0.5)
-plt.xlabel("$\mu s$")
-plt.ylabel("$P$")
-plt.legend(loc=7)
+plt.xlabel("Pulse width ($\mu s$)")
+plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=1))
+plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=0.0005))
+# plt.ylabel("Population ($|\psi_\mathrm{total}|^2=1$ normalisation)")
+plt.ylabel("Population overlap")
+plt.legend(loc='upper center',fontsize='x-small', ncol=4,bbox_to_anchor=(0.5,1.115))
 
 
 title = "halo_mom_ang_scan"
-plt.savefig(output_prefix+"tPiScan/"+title+".pdf", dpi=600)
-plt.savefig(output_prefix+"tPiScan/"+title+".png", dpi=600)
+plt.savefig(output_prefix+"tPiScan/"+title+".pdf", dpi=600,bbox_inches='tight')
+plt.savefig(output_prefix+"tPiScan/"+title+".png", dpi=600,bbox_inches='tight')
+plt.show()
+```
+
+```python
+plt.figure(figsize=(11,3))
+gam = 0.07
+omP = pi/6
+ts = np.linspace(0,30,1000)
+plt.plot(ts, 0+np.cos(omP*ts)**2, label="|U⟩ \t $  \cos^2(\omega t)                $", alpha=0.3,color='b')
+plt.plot(ts, 1-np.cos(omP*ts)**2, label="|D⟩ \t $1-\cos^2(\omega t)=sin^2(\omega t)$", alpha=0.3,color='r')
+plt.plot(ts, 0+np.cos(omP*ts)**2*np.exp(-gam*ts), label="|U⟩ \t $  \cos^2(\omega t)e^{-\gamma t }$", alpha=0.9, linestyle='--',color='b')
+plt.plot(ts, 1-np.cos(omP*ts)**2*np.exp(-gam*ts), label="|D⟩ \t $1-\cos^2(\omega t)e^{-\gamma t }$", alpha=0.9, linestyle='--',color='r')
+
+plt.legend(loc=7)
+plt.gca().xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=1))
+plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=1/4))
+plt.gca().yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=0.1))
+plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=0.1/2))
+plt.xlim([0,30])
+plt.xlabel("Pulse width ($\mu s$)")
+plt.ylabel("Population Fraction")
+
+title = "halo_mom_trans_model"
+plt.savefig(output_prefix+"tPiScan/"+title+".pdf", dpi=600,bbox_inches='tight')
+plt.savefig(output_prefix+"tPiScan/"+title+".png", dpi=600,bbox_inches='tight')
+
 plt.show()
 ```
 
@@ -1245,13 +1319,22 @@ with pgzip.open(output_prefix+"tPiScan/"+f"momAngPiScan"+output_ext,'wb', thread
 ```
 
 ```python
-with pgzip.open(output_prefix+"tPiScan/"+f"tPiOutput1VR"+output_ext,'wb', thread=1, blocksize=2*10**8) as file:
+with pgzip.open(output_prefix+"tPiScan/"+f"tPiOutput1VR"+output_ext,'wb', thread=4, blocksize=2*10**8) as file:
     pickle.dump(tPiOutput, file) 
 gc.collect()
 ```
 
 ```python
-sys.getsizeof(phi)/(1024**2)
+# with pgzip.open('/Volumes/tonyNVME Gold/oneParticleSim/20240703-225141-TFF/tPiScan/momAngPiScan.pgz.pkl' , 'rb', thread=8) as file:
+#     momAngPiScan = pickle.load(file)
+with pgzip.open('/Volumes/tonyNVME Gold/oneParticleSim/20240703-225141-TFF/tPiScan/tPiOutput1VR.pgz.pkl' , 'rb', thread=8) as file:
+    tPiOutput = pickle.load(file)
+```
+
+```python
+# del tPiOutput, momAngPiScan
+# del psi, phi
+gc.collect()
 ```
 
 ```python
