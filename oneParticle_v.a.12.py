@@ -882,7 +882,7 @@ need {round(sys.getsizeof(psi)/1024**3 * len(tPiTest),3)} GB RAM to tPiOutput"""
 # + editable=true slideshow={"slide_type": ""}
 tPiScanTimeStart = datetime.now()
 tPiOutput = Parallel(n_jobs=N_JOB2)(
-    delayed(lambda i: (i, scanTauPiInnerEval(i, False, False,0,p,dopd,VR)[:2]) )(i) 
+    delayed(lambda i: (i, scanTauPiInnerEval(i, False, False,0,p,1*dopd,VR)[:2]) )(i) 
     for i in tqdm(tPiTest)
 ) 
 tPiScanTimeEnd = datetime.now()
@@ -895,7 +895,7 @@ with pgzip.open(output_prefix+"tPiScan/"+f"tPiOutput"+output_ext,'wb', thread=4,
     pickle.dump(tPiOutput, file) 
 gc.collect()
 
-tPiOutput[110][0]
+tPiOutput[70][0]
 
 tPiOutput[10][1][0]
 
@@ -905,7 +905,9 @@ tPiTest[10]
 
 # + editable=true slideshow={"slide_type": ""}
 # psi = tPiOutput[-30][1][1]
-psi = tPiOutput[110][1][1]
+ind = 80
+psi = tPiOutput[ind][1][1]
+print(round(tPiOutput[ind][0]*1000, 3))
 # psi = tPiTestRun[1]L
 # psi = testFreeEv1[1]
 # plot_psi(psi)
@@ -1175,10 +1177,10 @@ gc.collect()
 
 plt.figure(figsize=(11,4))
 plt.subplot(1,2,1)
-plt.plot(momAngList*180/pi, momAngPiScan[110,:,0], label=f"UR {round(tPiTest[110]*1000,1)}$\mu s$", color='b', linestyle='-', alpha=0.5)
-plt.plot(momAngList*180/pi, momAngPiScan[110,:,3], label=f"DR {round(tPiTest[110]*1000,1)}$\mu s$", color='r', linestyle='-', alpha=0.5)
-plt.plot(momAngList*180/pi, momAngPiScan[115,:,0], label=f"UR {round(tPiTest[115]*1000,1)}$\mu s$", color='b', linestyle='--', alpha=0.5)
-plt.plot(momAngList*180/pi, momAngPiScan[115,:,3], label=f"DR {round(tPiTest[115]*1000,1)}$\mu s$", color='r', linestyle='--', alpha=0.5)
+plt.plot(momAngList*180/pi, momAngPiScan[80,:,0], label=f"UR {round(tPiTest[80]*1000,1)}$\mu s$", color='b', linestyle='-', alpha=0.5)
+plt.plot(momAngList*180/pi, momAngPiScan[80,:,3], label=f"DR {round(tPiTest[80]*1000,1)}$\mu s$", color='r', linestyle='-', alpha=0.5)
+plt.plot(momAngList*180/pi, momAngPiScan[90,:,0], label=f"UR {round(tPiTest[90]*1000,1)}$\mu s$", color='b', linestyle='--', alpha=0.5)
+plt.plot(momAngList*180/pi, momAngPiScan[90,:,3], label=f"DR {round(tPiTest[90]*1000,1)}$\mu s$", color='r', linestyle='--', alpha=0.5)
 # plt.plot(momAngList*180/pi, momAngPiScan[91,:,0], label=f"UR {round(tPiTest[91]*1000,1)}$\mu s, \pi/2$", color='b', linestyle='-.', alpha=0.5)
 # plt.plot(momAngList*180/pi, momAngPiScan[91,:,3], label=f"DR {round(tPiTest[91]*1000,1)}$\mu s, \pi/2$", color='r', linestyle='-.', alpha=0.5)
 # plt.plot(momAngList*180/pi, momAngPiScan[97,:,0], label=f"UR {round(tPiTest[97]*1000,1)}$\mu s, \pi/4$", color='b', linestyle=':', alpha=0.5)
