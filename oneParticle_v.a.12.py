@@ -230,7 +230,7 @@ v3 = 2*hb*k/m3
 # assert (pxmax > p*2.5 or pzmax > p*2.5), "momentum resolution too small"
 # dopd = 60.1025 # 1/ms Doppler detuning (?)
 # dopd = v3**2 * m3 / hb
-dopd = v4**2 * m4 / hb
+dopd = v4**2 * m4 / hb /2
 # -
 
 xmax**2 * m3 * 6 / (hb*pi*(nx-1))
@@ -882,7 +882,7 @@ need {round(sys.getsizeof(psi)/1024**3 * len(tPiTest),3)} GB RAM to tPiOutput"""
 # + editable=true slideshow={"slide_type": ""}
 tPiScanTimeStart = datetime.now()
 tPiOutput = Parallel(n_jobs=N_JOB2)(
-    delayed(lambda i: (i, scanTauPiInnerEval(i, False, False,0,p,1*dopd,VR)[:2]) )(i) 
+    delayed(lambda i: (i, scanTauPiInnerEval(i, False, False,0,p,dopd,VR)[:2]) )(i) 
     for i in tqdm(tPiTest)
 ) 
 tPiScanTimeEnd = datetime.now()
