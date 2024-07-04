@@ -64,8 +64,8 @@ plt.close("all") # close all existing matplotlib plots
 # numba.set_num_threads(8)
 # -
 
-N_JOBS=7
-N_JOB2=5
+N_JOBS=8
+N_JOB2=6
 nthreads=2
 
 import gc
@@ -368,16 +368,6 @@ plt.plot(tbtest, VS(tbtest,tBraggPi/2+0.4,tBraggPi,0.3*VR))
 plt.show()
 l.info(f"max(V) {1j*(dt/hb)*VBF(tBraggCenter,tBraggPi*5,tBraggPi)}")
 
-tBraggPi
-
-# + editable=true slideshow={"slide_type": ""}
-V(tBraggCenter)
-# -
-
-VBF(tBraggCenter,tBraggPi*5,tBraggPi)
-
-np.trapz(V(tbtest),tbtest) # this should be V0
-
 xlin = np.linspace(-xmax,+xmax, nx)
 zlin = np.linspace(-zmax,+zmax, nz)
 psi=np.zeros((nx,nz),dtype=complex)
@@ -426,9 +416,6 @@ title="bragg_potential_grid"
 # plt.savefig("output/"+title+".png", dpi=600)
 
 plt.show()
-
-# + editable=true slideshow={"slide_type": ""}
-dopd*dt/dx
 
 
 # + editable=true slideshow={"slide_type": ""}
@@ -528,10 +515,9 @@ def plot_mom(psi, zoom_div2=15, zoom_div3=6, plt_show=True):
     
     if plt_show: plt.show()
         
+# -
 
-# +
 sg=0.2
-
 def psi0(x,z,sx=sg,sz=sg,px=0,pz=0):
     return (1/np.sqrt(pi*sx*sz)) \
             * np.exp(-0.5*x**2/sx**2) \
@@ -543,8 +529,6 @@ def psi0ringUnNorm(x,z,pr=p,mur=10,sg=sg):
             * np.exp(-0.5*( mur - np.sqrt(x**2 + z**2) )**2 / sg**2) \
             * np.exp(+(1j/hb) * (x**2 + z**2)**0.5 * pr)
 
-
-# -
 
 expPGrid = np.zeros((nx,nz),dtype=complex)
 for indx in range(nx):
@@ -580,11 +564,6 @@ def psi0ringNpOffset(mur=1,sg=1,pr=p,xo=0,zo=0,pxo=0,pzo=0):
     norm = np.sum(np.abs(psi)**2)*dx*dz
     psi *= 1/sqrt(norm)
     return psi
-# -
-
-
-
-# + editable=true slideshow={"slide_type": ""}
 
 
 # + editable=true slideshow={"slide_type": ""}
@@ -629,12 +608,7 @@ plt.show()
 
 # -
 
-
-
-5/v4
-
 v4*0.2
-
 
 
 # + editable=true slideshow={"slide_type": ""}
@@ -711,8 +685,7 @@ def numericalEvolve(
     return (t,psi,phi)
 
 
-# -
-
+# + vscode={"languageId": "raw"} active=""
 # %timeit _ = numericalEvolve(0, psi0np(1,1,0,0), dt, final_plot=False, progress_bar=False)
 
 # + active=""
@@ -784,11 +757,9 @@ def freeEvolve(
 
 _ = freeEvolve(0,psi0np(1,1,0,0),0.1,final_plot=False,logging=True)
 
-(tBraggCenter,tBraggEnd,tBraggPi)
 
 
-
-# ## Pulse Scan Test Run
+# ## Pulse Scan Test Run (MUST RUN)
 
 # short test run
 _ = numericalEvolve(0, psi0np(3,3,0.5*p,0), 2*dt,progress_bar=False,final_plot=False)
@@ -822,20 +793,22 @@ def scanTauPiInnerEval(tPi,
 
 # -
 
-tPiScanTime1usStart = datetime.now()
-_ = scanTauPiInnerEval(0.001, False, True,0,p,0*dopd,VR)
-tPiScanTime1usEnd = datetime.now()
-tPiScanTime1usDelta = tPiScanTime1usEnd - tPiScanTime1usStart
-l.info(f"""Time to simulate 1us: {tPiScanTime1usDelta}""")
+# This is to get an estimate of long it takes to simulate 10us
+tPiScanTime10usStart = datetime.now()
+_ = scanTauPiInnerEval(0.010, False, True,0,p,1*dopd,VR)
+tPiScanTime10usEnd = datetime.now()
+tPiScanTime10usDelta = tPiScanTime10usEnd - tPiScanTime10usStart
+l.info(f"""Time to simulate 1us: {tPiScanTime10usDelta}""")
 
 # +
-tPDelta = 2*dt  # positive +, note I want tPiTest in decending order 
+tPDelta = 100*dt  # positive +, note I want tPiTest in decending order 
 # tPiTest = np.append(np.arange(0.5,0.1,-tPDelta), 0) # note this is decending
-tPiTest = np.arange(0.03,0.0006-tPDelta,-tPDelta)
+tPiTest = np.arange(0.05,0.0006-0*tPDelta,-tPDelta)
     # tPiTest = np.arange(dt,3*dt,dt)
-l.info(f"#tPiTest = {len(tPiTest)}, max={tPiTest[0]*1000}, min={tPiTest[-1]*1000} us")
-l.info(f"tPiTest: {tPiTest}")
-
+l.info(f"len(tPiTest) = {len(tPiTest)}, max={tPiTest[0]*1000}, min={tPiTest[-1]*1000} us")
+l.info(f"tPiTest: {round(tPiTest[0],6)}, {round(tPiTest[1],6)}, ..., {round(tPiTest[-2],6)}, {round(tPiTest[-1],6)}")
+l.info(f"""psi size is {round(sys.getsizeof(psi)/1024**2,3)} MB
+need {round(sys.getsizeof(psi)/1024**3 * len(tPiTest),3)} GB RAM to tPiOutput""")
 
 plt.figure(figsize=(12,5))
 def plot_inner_helper():
@@ -856,6 +829,7 @@ def plot_inner_helper():
 
 plt.subplot(2,1,1)
 tPiScanTotalSimUS = plot_inner_helper()
+l.info(f"roughtly can finish in {round((tPiScanTime10usDelta*tPiScanTotalSimUS*100).total_seconds()/60, 3)} min")
 plt.ylabel("$V(t)$")
 
 plt.subplot(2,1,2)
@@ -869,15 +843,13 @@ title="bragg_strength_V0"
 # plt.savefig("output/"+title+".pdf", dpi=600)
 # plt.savefig("output/"+title+".png", dpi=600)
 
-
 # -
 
-l.info(f"roughtly can finish in {round((tPiScanTime1usDelta*tPiScanTotalSimUS*1000).total_seconds()/3600, 3)} hours")
+tPiTest
 
-l.info(f"""psi size is {round(sys.getsizeof(psi)/1024**2,3)} MB
-need {round(sys.getsizeof(psi)/1024**3 * len(tPiTest),3)} GB RAM to tPiOutput""")
 
-0.25*dopd
+
+# ## Manual Scan
 
 # + editable=true slideshow={"slide_type": ""}
 tPiScanTimeStart = datetime.now()
@@ -895,14 +867,6 @@ with pgzip.open(output_prefix+"tPiScan/"+f"tPiOutput"+output_ext,'wb', thread=4,
     pickle.dump(tPiOutput, file) 
 gc.collect()
 
-tPiOutput[70][0]
-
-tPiOutput[10][1][0]
-
-tPiTest[10]
-
-tPiTest[10]
-
 # + editable=true slideshow={"slide_type": ""}
 # psi = tPiOutput[-30][1][1]
 ind = 80
@@ -914,8 +878,8 @@ print(round(tPiOutput[ind][0]*1000, 3))
 (swnf, phi) = phiAndSWNF(psi)
 plot_mom(psi,8,8)
 
-# + editable=true slideshow={"slide_type": ""}
-
+# + [markdown] editable=true slideshow={"slide_type": ""}
+# #### zcut method calculations
 
 # + editable=true slideshow={"slide_type": ""}
 # hbar_k_transfers = np.arange(-4,4+1,+2)
@@ -1068,7 +1032,7 @@ target A: {hbar_k_transfers[hbarkInA] if hbarkInA is not None else 'NA'}, target
 # currently (May 2024), by design, only one set will get used at a time. 
 # -
 
-
+# #### Angle Transfer Stuff
 
 # +
 # momAngMask = np.zeros((nx,nz))
@@ -1769,11 +1733,7 @@ pulseOutput.to_csv(output_prefix+"VRScanPulseDuration.csv")
 
 
 
-
-
-
-
-# # Loading previous scans
+# ### Loading previous scans
 
 assert False, "just to catch run all"
 
@@ -1832,27 +1792,102 @@ intensityScan.shape
 
 
 
+# ## Detuning Scan
+
+haloId = np.arange(-9,9+2,2)
+l.info(f"haloId = {haloId} \nNote pzmax/p = {pzmax/p}")
+assert max(haloId)+1.5 < pzmax/p, "check halo max momentum"
+
+
+# +
+def momAngMaskCombov2(mA, pwid=5*dpz, hid=0):
+    #NOTE: this should supercede momAngMaskCombo
+    #REVIEW: this thing might contain a +/- p definition error, or could mean somewhere in the code is problematic
+    momAngMaskL = np.exp(-((pxlin[:,np.newaxis] + p*sin(mA))**2 + (-pzlin[np.newaxis,:] - hid*p + p*cos(mA))**2) / (pwid)**2)
+    momAngMaskR = np.exp(-((pxlin[:,np.newaxis] - p*sin(mA))**2 + (-pzlin[np.newaxis,:] - hid*p - p*cos(mA))**2) / (pwid)**2)
+    # momAngMaskDR = np.exp(-((pxlin[:,np.newaxis] - p*sin(mA))**2 + (-pzlin[np.newaxis,:] + p - p*cos(mA))**2) / (pwid)**2)
+    # momAngMaskDL = np.exp(-((pxlin[:,np.newaxis] + p*sin(mA))**2 + (-pzlin[np.newaxis,:] + p + p*cos(mA))**2) / (pwid)**2)
+    return (momAngMaskL, momAngMaskR)
+
+def momAngFValv2(mA,phi,pwid=5*dpz):
+    #NOTE: this should supercede momAngFVal
+    outputTemp = np.zeros((len(haloId), 2))
+    phiAbsSq = np.abs(phi)**2
+    for (i,h) in enumerate(haloId):
+        mAML, mAMR = momAngMaskCombov2(mA, pwid, h)
+        outputTemp[i,0] = np.sum(phiAbsSq * mAML * dpz * dpx)
+        outputTemp[i,1] = np.sum(phiAbsSq * mAMR * dpz * dpx)
+    return outputTemp
 
 
 
+# -
 
+ddS = 2
+deltaScan = np.arange(-2 ,2+ddS,ddS)
+deltaScanRU = deltaScan*dopd
+l.info(f"""len(deltaScan) = {len(deltaScan)}
+deltaScan = {round(deltaScan[0],2)}, {round(deltaScan[1],2)}, ..., {round(deltaScan[-2],2)}, {round(deltaScan[-1],2)}
+deltaScanRU = {round(deltaScanRU[0],2)}, {round(deltaScanRU[1],2)}, ..., {round(deltaScanRU[-2],2)}, {round(deltaScanRU[-1],2)}
+dopd = {dopd}""")
 
+momAngList = np.arange(0,180,1)*pi/180
+DSScanOutput = np.zeros((len(deltaScan), len(tPiTest), len(momAngList), len(haloId), 2))
+l.info(f"""DSScanOutput.shape = {DSScanOutput.shape}, size {DSScanOutput.size}, {round(sys.getsizeof(DSScanOutput)/1024**2,3)} MB""")
 
+# +
+DScanTimeStart = datetime.now()
+output_prefix_dScanLoopTemp = output_prefix+"dScanLoopTemp/"
+os.makedirs(output_prefix_dScanLoopTemp, exist_ok=True)
+for (di, dd) in enumerate(deltaScan):
+    DScanTimeNow = datetime.now()
+    tE = DScanTimeNow - DScanTimeStart
+    if di != 0 :
+        tR = (len(deltaScan)-di)* tE/di
+        l.info(f"Computing di={di}, dd={round(dd,2)}, tE {tE} tR {tR}")
+    else:
+        l.info(f"Computing di={di}, dd={round(dd,2)}")
+    
+    tPiOutput = Parallel(n_jobs=N_JOB2)(
+        delayed(lambda i: (i, scanTauPiInnerEval(i, False, False, 0, p, dd*dopd,VR)[:2]) )(i) 
+        for i in tqdm(tPiTest)
+    )
 
+    with pgzip.open(output_prefix_dScanLoopTemp+f"tPiOutput_di={di}"+output_ext, 'wb', thread=5, blocksize=1*10**8) as file:
+        pickle.dump(tPiOutput, file)
 
+    momAngPiScan = np.zeros((len(tPiTest), len(momAngList), len(haloId), 2))
+    for (ti, tt) in tqdm(enumerate(tPiTest), total=len(tPiTest)):
+        item = tPiOutput[ti]
+        (swnf, phi) = phiAndSWNF(item[1][1])
+        momAngResults = Parallel(n_jobs=N_JOBS)( 
+            delayed(lambda mAv: np.array(momAngFValv2(mAv, pwid=5*dpz, phi=phi)))(mAv)
+            for mAv in momAngList
+        )
+        momAngResults = np.array(momAngResults)
+        momAngPiScan[ti] = momAngResults
+    DSScanOutput[di]=momAngPiScan
 
+    with pgzip.open(output_prefix_dScanLoopTemp+f"momAngPiScan_di={di}"+output_ext, 'wb', thread=8, blocksize=1*10**8) as file:
+        pickle.dump(momAngPiScan, file)
 
+    del momAngPiScan, tPiOutput
+    gc.collect()
 
+with pgzip.open(output_prefix+"DSScanOutput"+output_ext, 'wb', thread=8, blocksize=1*10**8) as file:
+    pickle.dump(DSScanOutput, file)
+l.info("Detuning Scan DONE !!! YEAHHH ")
+# -
 
+DSScanOutput.shape
 
-
-
-
-
-
-
-
-
+plt.plot(DSScanOutput[1,1,:,4,0],'-')
+plt.plot(DSScanOutput[1,1,:,4,1],'-')
+plt.plot(DSScanOutput[1,1,:,5,0],'-')
+plt.plot(DSScanOutput[1,1,:,5,1],'-')
+# plt.plot(DSScanOutput[1,2,:,4,0],'.-')
+# plt.plot(DSScanOutput[1,2,:,4,1],'.-')
+plt.show()
 
 
 
