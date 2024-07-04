@@ -40,7 +40,7 @@ import pgzip
 import os
 import platform
 import logging
-import sys
+# import sys
 
 from joblib import Parallel, delayed
 
@@ -64,7 +64,8 @@ plt.close("all") # close all existing matplotlib plots
 # numba.set_num_threads(8)
 # -
 
-N_JOBS=6
+N_JOBS=7
+N_JOB2=5
 nthreads=2
 
 import gc
@@ -798,7 +799,7 @@ tPiScanTime1usDelta = tPiScanTime1usEnd - tPiScanTime1usStart
 l.info(f"""Time to simulate 1us: {tPiScanTime1usDelta}""")
 
 # +
-tPDelta = 10*dt  # positive +, note I want tPiTest in decending order 
+tPDelta = 2*dt  # positive +, note I want tPiTest in decending order 
 # tPiTest = np.append(np.arange(0.5,0.1,-tPDelta), 0) # note this is decending
 tPiTest = np.arange(0.03,0.001-tPDelta,-tPDelta)
     # tPiTest = np.arange(dt,3*dt,dt)
@@ -808,12 +809,12 @@ l.info(f"tPiTest: {tPiTest}")
 
 plt.figure(figsize=(12,5))
 def plot_inner_helper():
-    tPiScanTotalSimMS = 0
+    tPiScanTotalSimUS = 0
     for (i, tauPi) in enumerate(tPiTest):
         if tauPi == 0: continue
         tauMid = tauPi / 2 
         tauEnd = tauPi * 1
-        tPiScanTotalSimMS += tauEnd
+        tPiScanTotalSimUS += tauEnd
         tlinspace = np.arange(0,tauEnd,dt)
         # plt.plot(tlinspace, VBF(tlinspace, tauMid, tauPi),
         #          linewidth=0.5,alpha=0.9
@@ -821,10 +822,10 @@ def plot_inner_helper():
         plt.plot(tlinspace, VS(tlinspace, tauMid, tauPi),
                  linewidth=0.5,alpha=0.9
             )
-    return tPiScanTotalSimMS
+    return tPiScanTotalSimUS
 
 plt.subplot(2,1,1)
-tPiScanTotalSimMS = plot_inner_helper()
+tPiScanTotalSimUS = plot_inner_helper()
 plt.ylabel("$V(t)$")
 
 plt.subplot(2,1,2)
@@ -841,11 +842,11 @@ title="bragg_strength_V0"
 
 # -
 
-(tPiScanTime1usDelta*tPiScanTotalSimMS*1000).total_seconds()/3600
+l.info(f"roughtly can finish in {round((tPiScanTime1usDelta*tPiScanTotalSimUS*1000).total_seconds()/3600, 3)} hours")
 
 # + editable=true slideshow={"slide_type": ""}
 tPiScanTimeStart = datetime.now()
-tPiOutput = Parallel(n_jobs=N_JOBS)(
+tPiOutput = Parallel(n_jobs=N_JOB2)(
     delayed(lambda i: (i, scanTauPiInnerEval(i, False, False,0,p,0*dopd,VR)[:2]) )(i) 
     for i in tqdm(tPiTest)
 ) 
@@ -864,7 +865,7 @@ tPiTest[10]
 
 # + editable=true slideshow={"slide_type": ""}
 # psi = tPiOutput[-30][1][1]
-psi = tPiOutput[16][1][1]
+psi = tPiOutput[80][1][1]
 # psi = tPiTestRun[1]L
 # psi = testFreeEv1[1]
 plot_psi(psi)
@@ -964,6 +965,9 @@ phiDensityNormFactor = np.trapz(phiDensityGrid_hbark,axis=1)
 # for i in range(len(hbar_k_transfers)):
 #     phiDensityNormed[:,i] = phiDensityGrid_hbark[:,i]/phiDensityNormFactor[i]
 phiDensityNormed = phiDensityGrid_hbark / phiDensityNormFactor[:, np.newaxis]
+# -
+
+gc.collect()
 
 # +
 # phiDensityNormFactor
@@ -1000,8 +1004,8 @@ plt.xlabel("$t_\pi \ (\mu s)$")
 # plt.text((1+ 9)*dt*1000, 1, "$\pi/4$",color='orange')
 
 title = "bragg_pulse_duration_test_labeled"
-plt.savefig(output_prefix+"/tPiScan/"+title+".pdf", dpi=600)
-plt.savefig(output_prefix+"/tPiScan/"+title+".png", dpi=600)
+plt.savefig(output_prefix+"tPiScan/"+title+".pdf", dpi=600)
+plt.savefig(output_prefix+"tPiScan/"+title+".png", dpi=600)
 
 plt.show()
 
@@ -1083,6 +1087,9 @@ plt.imshow(momAngResults.T, extent=[momAngList[0], momAngList[-1],-0.5,3.5],inte
 plt.yticks(range(4), labels=["DL","DR","UL","UR"])
 plt.xticks([i*pi/12 for i in range(13)], labels=[f"{i}" for i in range(13)])
 plt.grid(axis='x',alpha=0.5,linewidth=0.5)
+title = "halo_mom_ang_labels"
+plt.savefig(output_prefix+"tPiScan/"+title+".pdf", dpi=600)
+plt.savefig(output_prefix+"tPiScan/"+title+".png", dpi=600)
 plt.show()
 # -
 
@@ -1096,28 +1103,49 @@ for (ti, tt) in tqdm(enumerate(tPiTest), total=len(tPiTest)):
     )
     momAngResults = np.array(momAngResults)
     momAngPiScan[ti] = momAngResults
+del item, phi, swnf, momAngResults
+gc.collect()
 
-
-plt.plot(momAngList*180/pi, momAngPiScan[16,:,0])
-plt.plot(momAngList*180/pi, momAngPiScan[16,:,3])
+# +
+plt.figure(figsize=(14,6))
+plt.subplot(1,2,1)
+plt.plot(momAngList*180/pi, momAngPiScan[80,:,0])
+plt.plot(momAngList*180/pi, momAngPiScan[80,:,3])
 plt.xlabel("deg")
 plt.ylabel("P")
-plt.show()
 
-plt.plot(tPiTest*1000,momAngPiScan[:,90,0], label="UR at 90", color='b', linestyle='-', alpha=0.7)
-plt.plot(tPiTest*1000,momAngPiScan[:,90,3], label="DR at 90", color='r', linestyle='-', alpha=0.7)
-plt.plot(tPiTest*1000,momAngPiScan[:,75,0], label="UR at 75", color='b', linestyle='--', alpha=0.7)
-plt.plot(tPiTest*1000,momAngPiScan[:,75,3], label="DR at 75", color='r', linestyle='--', alpha=0.7)
+plt.subplot(1,2,2)
+plt.plot(tPiTest*1000,momAngPiScan[:,90,0], label="UR at 90", color='b', linestyle='-', alpha=0.5)
+plt.plot(tPiTest*1000,momAngPiScan[:,90,3], label="DR at 90", color='r', linestyle='-', alpha=0.5)
+plt.plot(tPiTest*1000,momAngPiScan[:,75,0], label="UR at 75", color='b', linestyle='--', alpha=0.5)
+plt.plot(tPiTest*1000,momAngPiScan[:,75,3], label="DR at 75", color='r', linestyle='--', alpha=0.5)
+plt.plot(tPiTest*1000,momAngPiScan[:,60,0], label="UR at 60", color='b', linestyle='-.', alpha=0.5)
+plt.plot(tPiTest*1000,momAngPiScan[:,60,3], label="DR at 60", color='r', linestyle='-.', alpha=0.5)
+plt.plot(tPiTest*1000,momAngPiScan[:,45,0], label="UR at 45", color='b', linestyle=':', alpha=0.5)
+plt.plot(tPiTest*1000,momAngPiScan[:,60,3], label="DR at 45", color='r', linestyle=':', alpha=0.5)
 plt.xlabel("$\mu s$")
 plt.ylabel("$P$")
 plt.legend(loc=7)
+
+
+title = "halo_mom_ang_scan"
+plt.savefig(output_prefix+"tPiScan/"+title+".pdf", dpi=600)
+plt.savefig(output_prefix+"tPiScan/"+title+".png", dpi=600)
 plt.show()
+# -
 
-momAngList[90]*180/pi
+with pgzip.open(output_prefix+"tPiScan/"+f"tPiTest"+output_ext,'wb', thread=8, blocksize=1*10**8) as file:
+    pickle.dump(tPiTest, file) 
+with pgzip.open(output_prefix+"tPiScan/"+f"momAngList"+output_ext,'wb', thread=8, blocksize=1*10**8) as file:
+    pickle.dump(momAngList, file) 
+with pgzip.open(output_prefix+"tPiScan/"+f"momAngPiScan"+output_ext,'wb', thread=8, blocksize=1*10**8) as file:
+    pickle.dump(momAngPiScan, file) 
 
+with pgzip.open(output_prefix+"tPiScan/"+f"tPiOutput1VR"+output_ext,'wb', thread=1, blocksize=2*10**8) as file:
+    pickle.dump(tPiOutput, file) 
+gc.collect()
 
-
-
+sys.getsizeof(phi)/(1024**2)
 
 thetaList = np.arange(0,16+1,1)*pi/4
 popTarList = np.sin(thetaList/2)**2
