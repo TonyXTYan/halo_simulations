@@ -882,7 +882,7 @@ need {round(sys.getsizeof(psi)/1024**3 * len(tPiTest),3)} GB RAM to tPiOutput"""
 # + editable=true slideshow={"slide_type": ""}
 tPiScanTimeStart = datetime.now()
 tPiOutput = Parallel(n_jobs=N_JOB2)(
-    delayed(lambda i: (i, scanTauPiInnerEval(i, False, False,0,p,1*dopd,VR)[:2]) )(i) 
+    delayed(lambda i: (i, scanTauPiInnerEval(i, False, False,0,p,0.5*dopd,VR)[:2]) )(i) 
     for i in tqdm(tPiTest)
 ) 
 tPiScanTimeEnd = datetime.now()
@@ -1179,8 +1179,12 @@ plt.figure(figsize=(11,4))
 plt.subplot(1,2,1)
 plt.plot(momAngList*180/pi, momAngPiScan[80,:,0], label=f"UR {round(tPiTest[80]*1000,1)}$\mu s$", color='b', linestyle='-', alpha=0.5)
 plt.plot(momAngList*180/pi, momAngPiScan[80,:,3], label=f"DR {round(tPiTest[80]*1000,1)}$\mu s$", color='r', linestyle='-', alpha=0.5)
-plt.plot(momAngList*180/pi, momAngPiScan[90,:,0], label=f"UR {round(tPiTest[90]*1000,1)}$\mu s$", color='b', linestyle='--', alpha=0.5)
-plt.plot(momAngList*180/pi, momAngPiScan[90,:,3], label=f"DR {round(tPiTest[90]*1000,1)}$\mu s$", color='r', linestyle='--', alpha=0.5)
+plt.plot(momAngList*180/pi, momAngPiScan[85,:,0], label=f"UR {round(tPiTest[85]*1000,1)}$\mu s$", color='b', linestyle='--', alpha=0.5)
+plt.plot(momAngList*180/pi, momAngPiScan[85,:,3], label=f"DR {round(tPiTest[85]*1000,1)}$\mu s$", color='r', linestyle='--', alpha=0.5)
+plt.plot(momAngList*180/pi, momAngPiScan[90,:,0], label=f"UR {round(tPiTest[85]*1000,1)}$\mu s$", color='b', linestyle='-.', alpha=0.5)
+plt.plot(momAngList*180/pi, momAngPiScan[90,:,3], label=f"DR {round(tPiTest[85]*1000,1)}$\mu s$", color='r', linestyle='-.', alpha=0.5)
+plt.plot(momAngList*180/pi, momAngPiScan[95,:,0], label=f"UR {round(tPiTest[85]*1000,1)}$\mu s$", color='b', linestyle=':', alpha=0.5)
+plt.plot(momAngList*180/pi, momAngPiScan[95,:,3], label=f"DR {round(tPiTest[85]*1000,1)}$\mu s$", color='r', linestyle=':', alpha=0.5)
 # plt.plot(momAngList*180/pi, momAngPiScan[91,:,0], label=f"UR {round(tPiTest[91]*1000,1)}$\mu s, \pi/2$", color='b', linestyle='-.', alpha=0.5)
 # plt.plot(momAngList*180/pi, momAngPiScan[91,:,3], label=f"DR {round(tPiTest[91]*1000,1)}$\mu s, \pi/2$", color='r', linestyle='-.', alpha=0.5)
 # plt.plot(momAngList*180/pi, momAngPiScan[97,:,0], label=f"UR {round(tPiTest[97]*1000,1)}$\mu s, \pi/4$", color='b', linestyle=':', alpha=0.5)
@@ -1189,7 +1193,7 @@ plt.xlabel("Polar angle (deg) from halo north pole")
 plt.ylabel("Population overlap")
 plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=5))
 plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=0.0005))
-plt.legend(loc='upper center',fontsize='x-small', ncol=2,bbox_to_anchor=(0.5,1.13))
+plt.legend(loc='upper center',fontsize='x-small', ncol=4,bbox_to_anchor=(0.5,1.13))
 # plt.tight_layout()
 
 plt.subplot(1,2,2)
@@ -1200,7 +1204,7 @@ plt.plot(tPiTest*1000,momAngPiScan[:,75,3], label="DR at 75", color='r', linesty
 plt.plot(tPiTest*1000,momAngPiScan[:,60,0], label="UR at 60", color='b', linestyle='-.', alpha=0.5)
 plt.plot(tPiTest*1000,momAngPiScan[:,60,3], label="DR at 60", color='r', linestyle='-.', alpha=0.5)
 plt.plot(tPiTest*1000,momAngPiScan[:,45,0], label="UR at 45", color='b', linestyle=':', alpha=0.5)
-plt.plot(tPiTest*1000,momAngPiScan[:,60,3], label="DR at 45", color='r', linestyle=':', alpha=0.5)
+plt.plot(tPiTest*1000,momAngPiScan[:,45,3], label="DR at 45", color='r', linestyle=':', alpha=0.5)
 plt.xlabel("Pulse width ($\mu s$)")
 plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=1))
 plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=0.0005))
@@ -1213,6 +1217,9 @@ title = "halo_mom_ang_scan"
 plt.savefig(output_prefix+"tPiScan/"+title+".pdf", dpi=600,bbox_inches='tight')
 plt.savefig(output_prefix+"tPiScan/"+title+".png", dpi=600,bbox_inches='tight')
 plt.show()
+# -
+
+
 
 # +
 plt.figure(figsize=(11,3))
