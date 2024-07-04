@@ -1077,6 +1077,7 @@ target A: {hbar_k_transfers[hbarkInA] if hbarkInA is not None else 'NA'}, target
 # -
 
 def momAngMaskCombo(mA,pwid=3*dpz):
+    #REVIEW: this thing might contain a +/- p definition error, or could mean somewhere in the code is problematic
     momAngMaskUR = np.exp(-((pxlin[:,np.newaxis] - p*sin(mA))**2 + (-pzlin[np.newaxis,:] - p - p*cos(mA))**2) / (pwid)**2)
     momAngMaskUL = np.exp(-((pxlin[:,np.newaxis] + p*sin(mA))**2 + (-pzlin[np.newaxis,:] - p + p*cos(mA))**2) / (pwid)**2)
     momAngMaskDR = np.exp(-((pxlin[:,np.newaxis] - p*sin(mA))**2 + (-pzlin[np.newaxis,:] + p - p*cos(mA))**2) / (pwid)**2)
@@ -1174,7 +1175,6 @@ del item, phi, swnf, momAngResults
 gc.collect()
 
 # +
-
 plt.figure(figsize=(11,4))
 plt.subplot(1,2,1)
 plt.plot(momAngList*180/pi, momAngPiScan[80,:,0], label=f"UR {round(tPiTest[80]*1000,1)}$\mu s$", color='b', linestyle='-', alpha=0.5)
@@ -1259,8 +1259,12 @@ with pgzip.open(output_prefix+"tPiScan/"+f"momAngPiScan"+output_ext,'wb', thread
     pickle.dump(momAngPiScan, file) 
 
 # +
-# with pgzip.open('/Volumes/tonyNVME Gold/oneParticleSim/20240703-225141-TFF/tPiScan/momAngPiScan.pgz.pkl' , 'rb', thread=8) as file:
+# del momAngPiScan
+# with pgzip.open('/Volumes/tonyNVME Gold/oneParticleSim/20240704-165506-TFF/tPiScan/momAngPiScan.pgz.pkl' , 'rb', thread=8) as file:
 #     momAngPiScan = pickle.load(file)
+# with pgzip.open('/Volumes/tonyNVME Gold/oneParticleSim/20240704-165506-TFF/tPiScan/tPiTest.pgz.pkl' , 'rb', thread=8) as file:
+#     tPiTest = pickle.load(file)
+# del tPiOutput
 # with pgzip.open('/Volumes/tonyNVME Gold/oneParticleSim/20240703-225141-TFF/tPiScan/tPiOutput1VR.pgz.pkl' , 'rb', thread=8) as file:
 #     tPiOutput = pickle.load(file)
 # del tPiOutput
