@@ -2126,7 +2126,12 @@ def fig_dScan2D_at(dID=16, haloIdCut=4, logging=False, saveFig=False, showFig=Fa
     if logging: l.info(f"haloIdStriped = {haloIdStriped}, \t {haloId[haloIdStriped]}")
     dV = deltaScan[dID]
     # dID = 16
-    fig, axes = plt.subplots(1, len(haloIdStriped), figsize=(figWidcm*cm, 10*cm), sharey=True, constrained_layout=True)
+    
+    # fig, axes = plt.subplots(1, len(haloIdStriped), figsize=(figWidcm*cm, 10*cm), sharey=True, constrained_layout=True)
+    fig = plt.figure(figsize=(figWidcm*cm, 10*cm))
+    gs = fig.add_gridspec(1, len(haloIdStriped), wspace=0.05)
+    axes = [fig.add_subplot(gs[0, i]) for i in range(len(haloIdStriped))]
+
     X, Y = np.meshgrid(tPiTest*1000, momAngList*180/pi)
     vmin = np.min(DSScanOutput[dID, :, :, haloIdStriped, 0])
     vmax = np.max(DSScanOutput[dID, :, :, haloIdStriped, 0])
@@ -2140,18 +2145,28 @@ def fig_dScan2D_at(dID=16, haloIdCut=4, logging=False, saveFig=False, showFig=Fa
         ax.yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=5))
         ax.grid(which='major', linestyle='-', linewidth='0.2', color='white', alpha=1)
         ax.grid(which='minor', linestyle='-', linewidth='0.15', color='white', alpha=1)
-        ax.set_xlabel("Bragg pulse width duration ($\mu s$)")
+        # ax.set_xlabel("pulse width ($\mu s$)")
         # ax.set_ylabel("Polar Angle (deg) from halo north pole")
-        ax.set_title(f"Halo ${'-' if haloId[hp]<0 else '+'} {abs(haloId[hp])}$")
+        # ax.set_title(f"Halo ${'-' if haloId[hp]<0 else '+'} {abs(haloId[hp])}$")
+        ax.set_xlabel("$\mathbf{"+f"{'-' if haloId[hp]<0 else '+'}"+"}$"+"$\mathbf{"+f"{abs(haloId[hp])}"+"}$ Halo" + ", pulse width ($\mu$)")
+        if hi != 0:
+            ax.set_ylabel("")
+            ax.set_yticklabels([])
     axes[0].set_ylabel("Polar Angle (deg) from halo north pole")
 
-    divider = make_axes_locatable(axes[-1])
-    cax = divider.append_axes("right", size="5%", pad=0.1)
+    # divider = make_axes_locatable(axes[-1])
+    # cax = divider.append_axes("right", size="5%", pad=0.1)
+    # fig.colorbar(contour, ax=axes, cax=cax, label="(× $10^{-2}$) Probability $|⟨\star|\psi⟩|^2$", 
+    #     ticks=matplotlib.ticker.MaxNLocator(nbins=10)).ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda x, _: f'{x * 100:.2f}'))
+    # Create an axis for the colorbar next to the last subplot
+    cax = fig.add_axes([0.91, 0.15, 0.01, 0.7])  # Adjust the [left, bottom, width, height] values as needed
+    cbar = fig.colorbar(contour, cax=cax, label="(× $10^{-2}$) Probability $|⟨\star|\psi⟩|^2$", 
+        ticks=matplotlib.ticker.MaxNLocator(nbins=10))
+    cbar.ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda x, _: f'{x * 100:.2f}'))
 
-    fig.colorbar(contour, ax=axes, cax=cax, label="(× $10^{-2}$) Probability $|⟨\star|\psi⟩|^2$", 
-        ticks=matplotlib.ticker.MaxNLocator(nbins=10)).ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda x, _: f'{x * 100:.2f}'))
+    
     title=f"Detuning={dV:.3f}$\omega_\delta$"
-    fig.suptitle(title)
+    fig.suptitle(title, y=0.94)
     title_clean = re.sub(r'\$.*?\$', '', title)
     # plt.tight_layout()
     # plt.subplots_adjust(wspace=1, hspace=0)
@@ -2162,15 +2177,14 @@ def fig_dScan2D_at(dID=16, haloIdCut=4, logging=False, saveFig=False, showFig=Fa
     plt.close()
     return (dID, title_clean)
 
-
 # fig_dScan2D_at(dID=16, haloIdCut=4, logging=True, saveFig=False, showFig=True)
-fig_dScan2D_at(dID=16, haloIdCut=3, logging=True, saveFig=False, showFig=True,figWidcm=30)
+fig_dScan2D_at(dID=16, haloIdCut=3, logging=True, saveFig=False, showFig=True,figWidcm=35)
 # fig_dScan2D_at(dID=16, haloIdCut=2, logging=True, saveFig=False, showFig=True)
 
 # for dID in tqdm(range(len(deltaScan)), desc="Exporting Detuning Scans"):
 #     fig_dScan2D_at(dID, haloIdCut=3, logging=False, saveFig=True, showFig=False, figWidcm=30)
 dScan2DFigNames = Parallel(n_jobs=N_JOB2)(
-    delayed(lambda dID: fig_dScan2D_at(dID, haloIdCut=3, logging=False, saveFig=True, showFig=False, figWidcm=30))(dID)
+    delayed(lambda dID: fig_dScan2D_at(dID, haloIdCut=3, logging=False, saveFig=True, showFig=False, figWidcm=35))(dID)
     for dID in tqdm(range(len(deltaScan)))
 )
 
