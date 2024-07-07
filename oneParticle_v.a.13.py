@@ -794,6 +794,7 @@ def scanTauPiInnerEval(tPi,
 # -
 
 # This is to get an estimate of long it takes to simulate 10us
+# This takes about 1 minute
 tPiScanTime10usStart = datetime.now()
 _ = scanTauPiInnerEval(0.010, False, True,0,p,1*dopd,VR)
 tPiScanTime10usEnd = datetime.now()
@@ -801,9 +802,9 @@ tPiScanTime10usDelta = tPiScanTime10usEnd - tPiScanTime10usStart
 l.info(f"""Time to simulate 1us: {tPiScanTime10usDelta}""")
 
 # +
-tPDelta = 100*dt  # positive +, note I want tPiTest in decending order 
+tPDelta = 2*dt  # positive +, note I want tPiTest in decending order 
 # tPiTest = np.append(np.arange(0.5,0.1,-tPDelta), 0) # note this is decending
-tPiTest = np.arange(0.05,0.0006-0*tPDelta,-tPDelta)
+tPiTest = np.arange(0.04,0.0006-0*tPDelta,-tPDelta)
     # tPiTest = np.arange(dt,3*dt,dt)
 l.info(f"len(tPiTest) = {len(tPiTest)}, max={tPiTest[0]*1000}, min={tPiTest[-1]*1000} us")
 l.info(f"tPiTest: {round(tPiTest[0],6)}, {round(tPiTest[1],6)}, ..., {round(tPiTest[-2],6)}, {round(tPiTest[-1],6)}")
@@ -812,12 +813,12 @@ need {round(sys.getsizeof(psi)/1024**3 * len(tPiTest),3)} GB RAM to tPiOutput"""
 
 plt.figure(figsize=(12,5))
 def plot_inner_helper():
-    tPiScanTotalSimUS = 0
+    tPiScanTotalSimMS = 0
     for (i, tauPi) in enumerate(tPiTest):
         if tauPi == 0: continue
         tauMid = tauPi / 2 
         tauEnd = tauPi * 1
-        tPiScanTotalSimUS += tauEnd
+        tPiScanTotalSimMS += tauEnd
         tlinspace = np.arange(0,tauEnd,dt)
         # plt.plot(tlinspace, VBF(tlinspace, tauMid, tauPi),
         #          linewidth=0.5,alpha=0.9
@@ -825,11 +826,11 @@ def plot_inner_helper():
         plt.plot(tlinspace, VS(tlinspace, tauMid, tauPi),
                  linewidth=0.5,alpha=0.9
             )
-    return tPiScanTotalSimUS
+    return tPiScanTotalSimMS
 
 plt.subplot(2,1,1)
-tPiScanTotalSimUS = plot_inner_helper()
-l.info(f"roughtly can finish in {round((tPiScanTime10usDelta*tPiScanTotalSimUS*100).total_seconds()/60, 3)} min")
+tPiScanTotalSimMS = plot_inner_helper()
+l.info(f"roughtly can finish in {round((100*tPiScanTime10usDelta*tPiScanTotalSimMS).total_seconds()/(0.7*N_JOB2)/60, 3)} min")
 plt.ylabel("$V(t)$")
 
 plt.subplot(2,1,2)
@@ -848,6 +849,8 @@ title="bragg_strength_V0"
 tPiTest
 
 
+
+assert False, "catch run all"
 
 # ## Manual Scan
 
@@ -1823,13 +1826,14 @@ def momAngFValv2(mA,phi,pwid=5*dpz):
 
 # -
 
-ddS = 2
+ddS = 1/8
 deltaScan = np.arange(-2 ,2+ddS,ddS)
 deltaScanRU = deltaScan*dopd
 l.info(f"""len(deltaScan) = {len(deltaScan)}
 deltaScan = {round(deltaScan[0],2)}, {round(deltaScan[1],2)}, ..., {round(deltaScan[-2],2)}, {round(deltaScan[-1],2)}
 deltaScanRU = {round(deltaScanRU[0],2)}, {round(deltaScanRU[1],2)}, ..., {round(deltaScanRU[-2],2)}, {round(deltaScanRU[-1],2)}
 dopd = {dopd}""")
+l.info(f"roughtly can finish in {round((tPiScanTime10usDelta*tPiScanTotalSimMS*100*len(deltaScan)/(0.7*N_JOB2)).total_seconds()/60/60, 2)} hours")
 
 momAngList = np.arange(0,180,1)*pi/180
 DSScanOutput = np.zeros((len(deltaScan), len(tPiTest), len(momAngList), len(haloId), 2))
@@ -1847,7 +1851,7 @@ for (di, dd) in enumerate(deltaScan):
         l.info(f"Computing di={di}, dd={round(dd,2)}, tE {tE} tR {tR}")
     else:
         l.info(f"Computing di={di}, dd={round(dd,2)}")
-    
+
     tPiOutput = Parallel(n_jobs=N_JOB2)(
         delayed(lambda i: (i, scanTauPiInnerEval(i, False, False, 0, p, dd*dopd,VR)[:2]) )(i) 
         for i in tqdm(tPiTest)
