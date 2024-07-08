@@ -883,12 +883,20 @@ gc.collect()
 # psi = tPiOutput[-30][1][1]
 ind = 40
 psi = tPiOutput[ind][1][1]
+psi40 = psi
 print(round(tPiOutput[ind][0]*1000, 3))
 # psi = tPiTestRun[1]L
 # psi = testFreeEv1[1]
 # plot_psi(psi)
 (swnf, phi) = phiAndSWNF(psi)
 plot_mom(psi,8,8)
+# -
+
+assert False, "catch run all"
+del tPiOutput
+gc.collect()
+
+
 
 # + [markdown] editable=true slideshow={"slide_type": ""}
 # #### zcut method calculations
@@ -1224,10 +1232,10 @@ plt.plot(ts, 1-np.sin(omP*ts)**2*np.exp(-gam*ts), label="|U⟩ \t $1-\sin^2(\ome
 plt.plot(ts, 0+np.sin(omP*ts)**2*np.exp(-gam*ts), label="|D⟩ \t $  \sin^2(\omega t)e^{-\gamma t }$", alpha=0.9, linestyle='--',color='r')
 
 plt.legend(loc=7, fontsize='small')
-plt.gca().xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=1))
-plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=1/4))
-plt.gca().yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=0.1))
-plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=0.1/2))
+plt.gca().xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=2))
+plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=1))
+plt.gca().yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=0.2))
+plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=0.1))
 plt.xlim([0,30])
 plt.xlabel("Pulse width ($\mu s$)")
 plt.ylabel("Population Fraction")
@@ -2258,8 +2266,8 @@ plt.text(-1.70,+0.20+2, "|$L^{+3}_\phi$⟩",fontsize='small')
 plt.text(-1.70,+0.20,   "|$L^{+1}_\phi$⟩",fontsize='small')
 plt.text(-1.70,-1.65,   "|$L^{-1}_\phi$⟩",fontsize='small')
 plt.text(-1.70,-1.55-2, "|$L^{-3}_\phi$⟩",fontsize='small')
-plt.grid(which='major', linestyle='-', linewidth='0.3', color='black', alpha=0.4)
-plt.grid(which='minor', linestyle='-', linewidth='0.2', color='black', alpha=0.15)
+plt.grid(which='major', linestyle='-', linewidth='0.3', color='black', alpha=0.3)
+plt.grid(which='minor', linestyle='-', linewidth='0.2', color='black', alpha=0.1)
 plt.gca().set_aspect('equal', adjustable='box')
 plt.scatter([0,0,0,0],[-3,-1,1,3], s=10, c='b', alpha=0.5)
 plt.text(-0.3, +3.10, "$+3\hbar k$", fontsize='small', alpha=0.6)
@@ -2277,8 +2285,8 @@ plt.plot(DSScanOutput[16,ind,:,5,1],'-.',color='b',label="|$R^{+1}_\phi$⟩",alp
 plt.plot(DSScanOutput[16,ind,:,6,1],':',color='b',label="|$R^{+3}_\phi$⟩",alpha=0.6)
 plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=5))
 plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=0.001/2))
-plt.grid(which='major', linestyle='-', linewidth='0.3', color='black', alpha=0.6)
-plt.grid(which='minor', linestyle='-', linewidth='0.2', color='black', alpha=0.2)
+plt.grid(which='major', linestyle='-', linewidth='0.3', color='black', alpha=0.3)
+plt.grid(which='minor', linestyle='-', linewidth='0.2', color='black', alpha=0.1)
 
 plt.xlabel("Polar angle (deg)")
 # plt.ylabel("Population fraction")
@@ -2288,7 +2296,7 @@ plt.legend(loc=7, fontsize='small')
 plt.xlim(-5,185)
 plt.ylim(-0.001/2,0.0160)
 
-title = f"Status Plot Detuning={deltaScan[16]:.3f}$\omega_\delta$, duration={tPiTest[ind]:.5f}$\mu s$, R"
+title = f"Status Plot Detuning={deltaScan[16]:.3f}$\omega_\delta$, duration={1e3*tPiTest[ind]:.1f}$\mu s$, R"
 title_clean = re.sub(r'\$.*?\$', '', title)
 plt.savefig(output_prefix_Figs+title_clean+".pdf", dpi=600, bbox_inches='tight')
 plt.savefig(output_prefix_Figs+title_clean+".png", dpi=600, bbox_inches='tight')
@@ -2308,8 +2316,8 @@ for (i,ii) in enumerate(ddIdL):
     ax.xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=25))
     ax.xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=5))
     if i==0: ax.yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=0.001/2))
-    ax.grid(which='major', linestyle='-', linewidth='0.3', color='black', alpha=0.6)
-    ax.grid(which='minor', linestyle='-', linewidth='0.2', color='black', alpha=0.2)
+    ax.grid(which='major', linestyle='-', linewidth='0.3', color='black', alpha=0.3)
+    ax.grid(which='minor', linestyle='-', linewidth='0.2', color='black', alpha=0.1)
     ax.set_xlabel("Polar angle (deg)")
     if i==0: ax.set_ylabel("Probability $|⟨\star|\psi⟩|^2$")
     ax.legend(loc=7, fontsize='small')
@@ -2328,9 +2336,9 @@ plt.savefig(output_prefix_Figs+title_clean+".png", dpi=600, bbox_inches='tight')
 plt.show()
 
 # +
-angPlotList = [90, 120]
+angPlotList = [90, 120, 150]
 ddIdL = [16, 17, 18, 19, 20, 21, 22, 23, 24]
-fig, axs = plt.subplots(2, len(angPlotList), figsize=(13, 8), sharey=True)
+fig, axs = plt.subplots(2, len(angPlotList), figsize=(15, 8), sharey=True)
 colors = plt.cm.rainbow(np.linspace(0, 1, len(ddIdL)))
 for i, an in enumerate(angPlotList):
     for row in range(2):
@@ -2363,7 +2371,7 @@ for i, an in enumerate(angPlotList):
         else: ax.tick_params(axis='x', which='both', direction='inout', top=True, bottom=True)
 
 
-        ax.grid(which='major', linestyle='-', linewidth='0.3', color='black', alpha=0.4)
+        ax.grid(which='major', linestyle='-', linewidth='0.3', color='black', alpha=0.3)
         ax.grid(which='minor', linestyle='-', linewidth='0.3', color='black', alpha=0.1)
 
         ax.set_xlim(-1,41)
@@ -2503,7 +2511,7 @@ plt.show()
 
 
 
-
+print_ram_usage()
 
 
 
