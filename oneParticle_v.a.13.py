@@ -593,7 +593,7 @@ def phiAndSWNF(psi):
 # psi = psi0np(2,2,0.5*p*np.cos(0),0.5*p*np.sin(0))
 # psi = psi0np(mux=3,muz=3,p0x=0,p0z=0)
 # psi = psi0ringNpOffset(5,3,p,0,5,0,p)
-psi = psi0ringNpOffset(10,3,p,0,20,0,p)
+psi = psi0ringNpOffset(20,3,p,0,20,0,p)
 (swnf, phi) = phiAndSWNF(psi)
 
 t = 0
@@ -872,14 +872,16 @@ tPiScanTimeDelta = tPiScanTimeEnd-tPiScanTimeStart
 l.info(f"""Time to run one scan: {tPiScanTimeDelta}""")
 # -
 
-os.makedirs(output_prefix+"tPiScan", exist_ok=True)
-with pgzip.open(output_prefix+"tPiScan/"+f"tPiOutput"+output_ext,'wb', thread=4, blocksize=2*10**8) as file:
-    pickle.dump(tPiOutput, file) 
+# os.makedirs(output_prefix+"tPiScan", exist_ok=True)
+# with pgzip.open(output_prefix+"tPiScan/"+f"tPiOutput"+output_ext,'wb', thread=4, blocksize=2*10**8) as file:
+#     pickle.dump(tPiOutput, file) 
+with pgzip.open("/Volumes/tonyNVME Gold/oneParticleSim/20240704-230718-TFF/dScanLoopTemp/tPiOutput_di=16.pgz.pkl", 'rb', thread=4) as file:
+    tPiOutput = pickle.load(file)
 gc.collect()
 
 # + editable=true slideshow={"slide_type": ""}
 # psi = tPiOutput[-30][1][1]
-ind = 80
+ind = 40
 psi = tPiOutput[ind][1][1]
 print(round(tPiOutput[ind][0]*1000, 3))
 # psi = tPiTestRun[1]L
@@ -1212,16 +1214,16 @@ plt.legend(loc='upper center',fontsize='x-small', ncol=4,bbox_to_anchor=(0.5,1.1
 plt.show()
 
 # +
-plt.figure(figsize=(11,3))
+plt.figure(figsize=(8,3))
 gam = 0.07
 omP = pi/6
 ts = np.linspace(0,30,1000)
-plt.plot(ts, 0+np.sin(omP*ts)**2, label="|U⟩ \t $  \sin^2(\omega t)                $", alpha=0.3,color='b')
-plt.plot(ts, 1-np.sin(omP*ts)**2, label="|D⟩ \t $1-\sin^2(\omega t)=cos^2(\omega t)$", alpha=0.3,color='r')
-plt.plot(ts, 0+np.sin(omP*ts)**2*np.exp(-gam*ts), label="|U⟩ \t $  \sin^2(\omega t)e^{-\gamma t }$", alpha=0.9, linestyle='--',color='b')
-plt.plot(ts, 1-np.sin(omP*ts)**2*np.exp(-gam*ts), label="|D⟩ \t $1-\sin^2(\omega t)e^{-\gamma t }$", alpha=0.9, linestyle='--',color='r')
+plt.plot(ts, 1-np.sin(omP*ts)**2, label="|U⟩ \t $1-\sin^2(\omega t)=cos^2(\omega t)$", alpha=0.25,color='b')
+plt.plot(ts, 0+np.sin(omP*ts)**2, label="|D⟩ \t $  \sin^2(\omega t)                $", alpha=0.25,color='r')
+plt.plot(ts, 1-np.sin(omP*ts)**2*np.exp(-gam*ts), label="|U⟩ \t $1-\sin^2(\omega t)e^{-\gamma t }$", alpha=0.9, linestyle='--',color='b')
+plt.plot(ts, 0+np.sin(omP*ts)**2*np.exp(-gam*ts), label="|D⟩ \t $  \sin^2(\omega t)e^{-\gamma t }$", alpha=0.9, linestyle='--',color='r')
 
-plt.legend(loc=7)
+plt.legend(loc=7, fontsize='small')
 plt.gca().xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=1))
 plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=1/4))
 plt.gca().yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=0.1))
@@ -1236,6 +1238,8 @@ plt.savefig(output_prefix+"tPiScan/"+title+".png", dpi=600,bbox_inches='tight')
 
 plt.show()
 # -
+
+
 
 
 
@@ -2143,8 +2147,8 @@ def fig_dScan2D_at(dID=16, haloIdCut=4, logging=False, saveFig=False, showFig=Fa
         ax.xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=1))
         ax.yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=15))
         ax.yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=5))
-        ax.grid(which='major', linestyle='-', linewidth='0.2', color='white', alpha=1)
-        ax.grid(which='minor', linestyle='-', linewidth='0.15', color='white', alpha=1)
+        ax.grid(which='major', linestyle='-', linewidth='0.3', color='white', alpha=0.7)
+        ax.grid(which='minor', linestyle='-', linewidth='0.3', color='white', alpha=0.3)
         # ax.set_xlabel("pulse width ($\mu s$)")
         # ax.set_ylabel("Polar Angle (deg) from halo north pole")
         # ax.set_title(f"Halo ${'-' if haloId[hp]<0 else '+'} {abs(haloId[hp])}$")
@@ -2215,5 +2219,296 @@ gc.collect()
 
 
 
+
+# ### Other plots
+
+(maUR, maUL, maDR, maDL) = momAngMaskCombo(momAngList[60], pwid=5*dpz)
+ma3L, ma3R = momAngMaskCombov2(momAngList[60],pwid=5*dpz,hid=+3)
+mm3L, mm3R = momAngMaskCombov2(momAngList[60],pwid=5*dpz,hid=-3)
+
+output_prefix_Figs = output_prefix+"Figs/"
+os.makedirs(output_prefix_Figs, exist_ok=True)
+
+# +
+plt.figure(figsize=(8,4),tight_layout=True)
+plt.subplot(1,2,1)
+plt.imshow(np.abs(phi.T)**2, cmap='Greys', alpha=0.6, extent=np.array([-pxmax,+pxmax,-pzmax,+pzmax])/p, interpolation='None')
+plt.colorbar()
+plt.imshow(maUR.T, cmap=ct_cmap('Reds'), alpha=0.9, extent=np.array([-pxmax,+pxmax,-pzmax,+pzmax])/p, interpolation='None')
+plt.imshow(maUL.T, cmap=ct_cmap('Reds'), alpha=0.9, extent=np.array([-pxmax,+pxmax,-pzmax,+pzmax])/p, interpolation='None')
+plt.imshow(maDR.T, cmap=ct_cmap('Reds'), alpha=0.9, extent=np.array([-pxmax,+pxmax,-pzmax,+pzmax])/p, interpolation='None')
+plt.imshow(maDL.T, cmap=ct_cmap('Reds'), alpha=0.9, extent=np.array([-pxmax,+pxmax,-pzmax,+pzmax])/p, interpolation='None')
+plt.imshow(ma3L.T, cmap=ct_cmap('Reds'), alpha=0.9, extent=np.array([-pxmax,+pxmax,-pzmax,+pzmax])/p, interpolation='None')
+plt.imshow(ma3R.T, cmap=ct_cmap('Reds'), alpha=0.9, extent=np.array([-pxmax,+pxmax,-pzmax,+pzmax])/p, interpolation='None')
+plt.imshow(mm3L.T, cmap=ct_cmap('Reds'), alpha=0.9, extent=np.array([-pxmax,+pxmax,-pzmax,+pzmax])/p, interpolation='None')
+plt.imshow(mm3R.T, cmap=ct_cmap('Reds'), alpha=0.9, extent=np.array([-pxmax,+pxmax,-pzmax,+pzmax])/p, interpolation='None')
+
+
+plt.xlim([-2.25, +2.25])
+plt.ylim([-3.75, +3.75])
+plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=1/4))
+plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=1/4))
+plt.xlabel("$p_x (\hbar k)$")
+plt.ylabel("$p_z (\hbar k)$")
+plt.text(+1.00,+1.40+2, "|$R^{+3}_\phi$⟩",fontsize='small')
+plt.text(+1.00,+1.60,   "|$R^{+1}_\phi$⟩",fontsize='small')
+plt.text(+1.00,-0.40,   "|$R^{-1}_\phi$⟩",fontsize='small')
+plt.text(+1.00,-0.40-2, "|$R^{-3}_\phi$⟩",fontsize='small')
+plt.text(-1.70,+0.20+2, "|$L^{+3}_\phi$⟩",fontsize='small')
+plt.text(-1.70,+0.20,   "|$L^{+1}_\phi$⟩",fontsize='small')
+plt.text(-1.70,-1.65,   "|$L^{-1}_\phi$⟩",fontsize='small')
+plt.text(-1.70,-1.55-2, "|$L^{-3}_\phi$⟩",fontsize='small')
+plt.grid(which='major', linestyle='-', linewidth='0.3', color='black', alpha=0.4)
+plt.grid(which='minor', linestyle='-', linewidth='0.2', color='black', alpha=0.15)
+plt.gca().set_aspect('equal', adjustable='box')
+plt.scatter([0,0,0,0],[-3,-1,1,3], s=10, c='b', alpha=0.5)
+plt.text(-0.3, +3.10, "$+3\hbar k$", fontsize='small', alpha=0.6)
+plt.text(-0.3, +1.10, "$+1\hbar k$", fontsize='small', alpha=0.6)
+plt.text(-0.3, -1.35, "$-1\hbar k$", fontsize='small', alpha=0.6)
+plt.text(-0.3, -3.35, "$-3\hbar k$", fontsize='small', alpha=0.6)
+
+plt.subplot(1,2,2)
+
+normAngCheck = np.sum(DSScanOutput[16,ind,:,:,1],axis=1)
+
+plt.plot(DSScanOutput[16,ind,:,3,1],'--',color='r',label="|$R^{-3}_\phi$⟩",alpha=0.6)
+plt.plot(DSScanOutput[16,ind,:,4,1],'-',color='r',label="|$R^{-1}_\phi$⟩",alpha=0.7)
+plt.plot(DSScanOutput[16,ind,:,5,1],'-.',color='b',label="|$R^{+1}_\phi$⟩",alpha=0.7)
+plt.plot(DSScanOutput[16,ind,:,6,1],':',color='b',label="|$R^{+3}_\phi$⟩",alpha=0.6)
+plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=5))
+plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=0.001/2))
+plt.grid(which='major', linestyle='-', linewidth='0.3', color='black', alpha=0.6)
+plt.grid(which='minor', linestyle='-', linewidth='0.2', color='black', alpha=0.2)
+
+plt.xlabel("Polar angle (deg)")
+# plt.ylabel("Population fraction")
+plt.ylabel("Probability $|⟨\star|\psi⟩|^2$")
+
+plt.legend(loc=7, fontsize='small')
+plt.xlim(-5,185)
+plt.ylim(-0.001/2,0.0160)
+
+title = f"Status Plot Detuning={deltaScan[16]:.3f}$\omega_\delta$, duration={tPiTest[ind]:.5f}$\mu s$, R"
+title_clean = re.sub(r'\$.*?\$', '', title)
+plt.savefig(output_prefix_Figs+title_clean+".pdf", dpi=600, bbox_inches='tight')
+plt.savefig(output_prefix_Figs+title_clean+".png", dpi=600, bbox_inches='tight')
+plt.show()
+
+# +
+# plt.figure(figsize=(8,4),tight_layout=True)
+ddIdL = [16, 17, 18]
+fig, axes = plt.subplots(1, len(ddIdL), figsize=(4*len(ddIdL), 4), sharey=True)
+for (i,ii) in enumerate(ddIdL):
+    ax = axes[i]
+    # plt.subplot(1,2,i+1)
+    ax.plot(DSScanOutput[ii,ind,:,4,0],':',color='r',label="|$L^{-1}_\phi$⟩",alpha=0.7)
+    ax.plot(DSScanOutput[ii,ind,:,5,0],':',color='b',label="|$L^{+1}_\phi$⟩",alpha=0.7)
+    ax.plot(DSScanOutput[ii,ind,:,4,1],'-',color='r',label="|$R^{-1}_\phi$⟩",alpha=0.7)
+    ax.plot(DSScanOutput[ii,ind,:,5,1],'-',color='b',label="|$R^{+1}_\phi$⟩",alpha=0.7)
+    ax.xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=25))
+    ax.xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=5))
+    if i==0: ax.yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=0.001/2))
+    ax.grid(which='major', linestyle='-', linewidth='0.3', color='black', alpha=0.6)
+    ax.grid(which='minor', linestyle='-', linewidth='0.2', color='black', alpha=0.2)
+    ax.set_xlabel("Polar angle (deg)")
+    if i==0: ax.set_ylabel("Probability $|⟨\star|\psi⟩|^2$")
+    ax.legend(loc=7, fontsize='small')
+    ax.set_xlim(-5,185)
+    ax.set_ylim(-0.001/2,0.0160)
+    ax.set_title(f"Detuning={deltaScan[ii]:.3f}$\omega_\delta$")
+    if i==0:    ax.tick_params(axis='y', which='both', direction='out', left=True)
+    else:       ax.tick_params(axis='y', which='both', direction='inout', left=True)
+
+plt.subplots_adjust(wspace=0.0)
+
+title = f"Status Plot 2b dId={ddIdL}$\omega_\delta$, duration={tPiTest[ind]:.5f}$\mu s$, LR"
+title_clean = re.sub(r'\$.*?\$', '', title)
+plt.savefig(output_prefix_Figs+title_clean+".pdf", dpi=600, bbox_inches='tight')
+plt.savefig(output_prefix_Figs+title_clean+".png", dpi=600, bbox_inches='tight')
+plt.show()
+
+# +
+angPlotList = [90, 120]
+ddIdL = [16, 17, 18, 19, 20, 21, 22, 23, 24]
+fig, axs = plt.subplots(2, len(angPlotList), figsize=(13, 8), sharey=True)
+colors = plt.cm.rainbow(np.linspace(0, 1, len(ddIdL)))
+for i, an in enumerate(angPlotList):
+    for row in range(2):
+        ax = axs[row, i]
+        for j, did in enumerate(ddIdL):
+            if row == 0: 
+                ax.plot(tPiTest*1e3,DSScanOutput[did,:,an,5,1],'-', c=colors[j], label="|$R^{+1}_{"+f"{an}"+"^\circ}$⟩, $\omega_\delta$="+f"{deltaScan[did]:.3f}",alpha=0.8-0.07*j)
+            else: 
+                ax.plot(tPiTest*1e3,DSScanOutput[did,:,an,4,1],'-', c=colors[j], label="|$R^{-1}_{"+f"{an}"+"^\circ}$⟩, $\omega_\delta$="+f"{deltaScan[did]:.3f}",alpha=0.8-0.07*j)
+        # ax.plot(tPiTest*1e3,DSScanOutput[16,:,an,4,1],'-', c='r', label="|$R^{-1}_{"+f"{an}"+"^\circ}$⟩, $\omega_\delta$="+f"{deltaScan[16]:.2f}",alpha=0.75)
+        # ax.plot(tPiTest*1e3,DSScanOutput[16,:,an,5,1],'-', c='b', label="|$R^{+1}_{"+f"{an}"+"^\circ}$⟩, $\omega_\delta$="+f"{deltaScan[16]:.2f}",alpha=0.75)
+        # ax.plot(tPiTest*1e3,DSScanOutput[17,:,an,4,1],'--',c='r', label="|$R^{-1}_{"+f"{an}"+"^\circ}$⟩, $\omega_\delta$="+f"{deltaScan[17]:.2f}",alpha=0.60)
+        # ax.plot(tPiTest*1e3,DSScanOutput[17,:,an,5,1],'--',c='b', label="|$R^{+1}_{"+f"{an}"+"^\circ}$⟩, $\omega_\delta$="+f"{deltaScan[17]:.2f}",alpha=0.60)
+        # ax.plot(tPiTest*1e3,DSScanOutput[18,:,an,4,1],'-.',c='r', label="|$R^{-1}_{"+f"{an}"+"^\circ}$⟩, $\omega_\delta$="+f"{deltaScan[18]:.2f}",alpha=0.45)
+        # ax.plot(tPiTest*1e3,DSScanOutput[18,:,an,5,1],'-.',c='b', label="|$R^{+1}_{"+f"{an}"+"^\circ}$⟩, $\omega_\delta$="+f"{deltaScan[18]:.2f}",alpha=0.45)
+        # ax.plot(tPiTest*1e3,DSScanOutput[19,:,an,4,1],':' ,c='r', label="|$R^{-1}_{"+f"{an}"+"^\circ}$⟩, $\omega_\delta$="+f"{deltaScan[19]:.2f}",alpha=0.30)
+        # ax.plot(tPiTest*1e3,DSScanOutput[19,:,an,5,1],':' ,c='b', label="|$R^{+1}_{"+f"{an}"+"^\circ}$⟩, $\omega_\delta$="+f"{deltaScan[19]:.2f}",alpha=0.30)
+
+        if i==0: ax.set_ylabel("Probability $|⟨\star|\psi⟩|^2$")
+        if row!=0: ax.set_xlabel("Pulse width ($\mu s$)")
+        ax.xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=5))
+        ax.xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=1))
+        ax.yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=0.002))
+        ax.yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=0.002/4))
+        # ax.tick_params(axis='y', which='both', direction='in', left=True, right=True)
+        # ax.tick_params(axis='x', which='both', direction='in', top=True, bottom=True)
+        if i==0:    ax.tick_params(axis='y', which='both', direction='out', left=True)
+        else:       ax.tick_params(axis='y', which='both', direction='inout', left=True)
+        if row==0:  ax.axes.set_xticklabels([])
+        else: ax.tick_params(axis='x', which='both', direction='inout', top=True, bottom=True)
+
+
+        ax.grid(which='major', linestyle='-', linewidth='0.3', color='black', alpha=0.4)
+        ax.grid(which='minor', linestyle='-', linewidth='0.3', color='black', alpha=0.1)
+
+        ax.set_xlim(-1,41)
+        ax.set_ylim(-0.001/2,0.015)
+
+        # ax.set_title("Polar Angle $\phi$" + f" = {an}°")
+
+        ax.legend(loc=7, fontsize='small', title="Polar Angle $\phi$" + f" = {an}°")
+plt.subplots_adjust(wspace=0.0, hspace=0.00)
+
+title=f"Status Plot 3b, angles = {angPlotList}"
+plt.savefig(output_prefix_Figs+title+".pdf", dpi=600, bbox_inches='tight')  
+plt.savefig(output_prefix_Figs+title+".png", dpi=600, bbox_inches='tight')
+plt.show()
+
+# + vscode={"languageId": "raw"} active=""
+# ddIdL = [16, 17, 18, 19]
+# ddLst = ['-', '--', '-.', ':']
+# angPL = [90, 120]
+# fig, axes = plt.subplots(1, len(angPL), figsize=(8, 4), sharey=True)
+#
+# for ai, an in enumerate(angPL):
+#     ax = axes[ai]
+#     for di, de in enumerate(ddIdL):
+#         ax.plot(tPiTest*1e3,DSScanOutput[de,:,an,4,1],ddLst[di],color='r',label="|$R^{-1}_{"+f"{an}"+"^\circ}$⟩",alpha=0.75-0.15*di)
+#     ax.legend(loc=7)
+# plt.subplots_adjust(wspace=0.0)
+#
+# title = f"Status Plot 4 dId={ddIdL}$\omega_\delta$"
+# title_clean = re.sub(r'\$.*?\$', '', title)
+# # plt.savefig(output_prefix_Figs+title_clean+".pdf", dpi=600, bbox_inches='tight')
+# # plt.savefig(output_prefix_Figs+title_clean+".png", dpi=600, bbox_inches='tight')
+# plt.show()
+
+# +
+# https://artmenlope.github.io/plotting-complex-variable-functions/
+from colorsys import hls_to_rgb
+from matplotlib.colors import Normalize, LinearSegmentedColormap
+from matplotlib.gridspec import GridSpec
+def colorize(fz):
+    """
+    The original colorize function can be found at:
+    https://stackoverflow.com/questions/17044052/mathplotlib-imshow-complex-2d-array
+    by the user nadapez.
+    """
+    fz = fz/np.max(np.abs(fz))
+    r = np.log2(1. + np.abs(fz)**2)
+    h = np.angle(fz)/(2*np.pi)
+    l = 0.6**(np.log(1+r)) 
+    # l = 0.75*((np.abs(fz))/np.abs(fz).max())**1.2
+    # l = ((np.abs(fz)**2)/((np.abs(fz)**2).max()))
+    s = 1
+    c = np.vectorize(hls_to_rgb)(h,l,s) # --> tuple
+    c = np.array(c)  # -->  array of (3,n,m) shape, but need (m,n,3)
+    c = np.rot90(c.transpose(2,1,0), 1) # Change shape to (m,n,3) and rotate 90 degrees
+    return c
+
+from matplotlib.lines import Line2D
+legend_elements = [Line2D([0], [0], marker='o', color='cyan', label='$Arg=\pm\pi$', markersize=10, lw=0),
+                   Line2D([0], [0], marker='o', color='red', label='$Arg=0$', markersize=10, lw=0)]
+# -
+
+# psi0ringNpOffset(halo_xr,3,pmom,0,halo_xr,0,pmom)
+psi = psi0ringNpOffset(20,3,p,0,20,0,p)
+(swnf, phi) = phiAndSWNF(psi)
+
+
+# +
+fig = plt.figure(figsize=(12,5))
+gs = GridSpec(1, 4, width_ratios=[1, 1, 0.07, 0.07], wspace=0.3)
+
+ax1 = fig.add_subplot(gs[0, 0])
+# ax1 = plt.subplot(1,2,1)
+im1 = ax1.imshow(colorize(psi.T), extent=np.array([-xmax,+xmax,-zmax,+zmax]), interpolation='None')
+ax1.set_xlim([-50, +50])
+ax1.set_ylim([-50, +50])
+ax1.xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=20))
+ax1.yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=20))
+ax1.xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=20/4))
+ax1.yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=20/4))
+ax1.set_xlabel("$x (\mu m)$")
+ax1.set_ylabel("$z (\mu m)$",labelpad=-5)
+ax1.set_title("Position")
+ax1.grid(which='major', linestyle='-', linewidth='0.3', color='black', alpha=0.3)
+ax1.grid(which='minor', linestyle='-', linewidth='0.3', color='black', alpha=0.1)
+
+ax2 = fig.add_subplot(gs[0, 1])
+# ax2 = plt.subplot(1,2,2)
+im2 = ax2.imshow(colorize(phi.T[::-1,:]), extent=np.array([-pxmax,+pxmax,-pzmax,+pzmax])/p, interpolation='None')
+ax2.set_xlim([-2.5, +2.5])
+ax2.set_ylim([-2.5, +2.5])
+ax2.xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=1))
+ax2.yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=1))
+ax2.xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=1/5))
+ax2.yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=1/5))
+ax2.set_xlabel("$p_x (\hbar k)$")
+ax2.set_ylabel("$p_z (\hbar k)$",labelpad=-6)
+ax2.set_title("Momentum")
+ax2.grid(which='major', linestyle='-', linewidth='0.3', color='black', alpha=0.3)
+ax2.grid(which='minor', linestyle='-', linewidth='0.3', color='black', alpha=0.1)
+
+# Create custom color maps
+phase_cmap = plt.cm.hsv
+amplitude_cmap = LinearSegmentedColormap.from_list('amplitude_cmap', ['white', 'gray'])
+# Add colorbars
+cbar_ax_phase = fig.add_subplot(gs[0, 2])
+cbar_ax_amplitude = fig.add_subplot(gs[0, 3])
+
+norm_phase = Normalize(vmin=-np.pi, vmax=np.pi)
+norm_amplitude = Normalize(vmin=0, vmax=1)
+
+mappable_phase = plt.cm.ScalarMappable(norm=norm_phase, cmap=phase_cmap)
+mappable_amplitude = plt.cm.ScalarMappable(norm=norm_amplitude, cmap=amplitude_cmap)
+
+cbar_phase = fig.colorbar(mappable_phase, cax=cbar_ax_phase)
+cbar_amplitude = fig.colorbar(mappable_amplitude, cax=cbar_ax_amplitude)
+
+# Set colorbar labels
+mappable_phase.set_clim(-np.pi, np.pi)
+mappable_amplitude.set_clim(0, 1)
+cbar_phase.set_label('Phase (rad)',labelpad=-14)
+cbar_amplitude.set_label('Amplitude',labelpad=3)
+
+# Set phase colorbar ticks in terms of π
+phase_ticks = [-np.pi, -np.pi/2, 0, np.pi/2, np.pi]
+cbar_phase.set_ticks(phase_ticks)
+cbar_phase.ax.set_yticklabels([r'$-\pi$', r'$-\pi/2$', r'$0$', r'$\pi/2$', r'$\pi$'])
+
+# cbar_ax_phase.subplot
+title = f"Phase and Amplitude of the wavefunction init"
+# title = f"Phase and Amplitude of the wavefunction {tPiTest[ind]:.5f}, d=0"
+plt.savefig(output_prefix_Figs+title+".pdf", dpi=600, bbox_inches='tight')
+plt.savefig(output_prefix_Figs+title+".png", dpi=600, bbox_inches='tight')
+
+plt.show()
+# -
+
+
+
+
+
+
+
+
+
+xmax
 
 
