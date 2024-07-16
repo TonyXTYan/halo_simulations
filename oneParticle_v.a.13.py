@@ -2155,8 +2155,8 @@ def fig_dScan2D_at(dID=16, haloIdCut=4, logging=False, saveFig=False, showFig=Fa
         ax.xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=1))
         ax.yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=15))
         ax.yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=5))
-        ax.grid(which='major', linestyle='-', linewidth='0.3', color='white', alpha=0.7)
-        ax.grid(which='minor', linestyle='-', linewidth='0.3', color='white', alpha=0.3)
+        ax.grid(which='major', linestyle='-', linewidth='0.3', color='white', alpha=0.3)
+        ax.grid(which='minor', linestyle='-', linewidth='0.3', color='white', alpha=0.1)
         # ax.set_xlabel("pulse width ($\mu s$)")
         # ax.set_ylabel("Polar Angle (deg) from halo north pole")
         # ax.set_title(f"Halo ${'-' if haloId[hp]<0 else '+'} {abs(haloId[hp])}$")
@@ -2214,7 +2214,7 @@ if img_alt_frames:
     height, width, layers = img_alt_frames[0].shape
     fourcc = cv2.VideoWriter_fourcc(*'hvc1')
     out = cv2.VideoWriter(
-        output_prefix_dScan2DMov+f"Halo Transfers varying different detuning"+".mov", 
+        output_prefix_dScan2DMov+f"Halo Transfers varying different detuning 2"+".mov", 
         fourcc, 10.0, (width, height), True)
     for frame in tqdm(img_alt_frames):
         out.write(frame)
