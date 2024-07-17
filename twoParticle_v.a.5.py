@@ -801,9 +801,9 @@ plt.show()
 ram_py_log()
 del tempTest3, tempTest4, tempTest3phi, tempTest4phi
 gc.collect()
-# %reset -f in
-# %reset -f out
-ram_py_log()
+# # %reset -f in
+# # %reset -f out
+# ram_py_log()
 # -
 
 
@@ -1131,12 +1131,16 @@ def scattering_evolve_loop_plot(t,f,psi,phi, plt_show=True, plt_save=False):
 
     if plt_save:
         title= "f="+str(f)+",t="+t_str 
-        plt.savefig(output_pre_selp+title+".pdf", dpi=600)
-        plt.savefig(output_pre_selp+title+".png", dpi=600)
+        plt.savefig(output_pre_selp+title+".pdf", dpi=600, bbox_inches='tight')
+        plt.savefig(output_pre_selp+title+".png", dpi=600, bbox_inches='tight')
     
     if plt_show: plt.show() 
     else:        plt.close(fig) 
 
+
+
+# +
+from matplotlib.transforms import Bbox
 
 
 output_pre_selpa = output_prefix + "scattering_evolve_loop_plot_alt/"
@@ -1185,12 +1189,14 @@ def scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=True, plt_save=False, 
 
     if plt_save:
         title= "f="+str(f)+",t="+t_str+",logPlus="+str(logPlus) 
-        plt.savefig(output_pre_selpa+title+".pdf", dpi=600)
-        plt.savefig(output_pre_selpa+title+".png", dpi=600)
+        plt.savefig(output_pre_selpa+title+".pdf", dpi=600, bbox_inches='tight')
+        plt.savefig(output_pre_selpa+title+".png", dpi=600, bbox_inches='tight')
     
     if plt_show: plt.show() 
     else:        plt.close(fig) 
 
+
+# -
 
 su = 3
 # psi = psi0_just_opposite_double(dr=0,s3=su*(4/3),s4=su,pt=-4.0*hb*k,a=0.5*pi) # 16.37s
@@ -1891,6 +1897,7 @@ print_every = {print_every}, \tframes_count = {frames_count}, total_steps = {tot
 Target simulation end time = {t_end_target} ms
 Estimated script runtime = {evolve_loop_time_estimate} which is {datetime.now()+evolve_loop_time_estimate}""")
 
+comboSettSetS = set()
 for combSetH in comboSettSet:
     print(combSetH)
     for tCombo in combSetH:
@@ -1899,7 +1906,10 @@ for combSetH in comboSettSet:
         # print(((round(vv3), round(tt3,6)), (round(vv4), round(tt4,6))))
         # print(((round(vv3/VR/0.02), round(tt3,6)), (round(vv4/VR/0.015), round(tt4,6))))
         # print(f"{round(vv3/VR/0.02)}π/4, {round(vv4/VR/0.015)}π/4")
-        print(f"{round(vv3/VR/0.02)}-{round(vv4/VR/0.015)}")
+        # print(f"{round(vv3/VR/0.02)}-{round(vv4/VR/0.015)}")
+        settingStr = f"{round(vv3/VR/0.02)}-{round(vv4/VR/0.015)}"
+        comboSettSetS.add(settingStr)
+        print(settingStr)
 
 thispklfile
 
@@ -2144,7 +2154,7 @@ with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={
 phi, swnf = phiAndSWNF(psi, nthreads=7)
 gc.collect()
 
-
+psi_phi_plot1(t,-1,psi,phi, plt_show=True, plt_save=True)
 
 
 
@@ -2224,8 +2234,8 @@ def plot_g34(phiHere, cutPlot=1.5, saveFig=True,
     plt.title(f"{title2}\ncut = {cutPlot}")
     title = f"CorrE t={round(t,5)}, cut = {cutPlot}, s={title2filestr}"
     if saveFig:
-        plt.savefig(output_prefix+title+".pdf", dpi=600)
-        plt.savefig(output_prefix+title+".png", dpi=600)
+        plt.savefig(output_prefix+title+".pdf", dpi=600, bbox_inches='tight')
+        plt.savefig(output_prefix+title+".png", dpi=600, bbox_inches='tight')
     if skipPlot:
         plt.close()
     else:
@@ -2261,6 +2271,19 @@ def plot_g34(phiHere, cutPlot=1.5, saveFig=True,
 # assert False, "just to catch run all"
 
 
+whatever_bla_testing1 = plot_g34(phi, cutPlot=1.5, saveFig=True, 
+        title2=f"Initial scattering",
+        title2filestr="NA", skipPlot=False
+        )
+
+psi_phi_plot1(t,-1,psi,phi, plt_show=True, plt_save=True)
+
+
+
+
+
+
+
 t=1.2052
 outputOfSett = {}
 data_folder = "20240711-234819-TFF" #"20240528-224811-TFF"
@@ -2277,6 +2300,7 @@ for combSetH in comboSettSet:
             psi = pickle.load(file)
         phi, swnf = phiAndSWNF(psi, nthreads=7)
         # (gx3px4p, gx3px4m, gx3mx4p, gx3mx4m, gx3x4n) 
+        psi_phi_plot1(t,-1,psi,phi, plt_show=False, plt_save=True,save_str=f"s={settingStr}",title_str=f"s={settingStr}")
         tempPlotOutput = plot_g34(
             phi, cutPlot=1.5, saveFig=True, 
             title2=f"$\phi_3$={round(vv3/VR/0.02)}π/4, $\phi_4=${round(vv4/VR/0.015)}π/4",
@@ -2310,22 +2334,22 @@ corrE(np.flipud(outputOfSett["0-1"][4].T))
 
 1/sqrt(2)
 
-corrE(np.flipud(outputOfSett["0-1"][4].T))\
+ corrE(np.flipud(outputOfSett["0-1"][4].T))\
 +corrE(np.flipud(outputOfSett["6-3"][4].T))\
 +corrE(np.flipud(outputOfSett["6-1"][4].T))\
 -corrE(np.flipud(outputOfSett["0-3"][4].T))
 
-corrE(np.flipud(outputOfSett["3-6"][4].T))\
+ corrE(np.flipud(outputOfSett["3-6"][4].T))\
 +corrE(np.flipud(outputOfSett["1-0"][4].T))\
 +corrE(np.flipud(outputOfSett["1-6"][4].T))\
 -corrE(np.flipud(outputOfSett["3-0"][4].T))
 
-corrE(np.flipud(outputOfSett["5-4"][4].T))\
+ corrE(np.flipud(outputOfSett["5-4"][4].T))\
 +corrE(np.flipud(outputOfSett["3-6"][4].T))\
 +corrE(np.flipud(outputOfSett["3-4"][4].T))\
 -corrE(np.flipud(outputOfSett["5-6"][4].T))
 
-corrE(np.flipud(outputOfSett["6-3"][4].T))\
+ corrE(np.flipud(outputOfSett["6-3"][4].T))\
 +corrE(np.flipud(outputOfSett["4-5"][4].T))\
 +corrE(np.flipud(outputOfSett["4-3"][4].T))\
 -corrE(np.flipud(outputOfSett["6-5"][4].T))
@@ -2583,10 +2607,110 @@ print_ram_usage(globals().items(),10)
 
 # # Making Figures
 
+output_pre_ppp = output_prefix + "psi_phi_plot/"
+os.makedirs(output_pre_ppp, exist_ok=True)
+def psi_phi_plot1(t,f,psi,phi, plt_show=True, plt_save=False, save_str="", title_str=""):
+    t_str = str(round(t,5))
+    if plt_show:
+        print("t = " +t_str+ " \t\t frame =", f, "\t\t memory used: " + 
+              str(round(ram_py_MB(),3)) + "MB  ")
+
+    fig = plt.figure(figsize=(8,8.5))
+    plt.subplot(2,2,1)
+    plt.imshow(np.flipud(only3(psi).T), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds')
+    plt.xlabel("$x \ (\mu m)$", labelpad=0)
+    plt.ylabel("$z \ (\mu m)$", labelpad=-10)
+    plt.title("He$^3\ \psi$")
+    # plt.title("$t="+t_str+" \ ms $")
+    # add a label to the top left corner
+    # plt.text(-xmax*0.95,zmax*0.95,"He$^3\ \psi$",color='k',ha='left',va='top',alpha=0.9)
+    plt.gca().xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=10))
+    plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=5))
+    plt.gca().yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=10))
+    plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=5))
+
+    plt.subplot(2,2,2)
+    plt.imshow(np.flipud(only4(psi).T), extent=[-xmax,xmax,-zmax, zmax],cmap='Blues')
+    plt.xlabel("$x \ (\mu m)$", labelpad=0)
+    plt.ylabel("$z \ (\mu m)$", labelpad=-10)
+    plt.title("He$^4\ \psi$")
+    # plt.text(-xmax*0.95,zmax*0.95,"He$^4\ \psi$",color='k',ha='left',va='top',alpha=0.9)
+    plt.gca().xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=10))
+    plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=5))
+    plt.gca().yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=10))
+    plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=5))
+
+    plt.subplot(2,2,3)
+    plt.imshow((only3phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds')
+    plt.xlabel("$p_x \ (\hbar k)$", labelpad=0)
+    plt.ylabel("$p_z \ (\hbar k)$", labelpad=-10)
+    plt.title("He$^3\ \phi$")
+    # plt.text(-pxmax*0.95/p,pzmax*0.95/p,"He$^3\ \phi$",color='k',ha='left',va='top',alpha=0.9)
+    plt.gca().xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=1))
+    plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=1/2))
+    plt.gca().yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=1))
+    plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=1/2))
+
+    plt.subplot(2,2,4)
+    plt.imshow((only4phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues')
+    plt.xlabel("$p_x \ (\hbar k)$", labelpad=0)
+    plt.ylabel("$p_z \ (\hbar k)$", labelpad=-10)
+    plt.title("He$^34\ \phi$")
+    # plt.text(-pxmax*0.95/p,pzmax*0.95/p,"He$^4\ \phi$",color='k',ha='left',va='top',alpha=0.9)
+    plt.gca().xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=1))
+    plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=1/2))
+    plt.gca().yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=1))
+    plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=1/2))
 
 
+    # add suptitle
+    if title_str=="": plt.suptitle("t = "+t_str+" ms")
+    else: plt.suptitle("t = "+t_str+" ms, "+title_str)
 
+    if plt_save:
+        title= "f="+str(f)+",t="+t_str+","+save_str
+        plt.savefig(output_pre_ppp+title+".pdf", dpi=600, bbox_inches='tight')
+        plt.savefig(output_pre_ppp+title+".png", dpi=600, bbox_inches='tight')
+    
+    if plt_show: plt.show() 
+    else:        plt.close(fig) 
+    gc.collect()
 
+# t=0.03
+# for t in [0.03, 0.06, 0.09, 0.012, 0.15]:
+for t in [0.5657, 0.5857, 0.6057, 0.6257, 0.6347]:
+# for t in [t=1.2052]
+    print(f"exporting figures for t={round(t,5)}")
+    data_folder = "20240711-234819-TFF" #"20240528-224811-TFF"
+    del psi, phi, swnf
+    with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)}.pgz.pkl', 'rb', thread=8) as file:
+        psi = pickle.load(file)
+    phi, swnf = phiAndSWNF(psi, nthreads=7)
+    gc.collect()
 
+    # psi_phi_plot1(t,-1,psi,phi, plt_show=False, plt_save=True)
+
+    whatever_bla_testing1 = plot_g34(phi, cutPlot=1.5, saveFig=True, 
+            title2=f"Mirror Pulse",
+            title2filestr="MP", skipPlot=True
+            )
+
+# +
+# t=1.2052
+# data_folder = "20240711-234819-TFF" #"20240528-224811-TFF"
+# for settingStr in comboSettSetS:
+#     del psi, phi, swnf
+#     with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)}.pgz.pkl', 'rb', thread=8) as file:
+#         psi = pickle.load(file)
+#     phi, swnf = phiAndSWNF(psi, nthreads=7)
+#     gc.collect()
+
+#     psi_phi_plot1(t,-1,psi,phi, plt_show=False, plt_save=True)
+
+#     whatever_bla_testing1 = plot_g34(phi, cutPlot=1.5, saveFig=True, 
+#             title2=f"Initial scattering",
+#             title2filestr="NA", skipPlot=True
+#             )
+# -
 
 
