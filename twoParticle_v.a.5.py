@@ -2146,19 +2146,30 @@ plt.show()
 gx3x4[0].shape
 
 t=1.2052
+# t=0.5657
+# t=0.6347
+# t=0.03
 data_folder = "20240711-234819-TFF" #"20240528-224811-TFF"
-settingStr = "0-1"
-del psi, phi, swnf
+settingStr = "3-0"
+psi, phi = None, None
+gc.collect()
+# with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)}.pgz.pkl', 'rb', thread=8) as file:
 with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)} s={settingStr}.pgz.pkl', 'rb', thread=8) as file:
     psi = pickle.load(file)
 phi, swnf = phiAndSWNF(psi, nthreads=7)
 gc.collect()
 
-psi_phi_plot1(t,-1,psi,phi, plt_show=True, plt_save=True)
+psi_phi_plot1(t,-1,psi,phi, plt_show=True, plt_save=True, 
+              cmax3x=2e-3,
+              cmax4x=2e-3,
+              cmax3p=2e-5,
+              cmax4p=2e-5
+              )
 
 
 
-
+psi, phi = None, None
+gc.collect()
 
 
 
@@ -2609,15 +2620,16 @@ print_ram_usage(globals().items(),10)
 
 output_pre_ppp = output_prefix + "psi_phi_plot/"
 os.makedirs(output_pre_ppp, exist_ok=True)
-def psi_phi_plot1(t,f,psi,phi, plt_show=True, plt_save=False, save_str="", title_str=""):
+def psi_phi_plot1(t,f,psi,phi, plt_show=True, plt_save=False, save_str="", title_str="",cmax3x=1,cmax3p=1,cmax4x=1,cmax4p=1):
     t_str = str(round(t,5))
     if plt_show:
         print("t = " +t_str+ " \t\t frame =", f, "\t\t memory used: " + 
               str(round(ram_py_MB(),3)) + "MB  ")
-
+    # normC = matplotlib.colors.Normalize(vmin=0, vmax=cmax)
+    # normP = matplotlib.colors.Normalize(vmin=0, vmax=cmaxp)
     fig = plt.figure(figsize=(8,8.5))
     plt.subplot(2,2,1)
-    plt.imshow(np.flipud(only3(psi).T), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds')
+    plt.imshow(np.flipud(only3(psi).T), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds',norm=matplotlib.colors.Normalize(vmin=0, vmax=cmax3x))
     plt.xlabel("$x \ (\mu m)$", labelpad=0)
     plt.ylabel("$z \ (\mu m)$", labelpad=-10)
     plt.title("He$^3\ \psi$")
@@ -2630,7 +2642,7 @@ def psi_phi_plot1(t,f,psi,phi, plt_show=True, plt_save=False, save_str="", title
     plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=5))
 
     plt.subplot(2,2,2)
-    plt.imshow(np.flipud(only4(psi).T), extent=[-xmax,xmax,-zmax, zmax],cmap='Blues')
+    plt.imshow(np.flipud(only4(psi).T), extent=[-xmax,xmax,-zmax, zmax],cmap='Blues',norm=matplotlib.colors.Normalize(vmin=0, vmax=cmax4x))
     plt.xlabel("$x \ (\mu m)$", labelpad=0)
     plt.ylabel("$z \ (\mu m)$", labelpad=-10)
     plt.title("He$^4\ \psi$")
@@ -2641,7 +2653,7 @@ def psi_phi_plot1(t,f,psi,phi, plt_show=True, plt_save=False, save_str="", title
     plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=5))
 
     plt.subplot(2,2,3)
-    plt.imshow((only3phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds')
+    plt.imshow((only3phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds',norm=matplotlib.colors.Normalize(vmin=0, vmax=cmax3p))
     plt.xlabel("$p_x \ (\hbar k)$", labelpad=0)
     plt.ylabel("$p_z \ (\hbar k)$", labelpad=-10)
     plt.title("He$^3\ \phi$")
@@ -2652,7 +2664,7 @@ def psi_phi_plot1(t,f,psi,phi, plt_show=True, plt_save=False, save_str="", title
     plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=1/2))
 
     plt.subplot(2,2,4)
-    plt.imshow((only4phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues')
+    plt.imshow((only4phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues',norm=matplotlib.colors.Normalize(vmin=0, vmax=cmax4p))
     plt.xlabel("$p_x \ (\hbar k)$", labelpad=0)
     plt.ylabel("$p_z \ (\hbar k)$", labelpad=-10)
     plt.title("He$^34\ \phi$")
@@ -2668,7 +2680,7 @@ def psi_phi_plot1(t,f,psi,phi, plt_show=True, plt_save=False, save_str="", title
     else: plt.suptitle("t = "+t_str+" ms, "+title_str)
 
     if plt_save:
-        title= "f="+str(f)+",t="+t_str+","+save_str
+        title= "f="+str(f)+",t="+t_str+","+str((cmax3x,cmax3p,cmax4x,cmax4p))+save_str
         plt.savefig(output_pre_ppp+title+".pdf", dpi=600, bbox_inches='tight')
         plt.savefig(output_pre_ppp+title+".png", dpi=600, bbox_inches='tight')
     
