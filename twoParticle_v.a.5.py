@@ -2166,10 +2166,56 @@ psi_phi_plot1(t,-1,psi,phi, plt_show=True, plt_save=True,
               cmax4p=2e-5
               )
 
+whatever_bla_testing2 = plot_g34(phi, cutPlot=1.5, saveFig=True, 
+        title2=f"Setting: 3-0",
+        title2filestr="s3-0", skipPlot=False
+        )
+
+whatever_bla_testing2v2 = plot_g34_v2(phi, cutPlot=1.5, saveFig=True, 
+        pMaxCut=2,
+        title2=f"Setting: 3-0",
+        title2filestr="s3-0", skipPlot=False
+        )
+
+whatever_bla_testing2v2[4][0,3]-whatever_bla_testing2v2[4][0,1]+\
+whatever_bla_testing2v2[4][1,2]-whatever_bla_testing2v2[4][1,0]+\
+whatever_bla_testing2v2[4][2,1]-whatever_bla_testing2v2[4][2,3]+\
+whatever_bla_testing2v2[4][3,0]-whatever_bla_testing2v2[4][3,2]
+
+whatever_bla_testing2v2[4]
+
+whatever_bla_testing2v2[4][1,2]
+
+(whatever_bla_testing2v2[4][0,3],whatever_bla_testing2v2[4][0,1]
+,whatever_bla_testing2v2[4][1,2],whatever_bla_testing2v2[4][1,0]
+,whatever_bla_testing2v2[4][2,1],whatever_bla_testing2v2[4][2,3]
+,whatever_bla_testing2v2[4][3,0],whatever_bla_testing2v2[4][3,2])
+
+corrE
+
+pxmax/dpx
+
+nx
+
+nc
+
+# +
+# 2024 Aug 31 Fig
+
+
+
+# -
+
+
+
+
+
 
 
 psi, phi = None, None
 gc.collect()
+
+
 
 
 
@@ -2253,22 +2299,109 @@ def plot_g34(phiHere, cutPlot=1.5, saveFig=True,
         plt.show()
     return (gx3px4p, gx3px4m, gx3mx4p, gx3mx4m, gx3x4n)
 
-# + active=""
-# # t=0.15
-# # t=0.2657
-# # t=0.2957
-# # t=0.3257
-# # t=0.3347
-# # t=0.5657
-# # t=0.5857
-# # t=0.6057
-# # t=0.6257
-# t=1.2052
-# # data_folder = "20240521-231755-TFF"
-# data_folder="20240528-224811-TFF"
-# (vv3, tt3), (vv4, tt4) = comboSettSet[0][0] 
-# settingStr = f"{round(vv3/VR/0.02)}-{round(vv4/VR/0.015)}"
-# l.info(f"Loading t={round(t,5)}  s={settingStr}")
+
+def plot_g34_v2(phiHere, cutPlot=1.5, saveFig=True, 
+             pMaxCut=2,
+             title2="", title2filestr="NA",
+             skipPlot=False):
+    gx3px4p = gp3p4_dhalo_calc(phiHere,cut=cutPlot,offset3=+p,offset4=+p)
+    gx3px4m = gp3p4_dhalo_calc(phiHere,cut=cutPlot,offset3=+p,offset4=-p)
+    gx3mx4p = gp3p4_dhalo_calc(phiHere,cut=cutPlot,offset3=-p,offset4=+p)
+    gx3mx4m = gp3p4_dhalo_calc(phiHere,cut=cutPlot,offset3=-p,offset4=-p)
+    
+    nc = int(pMaxCut*p/dpx)*2+1;
+    nr = (nx-nc)//2
+    # print(nc,nr)
+    # print(gx3px4p[0].shape)
+    # print(gx3px4p[0][nr:-nr,nr:-nr].shape)
+
+    gx3x4combined = np.zeros((2*nc,2*nc))
+    gx3x4combined[:nc, :nc] = gx3px4p[0][nr:-nr,nr:-nr]
+    gx3x4combined[:nc, nc:] = gx3px4m[0][nr:-nr,nr:-nr]
+    gx3x4combined[nc:, :nc] = gx3mx4p[0][nr:-nr,nr:-nr]
+    gx3x4combined[nc:, nc:] = gx3mx4m[0][nr:-nr,nr:-nr]
+
+    gx3x4combined2 = np.zeros((2*2,2*2))
+    gx3x4combined2[:2, :2] = [[gx3px4p[1][3],gx3px4p[1][2]],[gx3px4p[1][1],gx3px4p[1][0]]]
+    gx3x4combined2[:2, 2:] = [[gx3px4m[1][3],gx3px4m[1][2]],[gx3px4m[1][1],gx3px4m[1][0]]]
+    gx3x4combined2[2:, :2] = [[gx3mx4p[1][3],gx3mx4p[1][2]],[gx3mx4p[1][1],gx3mx4p[1][0]]]
+    gx3x4combined2[2:, 2:] = [[gx3mx4m[1][3],gx3mx4m[1][2]],[gx3mx4m[1][1],gx3mx4m[1][0]]]
+    gx3x4n = gx3x4combined2/sum(sum(gx3x4combined2))
+    
+    corrE = gx3x4n[0,3]-gx3x4n[0,1]+gx3x4n[1,2]-gx3x4n[1,0]+gx3x4n[2,1]-gx3x4n[2,3]+gx3x4n[3,0]-gx3x4n[3,2]
+
+    # if not skipPlot: 
+    ticks = np.linspace(0, 2*nc, 9)
+    ticksL = np.linspace(0, 2*nc, 9)
+    tick_labelsX = ["","$+p_{B_x}$","$0$","$-p_{B_x}$","","$+p_{B_x}$","$0$","$-p_{B_x}$",""]
+    tick_labelsY = ["","$+p_{A_x}$","$0$","$-p_{A_x}$","","$+p_{A_x}$","$0$","$-p_{A_x}$",""]
+    # tick_labels = np.concatenate((np.linspace(-4, 4, 5), np.linspace(-4, 4, 5)))
+    # plt.imshow(np.flipud(gx3x4combined.T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Greens')
+    plt.figure(figsize=(9,3.5))
+    ax = plt.subplot(1,2,1)
+    im = ax.imshow(np.flipud(gx3x4combined.T),cmap='Greens')
+    # ax.set_yticks(ticksL, ["","A↗︎","","A↖︎","","A↘︎","","A↙︎",""])
+    # ax.set_xticks(ticksL, ["","B↗︎","","B↖︎","","B↘︎","","B↙︎",""])
+    ax.set_yticks(ticks, ["","$A$↗︎","","$A$↖︎","","$A$↘︎","","$A$↙︎",""])
+    ax.set_xticks(ticks, ["","$B$↙︎","","$B$↘︎","","$B$↖︎","","$B$↗",""])
+    
+    ax.axhline(y=1.0*nc,color='k',alpha=0.3,linewidth=0.7)
+    ax.axhline(y=0.5*nc,color='k',alpha=0.1,linewidth=0.7)
+    ax.axhline(y=1.5*nc,color='k',alpha=0.1,linewidth=0.7)
+    ax.axvline(x=1.0*nc,color='k',alpha=0.3,linewidth=0.7)
+    ax.axvline(x=0.5*nc,color='k',alpha=0.1,linewidth=0.7)
+    ax.axvline(x=1.5*nc,color='k',alpha=0.1,linewidth=0.7)
+    ax2 = ax.secondary_xaxis('top')
+    ax3 = ax.secondary_yaxis('right')
+    ax2.set_xticks(ticks, tick_labelsX[::-1])
+    ax3.set_yticks(ticks, tick_labelsY)
+    plt.title(f"cE={round(corrE,5)}\nt = {t}")
+    
+    # l.info(f"""gx3px4p[1] = {gx3px4p[1]}
+    # gx3px4m[1] = {gx3px4m[1]}
+    # gx3mx4p[1] = {gx3mx4p[1]}
+    # gx3mx4m[1] = {gx3mx4m[1]}""")
+    
+    ax = plt.subplot(1,2,2)
+    im = ax.imshow(np.flipud(gx3x4combined2.T),cmap='Greens')
+    ticks=np.arange(0,4,1)
+    ax.set_yticks(ticks, ["$A$↗︎","$A$↖︎","$A$↘︎","$A$↙︎"])
+    ax.set_xticks(ticks, ["$B$↙︎","$B$↘︎","$B$↖︎","$B$↗"])
+    ax2 = ax.secondary_xaxis('top')
+    ax3 = ax.secondary_yaxis('right')
+    # # ax2.set_yticks(ticks, ticks)
+    ax3.set_yticks(ticks, ["$+p_{A_x}$","$-p_{A_x}$","$+p_{A_x}$","$-p_{A_x}$"])
+    ax2.set_xticks(ticks, ["$+p_{B_x}$","$-p_{B_x}$","$+p_{B_x}$","$-p_{B_x}$"])
+    for i in range(gx3x4n.shape[0]):
+        for j in range(gx3x4n.shape[1]):
+            plt.text(j, i, str(round(np.flipud(gx3x4n.T)[i, j],4)), ha='center', va='center', color='slategrey',fontsize='small')
+    plt.title(f"{title2}\ncut = {cutPlot}")
+    title = f"CorrE t={round(t,5)}, cut = {cutPlot}, s={title2filestr}"
+    if saveFig:
+        plt.savefig(output_prefix+title+".pdf", dpi=600, bbox_inches='tight')
+        plt.savefig(output_prefix+title+".png", dpi=600, bbox_inches='tight')
+    if skipPlot:
+        plt.close()
+    else:
+        plt.show()
+    return (gx3px4p, gx3px4m, gx3mx4p, gx3mx4m, gx3x4n)
+
+
+# t=0.15
+# t=0.2657
+# t=0.2957
+# t=0.3257
+# t=0.3347
+# t=0.5657
+# t=0.5857
+# t=0.6057
+# t=0.6257
+t=1.2052
+# data_folder = "20240521-231755-TFF"
+data_folder="20240528-224811-TFF"
+(vv3, tt3), (vv4, tt4) = comboSettSet[0][0] 
+settingStr = f"{round(vv3/VR/0.02)}-{round(vv4/VR/0.015)}"
+l.info(f"Loading t={round(t,5)}  s={settingStr}")
 # with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)} s={settingStr}.pgz.pkl'
 #                 , 'rb', thread=8) as file:
 #     psi = pickle.load(file)
@@ -2277,7 +2410,6 @@ def plot_g34(phiHere, cutPlot=1.5, saveFig=True,
 #          title2=f"$\phi_3$={round(vv3/VR/0.02)}π/4, $\phi_4=${round(vv4/VR/0.02)}π/4",
 #          title2filestr=settingStr
 #         )
-# -
 
 # assert False, "just to catch run all"
 
@@ -2293,7 +2425,8 @@ psi_phi_plot1(t,-1,psi,phi, plt_show=True, plt_save=True)
 
 
 
-
+psi=None
+phi=None
 
 t=1.2052
 outputOfSett = {}
@@ -2312,8 +2445,10 @@ for combSetH in comboSettSet:
         phi, swnf = phiAndSWNF(psi, nthreads=7)
         # (gx3px4p, gx3px4m, gx3mx4p, gx3mx4m, gx3x4n) 
         psi_phi_plot1(t,-1,psi,phi, plt_show=False, plt_save=True,save_str=f"s={settingStr}",title_str=f"s={settingStr}")
-        tempPlotOutput = plot_g34(
+        # tempPlotOutput = plot_g34(
+        tempPlotOutput = plot_g34_v2(
             phi, cutPlot=1.5, saveFig=True, 
+            pMaxCut=2,
             title2=f"$\phi_3$={round(vv3/VR/0.02)}π/4, $\phi_4=${round(vv4/VR/0.015)}π/4",
             title2filestr=settingStr, skipPlot=True
             )
@@ -2324,6 +2459,9 @@ for combSetH in comboSettSet:
 with pgzip.open(output_prefix+f"outputOfSett"+output_ext,'wb', thread=8, blocksize=1*10**8) as file:
     pickle.dump(outputOfSett, file)
 
+with pgzip.open("/Volumes/tonyNVME Gold/twoParticleSim/20240711-234819-TFF/outputOfSett.pgz.pkl", 'rb', thread=1) as file:
+    outputOfSett = pickle.load(file)
+
 outputOfSett["0-1"][0][0].shape
 
 outputOfSett["0-1"][4]
@@ -2331,8 +2469,6 @@ outputOfSett["0-1"][4]
 outputOfSett["0-1"][4].T
 
 np.flipud(outputOfSett["0-1"][4].T)
-
-phi.shape
 
 gx3px4p
 
