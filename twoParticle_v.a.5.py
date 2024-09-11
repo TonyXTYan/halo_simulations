@@ -869,7 +869,9 @@ plt.imshow(np.real(psi[60,:,60,:]))
 plt.subplot(2,2,4)
 plt.imshow(np.real(psi[30,:,90,:]))
 
+su/v3
 
+su/v4
 
 
 
@@ -1607,19 +1609,31 @@ gc.collect()
 # #### Beam Splitter Pulse
 
 t=0.6347
-data_folder = "20240521-231755-TFF"
+# data_folder = "20240521-231755-TFF"
+data_folder = "20240711-234819-TFF"
 with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)}.pgz.pkl'
                 , 'rb', thread=8) as file:
     psi = pickle.load(file)
 phi, swnf = phiAndSWNF(psi, nthreads=7)
 gc.collect()
 
+# +
 # th3, th3p, th4, th4p sets 
 thetaCombo1 = ((0,1),           (V3pi32,t3pi32), (V4pi4, t4pi4),  (V4pi34,t4pi34))
-thetaCombo2 = ((V3pi34,t3pi34), (V3pi4, t3pi4),  (V4pi32,t4pi32), (0,1))
+thetaCombo2 = ((V3pi34,t3pi34), (V3pi4, t3pi4),  (V4pi32,t4pi32), (0,1)          )
 thetaCombo3 = ((V3pi54,t3pi54), (V3pi34,t3pi34), (V4pi1, t4pi1),  (V4pi32,t4pi32))
 thetaCombo4 = ((V3pi32,t3pi32), (V3pi1, t3pi1),  (V4pi34,t4pi34), (V4pi54,t4pi54))
 
+thetaCombo5 = ((V3pi4,t3pi4),   (V3pi74,t3pi74), (0,1),           (V4pi2,t4pi2)  )
+thetaCombo6 = ((V3pi2,t3pi2),   (0, 1),          (V4pi74,t4pi74), (V4pi4,t4pi4)  )
+# thetaCombo7 = ((V3pi21,t3pi21), (V3pi2,t3pi2),   (V4pi54,t4pi54), (V4pi74,t4pi74))
+# thetaCombo8 = ((V3pi74,t3pi74), (V3pi54,t3pi54), (V4pi2,t4pi2),   (V4pi21,t4pi21))
+        #     this one is incorrect! 
+thetaCombo7 = ((V3pi1,t3pi1),   (V3pi2,t3pi2),   (V4pi54,t4pi54), (V4pi74,t4pi74))
+thetaCombo8 = ((V3pi74,t3pi74), (V3pi54,t3pi54), (V4pi2,t4pi2),   (V4pi1,t4pi1)  )
+
+
+# -
 
 def comboSettingsGen(combo):
     return [(combo[0],combo[2]), (combo[0],combo[3]), 
@@ -1630,8 +1644,43 @@ comboSett1 = comboSettingsGen(thetaCombo1)
 comboSett2 = comboSettingsGen(thetaCombo2)
 comboSett3 = comboSettingsGen(thetaCombo3)
 comboSett4 = comboSettingsGen(thetaCombo4)
+comboSett5 = comboSettingsGen(thetaCombo5)
+comboSett6 = comboSettingsGen(thetaCombo6)
+comboSett7 = comboSettingsGen(thetaCombo7)
+comboSett8 = comboSettingsGen(thetaCombo8)
 
-comboSettSet = [comboSett1, comboSett2, comboSett3, comboSett4]
+
+def comboSymSwap(combo):
+    return (combo[2], combo[3], combo[0], combo[1])
+
+
+# comboSett1s = comboSettingsGen(comboSymSwap(thetaCombo1))
+# comboSett2s = comboSettingsGen(comboSymSwap(thetaCombo2))
+# comboSett3s = comboSettingsGen(comboSymSwap(thetaCombo3))
+# comboSett4s = comboSettingsGen(comboSymSwap(thetaCombo4))
+# comboSett5s = comboSettingsGen(comboSymSwap(thetaCombo5))
+# comboSett6s = comboSettingsGen(comboSymSwap(thetaCombo6))
+# comboSett7s = comboSettingsGen(comboSymSwap(thetaCombo7))
+# comboSett8s = comboSettingsGen(comboSymSwap(thetaCombo8))
+thetaCombo1s = ( (V3pi4, t4pi4),  (V3pi34,t4pi34), (0,1),           (V4pi32,t3pi32) )
+thetaCombo2s = ( (V3pi32,t4pi32), (0,1)          , (V4pi34,t3pi34), (V4pi4, t3pi4)  )
+thetaCombo3s = ( (V3pi1, t4pi1),  (V3pi32,t4pi32), (V4pi54,t3pi54), (V4pi34,t3pi34) )
+thetaCombo4s = ( (V3pi34,t4pi34), (V3pi54,t4pi54), (V4pi32,t3pi32), (V4pi1, t3pi1)  )
+thetaCombo5s = ( (0,1),           (V3pi2,t4pi2)  , (V4pi4,t3pi4),   (V4pi74,t3pi74) )
+thetaCombo6s = ( (V3pi74,t4pi74), (V3pi4,t4pi4)  , (V4pi2,t3pi2),   (0, 1)          )
+thetaCombo7s = ( (V3pi54,t4pi54), (V3pi74,t4pi74), (V4pi1,t3pi1),   (V4pi2,t3pi2)   )
+thetaCombo8s = ( (V3pi2,t4pi2),   (V3pi1,t4pi1)  , (V4pi74,t3pi74), (V4pi54,t3pi54) )
+comboSett1s = comboSettingsGen(thetaCombo1s)
+comboSett2s = comboSettingsGen(thetaCombo2s)
+comboSett3s = comboSettingsGen(thetaCombo3s)
+comboSett4s = comboSettingsGen(thetaCombo4s)
+comboSett5s = comboSettingsGen(thetaCombo5s)
+comboSett6s = comboSettingsGen(thetaCombo6s)
+comboSett7s = comboSettingsGen(thetaCombo7s)
+comboSett8s = comboSettingsGen(thetaCombo8s)
+
+comboSettSet = [comboSett1, comboSett2, comboSett3, comboSett4, comboSett5, comboSett6, comboSett7, comboSett8, 
+                comboSett1s, comboSett2s, comboSett3s, comboSett4s, comboSett5s, comboSett6s, comboSett7s, comboSett8s]
 
 T_BS_L
 
@@ -1882,6 +1931,8 @@ plt.show()
 
 del psi2, phi2
 
+t
+
 (t,psi,phi) = evolve_free_part(t,psi,swnf,N_FREE_TO_BS)
 
 ### THIS CELL IS COPIED CODE FROM INITIAL SCATTERING!!!!! 
@@ -1896,6 +1947,8 @@ l.info(f"""t={t},
 print_every = {print_every}, \tframes_count = {frames_count}, total_steps = {total_steps}
 Target simulation end time = {t_end_target} ms
 Estimated script runtime = {evolve_loop_time_estimate} which is {datetime.now()+evolve_loop_time_estimate}""")
+
+len(comboSettSet)
 
 comboSettSetS = set()
 for combSetH in comboSettSet:
@@ -1916,12 +1969,16 @@ thispklfile
 os.path.exists(thispklfile)
 
 gc.collect()
+print_ram_usage()
 
+gc.collect()
 for cind, combSetH in enumerate(comboSettSet):
     l.info(f"Combo Set ind = {cind}")
     for tCombo in combSetH:
         t=1.2052
         (vv3, tt3), (vv4, tt4) = tCombo 
+        # IDEA: use 1/16 division scans? and scan all compo rather than just bell angles
+        # IDEA: also need to scan T_BS using corrE as signal.
         # print(((vv3, tt3), (vv4, tt4)))
         # settingStr = ((round(vv3), round(tt3,6)), (round(vv4), round(tt4,6)))
         settingStr = f"{round(vv3/VR/0.02)}-{round(vv4/VR/0.015)}"
@@ -1931,9 +1988,13 @@ for cind, combSetH in enumerate(comboSettSet):
         if os.path.exists(thispklfile): 
             l.info(f"    Skipped: {thispklfile}")
             continue
-
+        
+        l.info("    Calculating...")
         t=0.6347
-        data_folder = "20240711-234819-TFF # ""20240521-231755-TFF"
+        data_folder = "20240711-234819-TFF" # "20240521-231755-TFF"
+        psi = None
+        phi = None
+        gc.collect()
         with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)}.pgz.pkl'
                         , 'rb', thread=8) as file:
             psi = pickle.load(file)
@@ -2015,6 +2076,7 @@ def gp3p4_dhalo_calc(phiHere,cut=5.0,offset3=0,offset4=0):
     gx3x4 = np.trapz(gx3x4[:,ind3,:],pzlin[ind3],axis=1)
     xip = pxlin > +0*cut*dpz 
     xim = pxlin < -0*cut*dpz 
+    #REVIEW: proper integration box
     gpp = np.trapz(np.trapz(gx3x4[:,xip],pxlin[xip],axis=1)[xip],pxlin[xip],axis=0)
     gpm = np.trapz(np.trapz(gx3x4[:,xim],pxlin[xim],axis=1)[xip],pxlin[xip],axis=0)
     gmp = np.trapz(np.trapz(gx3x4[:,xip],pxlin[xip],axis=1)[xim],pxlin[xim],axis=0)
@@ -2150,7 +2212,7 @@ t=1.2052
 # t=0.6347
 # t=0.03
 data_folder = "20240711-234819-TFF" #"20240528-224811-TFF"
-settingStr = "3-0"
+settingStr = "6-5"
 psi, phi = None, None
 gc.collect()
 # with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)}.pgz.pkl', 'rb', thread=8) as file:
@@ -2171,11 +2233,14 @@ whatever_bla_testing2 = plot_g34(phi, cutPlot=1.5, saveFig=True,
         title2filestr="s3-0", skipPlot=False
         )
 
+figSizeHere = (9,2.0)
 whatever_bla_testing2v2 = plot_g34_v2(phi, cutPlot=1.5, saveFig=True, 
         pMaxCut=2,
-        title2=f"Setting: 3-0",
-        title2filestr="s3-0", skipPlot=False
+        title2=f"{figSizeHere}",
+        title2filestr=f"6-5, {figSizeHere}", skipPlot=False,
+        figSize=figSizeHere
         )
+del figSizeHere
 
 whatever_bla_testing2v2[4][0,3]-whatever_bla_testing2v2[4][0,1]+\
 whatever_bla_testing2v2[4][1,2]-whatever_bla_testing2v2[4][1,0]+\
@@ -2303,7 +2368,8 @@ def plot_g34(phiHere, cutPlot=1.5, saveFig=True,
 def plot_g34_v2(phiHere, cutPlot=1.5, saveFig=True, 
              pMaxCut=2,
              title2="", title2filestr="NA",
-             skipPlot=False):
+             skipPlot=False,
+             figSize=(9,3.5)):
     gx3px4p = gp3p4_dhalo_calc(phiHere,cut=cutPlot,offset3=+p,offset4=+p)
     gx3px4m = gp3p4_dhalo_calc(phiHere,cut=cutPlot,offset3=+p,offset4=-p)
     gx3mx4p = gp3p4_dhalo_calc(phiHere,cut=cutPlot,offset3=-p,offset4=+p)
@@ -2337,7 +2403,7 @@ def plot_g34_v2(phiHere, cutPlot=1.5, saveFig=True,
     tick_labelsY = ["","$+p_{A_x}$","$0$","$-p_{A_x}$","","$+p_{A_x}$","$0$","$-p_{A_x}$",""]
     # tick_labels = np.concatenate((np.linspace(-4, 4, 5), np.linspace(-4, 4, 5)))
     # plt.imshow(np.flipud(gx3x4combined.T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Greens')
-    plt.figure(figsize=(9,3.5))
+    plt.figure(figsize=figSize)
     ax = plt.subplot(1,2,1)
     im = ax.imshow(np.flipud(gx3x4combined.T),cmap='Greens')
     # ax.set_yticks(ticksL, ["","A↗︎","","A↖︎","","A↘︎","","A↙︎",""])
@@ -2387,6 +2453,8 @@ def plot_g34_v2(phiHere, cutPlot=1.5, saveFig=True,
     return (gx3px4p, gx3px4m, gx3mx4p, gx3mx4m, gx3x4n)
 
 
+comboSettSet
+
 # t=0.15
 # t=0.2657
 # t=0.2957
@@ -2430,7 +2498,7 @@ phi=None
 
 t=1.2052
 outputOfSett = {}
-data_folder = "20240711-234819-TFF" #"20240528-224811-TFF"
+data_folder = "20240906-124041-TFF" #"20240711-234819-TFF" #"20240528-224811-TFF"
 for combSetH in comboSettSet:
     for tCombo in combSetH:
         (vv3, tt3), (vv4, tt4) = tCombo
@@ -2444,8 +2512,14 @@ for combSetH in comboSettSet:
             psi = pickle.load(file)
         phi, swnf = phiAndSWNF(psi, nthreads=7)
         # (gx3px4p, gx3px4m, gx3mx4p, gx3mx4m, gx3x4n) 
-        psi_phi_plot1(t,-1,psi,phi, plt_show=False, plt_save=True,save_str=f"s={settingStr}",title_str=f"s={settingStr}")
+        scattering_evolve_loop_plot(t,-1,psi,phi, plt_show=False, plt_save=True)
+        gc.collect()
+        scattering_evolve_loop_plot_alt(t,-1,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
+        gc.collect()
+        psi_phi_plot1(t,-1,psi,phi, plt_show=False, plt_save=True,save_str=f"s={settingStr}",title_str=f"s={settingStr}",
+                      cmax3x=2e-3,cmax4x=2e-3,cmax3p=2e-5,cmax4p=2e-5)
         # tempPlotOutput = plot_g34(
+        gc.collect()
         tempPlotOutput = plot_g34_v2(
             phi, cutPlot=1.5, saveFig=True, 
             pMaxCut=2,
@@ -2461,6 +2535,11 @@ with pgzip.open(output_prefix+f"outputOfSett"+output_ext,'wb', thread=8, blocksi
 
 with pgzip.open("/Volumes/tonyNVME Gold/twoParticleSim/20240711-234819-TFF/outputOfSett.pgz.pkl", 'rb', thread=1) as file:
     outputOfSett = pickle.load(file)
+
+psi_phi_plot1(t,-1,psi,phi, plt_show=False, plt_save=True,save_str=f"s={settingStr}",title_str=f"s={settingStr}",
+                      cmax3x=2e-3,cmax4x=2e-3,cmax3p=2e-5,cmax4p=2e-5)
+
+
 
 outputOfSett["0-1"][0][0].shape
 
@@ -2511,19 +2590,31 @@ corrE(np.flipud(outputOfSett["0-3"][4].T))
 
 np.flipud(outputOfSett["0-3"][4].T)
 
+for (ci, combSetH) in enumerate(comboSettSet):
+    (tC1, tC2, tC3, tC4) = combSetH
+    (v31,_), (v41,_) = tC1 
+    (v32,_), (v42,_) = tC2
+    (v33,_), (v43,_) = tC3
+    (v34,_), (v44,_) = tC4
+    ss1 = f"{round(v31/VR/0.02)}-{round(v41/VR/0.015)}"
+    ss2 = f"{round(v32/VR/0.02)}-{round(v42/VR/0.015)}"
+    ss3 = f"{round(v33/VR/0.02)}-{round(v43/VR/0.015)}"
+    ss4 = f"{round(v34/VR/0.02)}-{round(v44/VR/0.015)}"
+        # (vv3, tt3), (vv4, tt4) = tCombo
+        # settingStr = f"{round(vv3/VR/0.02)}-{round(vv4/VR/0.015)}"
+        # print(settingStr)
+    cE = corrE(np.flipud(outputOfSett[ss1][4].T))\
+        -corrE(np.flipud(outputOfSett[ss2][4].T))\
+        +corrE(np.flipud(outputOfSett[ss3][4].T))\
+        +corrE(np.flipud(outputOfSett[ss4][4].T))
+    
+    print(f"ci={ci}, g({ss1})-g({ss2})+g({ss3})+g({ss4}) \t cE = {round(cE,5)}")
+    print(f"    {round(corrE(np.flipud(outputOfSett[ss1][4].T)),4)}"+\
+          f"    {round(corrE(np.flipud(outputOfSett[ss2][4].T)),4)}"+\
+          f"    {round(corrE(np.flipud(outputOfSett[ss3][4].T)),4)}"+\
+          f"    {round(corrE(np.flipud(outputOfSett[ss4][4].T)),4)}")
 
 
-outputOfSett["0-1"][4][0,1]
-
-np.flipud(outputOfSett["0-1"][4].T)[0,2]
-
-np.flipud(outputOfSett["0-1"][4].T)[2,0]
-
-np.flipud(outputOfSett["0-1"][4].T)[0,0]
-
-np.flipud(outputOfSett["0-1"][4].T)[2,2]
-
-0.2+0.2-0.03-0.03
 
 
 
@@ -2824,24 +2915,25 @@ def psi_phi_plot1(t,f,psi,phi, plt_show=True, plt_save=False, save_str="", title
     else:        plt.close(fig) 
     gc.collect()
 
-# t=0.03
-# for t in [0.03, 0.06, 0.09, 0.012, 0.15]:
-for t in [0.5657, 0.5857, 0.6057, 0.6257, 0.6347]:
-# for t in [t=1.2052]
-    print(f"exporting figures for t={round(t,5)}")
-    data_folder = "20240711-234819-TFF" #"20240528-224811-TFF"
-    del psi, phi, swnf
-    with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)}.pgz.pkl', 'rb', thread=8) as file:
-        psi = pickle.load(file)
-    phi, swnf = phiAndSWNF(psi, nthreads=7)
-    gc.collect()
+# +
+# # t=0.03
+# # for t in [0.03, 0.06, 0.09, 0.012, 0.15]:
+# for t in [0.5657, 0.5857, 0.6057, 0.6257, 0.6347]:
+# # for t in [t=1.2052]
+#     print(f"exporting figures for t={round(t,5)}")
+#     data_folder = "20240711-234819-TFF" #"20240528-224811-TFF"
+#     del psi, phi, swnf
+#     with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)}.pgz.pkl', 'rb', thread=8) as file:
+#         psi = pickle.load(file)
+#     phi, swnf = phiAndSWNF(psi, nthreads=7)
+#     gc.collect()
 
-    # psi_phi_plot1(t,-1,psi,phi, plt_show=False, plt_save=True)
+#     psi_phi_plot1(t,-1,psi,phi, plt_show=False, plt_save=True)
 
-    whatever_bla_testing1 = plot_g34(phi, cutPlot=1.5, saveFig=True, 
-            title2=f"Mirror Pulse",
-            title2filestr="MP", skipPlot=True
-            )
+#     whatever_bla_testing1 = plot_g34(phi, cutPlot=1.5, saveFig=True, 
+#             title2=f"Mirror Pulse",
+#             title2filestr="MP", skipPlot=True
+#             )
 
 # +
 # t=1.2052
