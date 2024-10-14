@@ -15,13 +15,16 @@ Please run one of the following command.
 ```bash
 conda env create --file env-hist-macos-arm64.yml --prefix ./envs/py311_he34sim
 conda env create --file env-hist-intel.yml --prefix ./envs/py311_he34sim
+conda env create --file env-hist-noarch.yml --prefix ./envs/py311_he34sim
 ```
 
 By default, I want to create the environment in the project directory `./` so it doesn't clutter my home directory. But if you want to store packages for this environment in the conda default directory, use `--name py311_he34sim` instead of `--prefix`.  
 
 `macos-armos` uses the Apple Accelerate framework, `intel` uses MKL for hardware accelerated linear algebra computations.
 
-Don't forget to activate the newly created environment
+Don't forget to activate the newly created environment.
+
+VSCode's jupyter page should auto detect the new environment. 
 
 
 ```bash
@@ -71,11 +74,11 @@ conda env remove --prefix ./envs/py311_he34sim
 Because jupyter's file is rather large with too much not-git-useful data, I am using [`jupytext`](https://jupytext.readthedocs.io/en/latest/using-cli.html) to convert `.ipynb` files to `.py` for better git readability. 
 
 ```bash
-jupytext --to py twoParticle_v.a.5.ipynb
+jupytext --to py twoParticle_v.a.6.ipynb
 ```
 
 ```bash
-jupytext --to ipynb twoParticle_v.a.5.py
+jupytext --to ipynb twoParticle_v.a.6.py
 ```
 
 Because I'm using VSCode so I have to do these manual conversions, if you use jupyter notebook or lab, you can setup a pairing between `.ipynb` and `.py` files, and then can convert automatically, see doc [here](https://jupytext.readthedocs.io/en/latest/paired-notebooks.html). 
@@ -87,4 +90,17 @@ Because I'm using VSCode so I have to do these manual conversions, if you use ju
 
 
 
+Random command logs needed to get shit working 
+```bash
+which ffmpeg
+# and then update os.environ["IMAGEIO_FFMPEG_EXE"]
 
+conda install matplotlib --update-deps --force-reinstall
+
+conda install opencv --update-deps --force-reinstall
+
+conda install numpy --update-deps --force-reinstall
+
+conda install 'numpy>=2.0' --update-deps --force-reinstall
+
+```

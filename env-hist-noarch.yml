@@ -6,7 +6,7 @@ dependencies:
   - conda
   - setuptools[version='<65']
   - numpy[version='>=2.0']
-  - libblas[build=*mkl]
+  - libblas
   - numba
   - pgzip
   - matplotlib
