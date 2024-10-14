@@ -22,3 +22,4 @@ output/(20230212-191315-F) bragg_mixing_0_Pi/*
 *__pycache__
 *.html
 envs
+output
