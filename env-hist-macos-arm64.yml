@@ -23,4 +23,6 @@ dependencies:
   - hypothesis
   - meson
   - ipykernel
+  - ipywidgets
   - jupytext
+  - ffmpeg
