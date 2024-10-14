@@ -5,9 +5,9 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.16.1
+#       jupytext_version: 1.16.4
 #   kernelspec:
-#     display_name: Python 3 (ipykernel)
+#     display_name: Python 3
 #     language: python
 #     name: python3
 # ---
@@ -33,6 +33,13 @@ import pandas as pd
 import sys
 import statsmodels.api as sm
 import warnings ## statsmodels.api is too old ... -_-#
+
+from matplotlib.ticker import MaxNLocator
+from matplotlib.ticker import MultipleLocator
+from matplotlib.lines import Line2D
+from matplotlib.transforms import Bbox
+
+from colorsys import hls_to_rgb # for complex plot color
 
 import pickle
 import pgzip
@@ -70,7 +77,6 @@ from numba import njit, jit, prange, objmode, vectorize
 import numba
 numba.set_num_threads(8)
 from numba_progress import ProgressBar
-from matplotlib.ticker import MaxNLocator
 
 N_JOBS=2#-3-1
 nthreads=2
@@ -1141,10 +1147,6 @@ def scattering_evolve_loop_plot(t,f,psi,phi, plt_show=True, plt_save=False):
 
 
 
-# +
-from matplotlib.transforms import Bbox
-
-
 output_pre_selpa = output_prefix + "scattering_evolve_loop_plot_alt/"
 os.makedirs(output_pre_selpa, exist_ok=True)
 def scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=True, plt_save=False, logPlus=1,po=1):
@@ -1197,8 +1199,6 @@ def scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=True, plt_save=False, 
     if plt_show: plt.show() 
     else:        plt.close(fig) 
 
-
-# -
 
 su = 3
 # psi = psi0_just_opposite_double(dr=0,s3=su*(4/3),s4=su,pt=-4.0*hb*k,a=0.5*pi) # 16.37s
@@ -2295,7 +2295,6 @@ def plot_dhalo_gp3p4(gx3x4,cut,offset3=0,offset4=0):
 
 # +
 # https://artmenlope.github.io/plotting-complex-variable-functions/
-from colorsys import hls_to_rgb
 def colorize(fz):
     """
     The original colorize function can be found at:
@@ -2313,7 +2312,6 @@ def colorize(fz):
     c = np.rot90(c.transpose(2,1,0), 1) # Change shape to (m,n,3) and rotate 90 degrees
     return c
 
-from matplotlib.lines import Line2D
 legend_elements = [Line2D([0], [0], marker='o', color='cyan', label='$Arg=\pm\pi$', markersize=10, lw=0),
                    Line2D([0], [0], marker='o', color='red', label='$Arg=0$', markersize=10, lw=0)]
 # -
@@ -2570,10 +2568,6 @@ def plot_g34(phiHere, cutPlot=1.5, saveFig=True,
     return (gx3px4p, gx3px4m, gx3mx4p, gx3mx4m, gx3x4n)
 
 
-# +
-from numpy import pad
-
-
 def plot_g34_v2(phiHere, cutPlot=1.5, saveFig=True, 
              pMaxCut=2,
              title2="", title2filestr="NA",
@@ -2665,8 +2659,6 @@ def plot_g34_v2(phiHere, cutPlot=1.5, saveFig=True,
         plt.show()
     return (gx3px4p, gx3px4m, gx3mx4p, gx3mx4m, gx3x4n)
 
-
-# -
 
 comboSettSet
 
@@ -2818,8 +2810,6 @@ phi_corrE_list.sort(key=extract_pgzpkl_t)
 phi_corrE_ss_l = [extract_pgzpkl_t(x) for x in phi_corrE_list]
 
 # +
-from calendar import c
-
 selected_sett = ["2-7","2-1","0-7","0-1"]
 corrE_3p4 = []
 corrE_3m4 = []
@@ -2874,10 +2864,8 @@ float(sss.split("-")[0])
 
 corrE_3p4s
 
+
 # +
-from matplotlib.ticker import MultipleLocator
-
-
 def cosM(x, a, o, h):
     return a*np.cos(x-o)+h
 par, cov = scipy.optimize.curve_fit(cosM, corrE_3p4, corrE_val)
@@ -3380,7 +3368,7 @@ t = 0.15
 data_folder = "20240919-173152-TFF"
 # data_folder = "20240512-005555-TFF" 
 # data_folder = "20240911-182427-TFF"#"20240711-234819-TFF" #"20240528-224811-TFF"
-# settingStr = "1-0"
+settingStr = "1-0"
 # settingStr = "6-5"
 psi, phi = None, None
 gc.collect()
@@ -3552,6 +3540,14 @@ pxmax/(hb*k)
 
 psi, phi = None, None
 gc.collect()
+
+
+
+np.show_config()
+
+np.test()
+
+
 
 
 

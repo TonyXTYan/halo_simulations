@@ -1,0 +1,29 @@
+name: 
+  /Users/tonyyan/Documents/_ANU/_He_BEC_Group/_Mass-Entanglement/bell_correlations/simulations/envs/py311_he34sim
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - meson
+  - numba
+  - numpy[version='>=2.0']
+  - pandas
+  - pytest
+  - conda-forge::numba-progress
+  - setuptools[version='<65']
+  - uncertainties
+  - moviepy
+  - pyfftw
+  - opencv
+  - scipy
+  - hypothesis
+  - libblas[build=*accelerate]
+  - python=3.11
+  - statsmodels
+  - conda
+  - matplotlib
+  - pgzip
+  - joblib
+  - ipykernel
+prefix: 
+  /Users/tonyyan/Documents/_ANU/_He_BEC_Group/_Mass-Entanglement/bell_correlations/simulations/envs/py311_he34sim
