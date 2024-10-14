@@ -5,9 +5,9 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.16.1
+#       jupytext_version: 1.16.4
 #   kernelspec:
-#     display_name: Python 3 (ipykernel)
+#     display_name: Python 3
 #     language: python
 #     name: python3
 # ---
@@ -33,6 +33,13 @@ import pandas as pd
 import sys
 import statsmodels.api as sm
 import warnings ## statsmodels.api is too old ... -_-#
+
+from matplotlib.ticker import MaxNLocator
+from matplotlib.ticker import MultipleLocator
+from matplotlib.lines import Line2D
+from matplotlib.transforms import Bbox
+
+from colorsys import hls_to_rgb # for complex plot color
 
 import pickle
 import pgzip
@@ -70,7 +77,6 @@ from numba import njit, jit, prange, objmode, vectorize
 import numba
 numba.set_num_threads(8)
 from numba_progress import ProgressBar
-from matplotlib.ticker import MaxNLocator
 
 N_JOBS=2#-3-1
 nthreads=2
@@ -869,7 +875,9 @@ plt.imshow(np.real(psi[60,:,60,:]))
 plt.subplot(2,2,4)
 plt.imshow(np.real(psi[30,:,90,:]))
 
+su/v3
 
+su/v4
 
 
 
@@ -1139,10 +1147,6 @@ def scattering_evolve_loop_plot(t,f,psi,phi, plt_show=True, plt_save=False):
 
 
 
-# +
-from matplotlib.transforms import Bbox
-
-
 output_pre_selpa = output_prefix + "scattering_evolve_loop_plot_alt/"
 os.makedirs(output_pre_selpa, exist_ok=True)
 def scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=True, plt_save=False, logPlus=1,po=1):
@@ -1195,8 +1199,6 @@ def scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=True, plt_save=False, 
     if plt_show: plt.show() 
     else:        plt.close(fig) 
 
-
-# -
 
 su = 3
 # psi = psi0_just_opposite_double(dr=0,s3=su*(4/3),s4=su,pt=-4.0*hb*k,a=0.5*pi) # 16.37s
@@ -1308,8 +1310,8 @@ with pgzip.open(output_prefix+f"psi at t={t}"+output_ext,
 # ## Scattering generated from Bragg pulse
 
 # +
-# @njit(parallel=True,cache=True,fastmath=True)
-@njit(parallel=True,cache=True)
+@njit(parallel=True,cache=True,fastmath=True)
+# @njit(parallel=True,cache=True)
 def scattering_evolve_bragg_loop_helper2_inner_psi_step(
         psi_init, s34, tnow,
         t3mid, t3wid, v3pot,
@@ -1317,21 +1319,22 @@ def scattering_evolve_bragg_loop_helper2_inner_psi_step(
     ):
     psi = psi_init
     minus1jhb05dt = -(1j/hb)*0.5*dt
+    VS3 = VS(tnow,t3mid,t3wid,v3pot)
+    VS4 = VS(tnow,t4mid,t4wid,v4pot)
     for iz3 in prange(nz):
         z3 = zlin[iz3]
         for (ix4, x4) in enumerate(xlin):
             for (iz4, z4) in enumerate(zlin):
                 # xlin is x3 here in the for loop
                 # a34 contact potential
-                dis = ((xlin-x4)**2 +(z3-z4)**2)**0.5
-                psi[:,iz3,ix4,iz4] *= np.exp(minus1jhb05dt * # this one is unitary time evolution operator
-                                             s34 * 0.5*(1+np.cos(2*np.pi/a34*( dis ))) * 
-                                                 (-0.5*a34 < dis) * (dis < 0.5*a34)
-                                        # np.exp(-((xlin-x4)**2 +(z3-z4)**2)/(4*a34**2)) # inside the guassian contact potential
-                                            )
+                if s34 != 0:
+                    dis = ((xlin-x4)**2 +(z3-z4)**2)**0.5
+                    psi[:,iz3,ix4,iz4] *= np.exp(minus1jhb05dt * # this one is unitary time evolution operator
+                                                s34 * 0.5*(1+np.cos(2*np.pi/a34*( dis ))) * 
+                                                    (-0.5*a34 < dis) * (dis < 0.5*a34)
+                                            # np.exp(-((xlin-x4)**2 +(z3-z4)**2)/(4*a34**2)) # inside the guassian contact potential
+                                                )
                 # Bragg Potential (VxExpGrid in oneParticle)
-                VS3 = VS(tnow,t3mid,t3wid,v3pot)
-                VS4 = VS(tnow,t4mid,t4wid,v4pot)
                 if VS3 != 0 or VS4 != 0:
                     psi[:,iz3,ix4,iz4] *= np.exp(minus1jhb05dt * (
                                              VS3*np.cos(2*kx*xlin + 2*kz*z3) + 
@@ -1363,15 +1366,26 @@ def scattering_evolve_bragg_loop_helper2(
         steps=20, progress_proxy=None, s34=strength34,
         t3mid=-2, t3wid=1, v3pot=0,
         t4mid=-2, t4wid=1, v4pot=0,
+        numba_threads=7,
+        fftw_threads=7
     ):
     t = tin
     psi = psii
+    numba.set_num_threads(numba_threads)
     for ia in range(steps):
+        # psi = scattering_evolve_bragg_loop_helper2_inner_psi_step(
+        #     toPsi(
+        #         scattering_evolve_loop_helper2_inner_phi_step(toPhi(
+        #             scattering_evolve_bragg_loop_helper2_inner_psi_step(psi,s34,t,t3mid,t3wid,v3pot,t4mid,t4wid,v4pot)
+        #             , swnf, nthreads=fftw_threads))
+        #         , swnf, nthreads=fftw_threads)
+        #     ,s34,t,t3mid,t3wid,v3pot,t4mid,t4wid,v4pot)
+
         psi = scattering_evolve_bragg_loop_helper2_inner_psi_step(psi,s34,t,t3mid,t3wid,v3pot,t4mid,t4wid,v4pot)
-        phi = toPhi(psi, swnf, nthreads=7)
+        phi = toPhi(psi, swnf, nthreads=fftw_threads)
         phi = scattering_evolve_loop_helper2_inner_phi_step(phi)
         #del psi  # might cause memory issues
-        psi = toPsi(phi, swnf, nthreads=7)
+        psi = toPsi(phi, swnf, nthreads=fftw_threads)
         psi = scattering_evolve_bragg_loop_helper2_inner_psi_step(psi,s34,t,t3mid,t3wid,v3pot,t4mid,t4wid,v4pot)
         t += dt 
         if progress_proxy != None:
@@ -1390,6 +1404,9 @@ def evolve_free_part(tin, psii, swnf, dtsteps):
 
 
 # -
+
+for a in range(1):
+    print(a)
 
 evolve_loop_time_start = datetime.now()
 _ = scattering_evolve_bragg_loop_helper2(t,psi,swnf,steps=1,progress_proxy=None,s34=evolve_s34,
@@ -1607,19 +1624,31 @@ gc.collect()
 # #### Beam Splitter Pulse
 
 t=0.6347
-data_folder = "20240521-231755-TFF"
+# data_folder = "20240521-231755-TFF"
+data_folder = "20240711-234819-TFF"
 with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)}.pgz.pkl'
                 , 'rb', thread=8) as file:
     psi = pickle.load(file)
 phi, swnf = phiAndSWNF(psi, nthreads=7)
 gc.collect()
 
+# +
 # th3, th3p, th4, th4p sets 
 thetaCombo1 = ((0,1),           (V3pi32,t3pi32), (V4pi4, t4pi4),  (V4pi34,t4pi34))
-thetaCombo2 = ((V3pi34,t3pi34), (V3pi4, t3pi4),  (V4pi32,t4pi32), (0,1))
+thetaCombo2 = ((V3pi34,t3pi34), (V3pi4, t3pi4),  (V4pi32,t4pi32), (0,1)          )
 thetaCombo3 = ((V3pi54,t3pi54), (V3pi34,t3pi34), (V4pi1, t4pi1),  (V4pi32,t4pi32))
 thetaCombo4 = ((V3pi32,t3pi32), (V3pi1, t3pi1),  (V4pi34,t4pi34), (V4pi54,t4pi54))
 
+thetaCombo5 = ((V3pi4,t3pi4),   (V3pi74,t3pi74), (0,1),           (V4pi2,t4pi2)  )
+thetaCombo6 = ((V3pi2,t3pi2),   (0, 1),          (V4pi74,t4pi74), (V4pi4,t4pi4)  )
+# thetaCombo7 = ((V3pi21,t3pi21), (V3pi2,t3pi2),   (V4pi54,t4pi54), (V4pi74,t4pi74))
+# thetaCombo8 = ((V3pi74,t3pi74), (V3pi54,t3pi54), (V4pi2,t4pi2),   (V4pi21,t4pi21))
+        #     this one is incorrect! 
+thetaCombo7 = ((V3pi1,t3pi1),   (V3pi2,t3pi2),   (V4pi54,t4pi54), (V4pi74,t4pi74))
+thetaCombo8 = ((V3pi74,t3pi74), (V3pi54,t3pi54), (V4pi2,t4pi2),   (V4pi1,t4pi1)  )
+
+
+# -
 
 def comboSettingsGen(combo):
     return [(combo[0],combo[2]), (combo[0],combo[3]), 
@@ -1630,11 +1659,47 @@ comboSett1 = comboSettingsGen(thetaCombo1)
 comboSett2 = comboSettingsGen(thetaCombo2)
 comboSett3 = comboSettingsGen(thetaCombo3)
 comboSett4 = comboSettingsGen(thetaCombo4)
+comboSett5 = comboSettingsGen(thetaCombo5)
+comboSett6 = comboSettingsGen(thetaCombo6)
+comboSett7 = comboSettingsGen(thetaCombo7)
+comboSett8 = comboSettingsGen(thetaCombo8)
 
-comboSettSet = [comboSett1, comboSett2, comboSett3, comboSett4]
+
+def comboSymSwap(combo):
+    return (combo[2], combo[3], combo[0], combo[1])
+
+
+# comboSett1s = comboSettingsGen(comboSymSwap(thetaCombo1))
+# comboSett2s = comboSettingsGen(comboSymSwap(thetaCombo2))
+# comboSett3s = comboSettingsGen(comboSymSwap(thetaCombo3))
+# comboSett4s = comboSettingsGen(comboSymSwap(thetaCombo4))
+# comboSett5s = comboSettingsGen(comboSymSwap(thetaCombo5))
+# comboSett6s = comboSettingsGen(comboSymSwap(thetaCombo6))
+# comboSett7s = comboSettingsGen(comboSymSwap(thetaCombo7))
+# comboSett8s = comboSettingsGen(comboSymSwap(thetaCombo8))
+thetaCombo1s = ( (V3pi4, t3pi4),  (V3pi34,t3pi34), (0,1),           (V4pi32,t4pi32) )
+thetaCombo2s = ( (V3pi32,t3pi32), (0,1)          , (V4pi34,t4pi34), (V4pi4, t4pi4)  )
+thetaCombo3s = ( (V3pi1, t3pi1),  (V3pi32,t3pi32), (V4pi54,t4pi54), (V4pi34,t4pi34) )
+thetaCombo4s = ( (V3pi34,t3pi34), (V3pi54,t3pi54), (V4pi32,t4pi32), (V4pi1, t4pi1)  )
+thetaCombo5s = ( (0,1),           (V3pi2,t3pi2)  , (V4pi4,t4pi4),   (V4pi74,t4pi74) )
+thetaCombo6s = ( (V3pi74,t3pi74), (V3pi4,t3pi4)  , (V4pi2,t4pi2),   (0, 1)          )
+thetaCombo7s = ( (V3pi54,t3pi54), (V3pi74,t3pi74), (V4pi1,t4pi1),   (V4pi2,t4pi2)   )
+thetaCombo8s = ( (V3pi2,t3pi2),   (V3pi1,t3pi1)  , (V4pi74,t4pi74), (V4pi54,t4pi54) )
+comboSett1s = comboSettingsGen(thetaCombo1s)
+comboSett2s = comboSettingsGen(thetaCombo2s)
+comboSett3s = comboSettingsGen(thetaCombo3s)
+comboSett4s = comboSettingsGen(thetaCombo4s)
+comboSett5s = comboSettingsGen(thetaCombo5s)
+comboSett6s = comboSettingsGen(thetaCombo6s)
+comboSett7s = comboSettingsGen(thetaCombo7s)
+comboSett8s = comboSettingsGen(thetaCombo8s)
+
+comboSettSet = [comboSett1, comboSett2, comboSett3, comboSett4, comboSett5, comboSett6, comboSett7, comboSett8, 
+                comboSett1s, comboSett2s, comboSett3s, comboSett4s, comboSett5s, comboSett6s, comboSett7s, comboSett8s]
 
 T_BS_L
 
+t=0.6347
 T_FREE_TO_BS = T_BS_L - 5*dt - t
 # T_FREE_TO_BS = 1.0 - t
 N_FREE_TO_BS = ceil(T_FREE_TO_BS/dt)
@@ -1882,10 +1947,13 @@ plt.show()
 
 del psi2, phi2
 
+t=0.6347
+
 (t,psi,phi) = evolve_free_part(t,psi,swnf,N_FREE_TO_BS)
 
-### THIS CELL IS COPIED CODE FROM INITIAL SCATTERING!!!!! 
-# print_every = 10 # every us 
+###0 THIS CELL IS COPIED CODE FROM INITIAL SCATTERING!!!!! 
+t=0.6347 + N_FREE_TO_BS*dt
+print_every = 10 # every us 
 # frames_count = ceil(NLongestBSPulse/print_every) # until T_a34off
 frames_count = ceil((T_BS_R + 11*dt - t)/dt/print_every)
 export_every = 30
@@ -1894,8 +1962,20 @@ t_end_target = frames_count*print_every*dt
 evolve_loop_time_estimate = total_steps*evolve_loop_time_delta*1.1
 l.info(f"""t={t},
 print_every = {print_every}, \tframes_count = {frames_count}, total_steps = {total_steps}
-Target simulation end time = {t_end_target} ms
+Target simulation end time = {t_end_target} ms, {round(t+t_end_target,6)}
 Estimated script runtime = {evolve_loop_time_estimate} which is {datetime.now()+evolve_loop_time_estimate}""")
+
+N_FREE_TO_BS*dt
+
+T_END
+
+t3pi1
+
+# +
+# evolve_loop_time_delta = datetime.timedelta(seconds=1)
+# -
+
+len(comboSettSet)
 
 comboSettSetS = set()
 for combSetH in comboSettSet:
@@ -1916,12 +1996,16 @@ thispklfile
 os.path.exists(thispklfile)
 
 gc.collect()
+print_ram_usage()
 
+gc.collect()
 for cind, combSetH in enumerate(comboSettSet):
     l.info(f"Combo Set ind = {cind}")
     for tCombo in combSetH:
         t=1.2052
         (vv3, tt3), (vv4, tt4) = tCombo 
+        # IDEA: use 1/16 division scans? and scan all compo rather than just bell angles
+        # IDEA: also need to scan T_BS using corrE as signal.
         # print(((vv3, tt3), (vv4, tt4)))
         # settingStr = ((round(vv3), round(tt3,6)), (round(vv4), round(tt4,6)))
         settingStr = f"{round(vv3/VR/0.02)}-{round(vv4/VR/0.015)}"
@@ -1931,9 +2015,13 @@ for cind, combSetH in enumerate(comboSettSet):
         if os.path.exists(thispklfile): 
             l.info(f"    Skipped: {thispklfile}")
             continue
-
+        
+        l.info("    Calculating...")
         t=0.6347
-        data_folder = "20240711-234819-TFF # ""20240521-231755-TFF"
+        data_folder = "20240919-173152-TFF"#"20240711-234819-TFF" # "20240521-231755-TFF"
+        psi = None
+        phi = None
+        gc.collect()
         with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)}.pgz.pkl'
                         , 'rb', thread=8) as file:
             psi = pickle.load(file)
@@ -1958,9 +2046,11 @@ for cind, combSetH in enumerate(comboSettSet):
                 # scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
                 gc.collect()
                 (t,psi,phi) = scattering_evolve_bragg_loop_helper2(t,psi,swnf,
-                                  steps=print_every,progress_proxy=progressbar,s34=evolve_s34,
+                                  steps=print_every,progress_proxy=progressbar,s34=0,
                                   t3mid=T_BS, t3wid=tt3, v3pot=vv3, #### THESE CHANGED, EVERYTHING ELSE COPIED
-                                  t4mid=T_BS, t4wid=tt4, v4pot=vv4  ####                  
+                                  t4mid=T_BS, t4wid=tt4, v4pot=vv4, ####     
+                                  numba_threads = 8,
+                                  fftw_threads  = 8             
                                   )
                 frameAcc += 1
                 # if frameAcc % export_every == 0:
@@ -1971,10 +2061,26 @@ for cind, combSetH in enumerate(comboSettSet):
         f += 1
         # scattering_evolve_loop_plot(t,f+1,psi,phi, plt_show=False, plt_save=True)
         # scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
+        phi = None
         with pgzip.open(thispklfile,
                         'wb', thread=8, blocksize=1*10**8) as file:
             pickle.dump(psi, file) 
         gc.collect()
+
+time.sleep(3)
+
+# +
+# numba.config.NUMBA_NUM_THREADS
+
+# +
+# numba.set_num_threads(6)
+# -
+
+numba.get_num_threads()
+
+
+
+
 
 settingStr = f"{round(vv3/VR/0.02)}-{round(vv4/VR/0.015)}"
 thispklfile = output_prefix+f"psi at t={round(t,6)} s={settingStr}"+output_ext
@@ -1982,9 +2088,137 @@ os.path.exists(thispklfile)
 
 os.path.exists(output_prefix+f"psi at t={round(0.6347,6)}"+output_ext)
 
+# ##### Massive everything scans
+
+omegaNDivs = 8
+omegaNDivsList = np.arange(0,2*omegaNDivs+1)
+# omegaNDivsList = np.flip(omegaNDivsList)
+omegalist = pi/omegaNDivs*omegaNDivsList
+l.info(f"omegaNDivsList = {omegaNDivsList}")
+l.info(f"omegalist = {omegalist}")
+
+frames_count
+
+print_every
+
+2%2
+
+# + notebookRunGroups={"groupValue": "2"}
+(2%omegaNDivs)
+# -
+
+int((V4pi1*5/omegaNDivs)/VR/0.015*(omegaNDivs/4))
+
+# +
+for (i3,o3) in enumerate(omegaNDivsList):
+    for (i4,o4) in enumerate(omegaNDivsList):
+        # if i3>=1: break # DEBUGGING SKIP LOOP
+        
+        t=1.2052
+        # (vv3, tt3), (vv4, tt4) = tCombo 
+        # print(((vv3, tt3), (vv4, tt4)))
+        # settingStr = ((round(vv3), round(tt3,6)), (round(vv4), round(tt4,6)))
+        tt3 = t3pi1
+        tt4 = t4pi1
+        vv3 = V3pi1 * o3/omegaNDivs
+        vv4 = V4pi1 * o4/omegaNDivs
+        sv3 = round(vv3/VR/0.02 *(omegaNDivs/4))
+        sv4 = round(vv4/VR/0.015*(omegaNDivs/4))
+        assert sv3 == o3 and sv4 == o4, "I think this should be fine?"
+        settingStr = f"{sv3}-{sv4}"
+        print(f"i3={i3}, i4={i4}, o3={o3}, o4={o4}, sv3={sv3}, sv4={sv4}") 
+        # l.info(settingStr)
+        if omegaNDivs == 4 or (sv3%(omegaNDivs/4)==0 and sv4%(omegaNDivs/4)==0):
+            settingStr = f"{round(vv3/VR/0.02)}-{round(vv4/VR/0.015)}"
+            thispklfile = output_prefix+f"psi at t={round(t,6)} s={settingStr}"+output_ext
+            thisPhiCorrFile = output_prefix+f"phi-corr-stats s={settingStr}"+output_ext
+        else:
+            thispklfile = output_prefix+f"psi at t={round(t,6)} s={settingStr}D{omegaNDivs}"+output_ext
+            thisPhiCorrFile = output_prefix+f"phi-corr-stats s={settingStr}D{omegaNDivs}"+output_ext
+
+        l.info(f"  Setting: {sv3}π/{omegaNDivs}, {sv4}π/{omegaNDivs}, \t path: {thispklfile}")
+        if os.path.exists(thispklfile): 
+            l.info(f"    File exist, SKIPPED (yey)")
+            continue
+        
+
+        l.info("    Calculating...")
+        t=0.6347
+        data_folder = "20240919-173152-TFF"#"20240919-173152-TFF" #"20240711-234819-TFF" # "20240521-231755-TFF"
+        psi = None
+        phi = None
+        gc.collect()
+
+        # continue # DEBUGGING SKIP LOOP SPEED UP
+        with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)}.pgz.pkl', 'rb', thread=8) as file:
+            psi = pickle.load(file)
+        phi, swnf = phiAndSWNF(psi, nthreads=7)
+        gc.collect()
+        (t,psi,phi) = evolve_free_part(t,psi,swnf,N_FREE_TO_BS)
+        
+        ### THIS CELL IS COPIED CODE FROM INITIAL SCATTERING!!!!! 
+        ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
+        
+        evolve_many_loops_start = datetime.now()
+        frameAcc = 0 
+        with ProgressBar(total=total_steps) as progressbar:
+            for f in range(frames_count):
+                evolve_many_loops_inner_now = datetime.now()
+                tP = evolve_many_loops_inner_now - evolve_many_loops_start
+                # if frameAcc > 0: 
+                #     tR = (frames_count-frameAcc)* tP/frameAcc
+                #     tE = datetime.now() + tR
+                #     l.info(f"Now f={frameAcc}, t={round(t,6)}, tP={tP}, tR={tR}, tE = {tE}")
+                # scattering_evolve_loop_plot(t,f,psi,phi, plt_show=False, plt_save=True)
+                # scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
+                gc.collect()
+                (t,psi,phi) = scattering_evolve_bragg_loop_helper2(t,psi,swnf,
+                                  steps=print_every,progress_proxy=progressbar,s34=0,
+                                  t3mid=T_BS, t3wid=tt3, v3pot=vv3, #### THESE CHANGED, EVERYTHING ELSE COPIED
+                                  t4mid=T_BS, t4wid=tt4, v4pot=vv4,  ####      
+                                  numba_threads = 8,
+                                  fftw_threads  = 8              
+                                  )
+                frameAcc += 1
+                # t += print_every * dt
+                # if frameAcc % export_every == 0:
+                #     with pgzip.open(output_prefix+f"psi at t={round(t,6)}"+output_ext,
+                #         'wb', thread=8, blocksize=1*10**8) as file:
+                #         pickle.dump(psi, file) 
+                        
+        f += 1
+        l.info(f"    t = {t}")
+        # scattering_evolve_loop_plot(t,f+1,psi,phi, plt_show=False, plt_save=True)
+        # scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
 
 
+        ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
+        scattering_evolve_loop_plot(t,settingStr,psi,phi, plt_show=False, plt_save=True)
+        scattering_evolve_loop_plot_alt(t,settingStr,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
+        psi_phi_plot1(t,-1,psi,phi, plt_show=False, plt_save=True,save_str=f"s={settingStr}",title_str=f"s={settingStr}",cmax3x=2e-3,cmax4x=2e-3,cmax3p=2e-5,cmax4p=2e-5)
+        psi_phi_plot1(t,-1,psi,phi, plt_show=False, plt_save=True,save_str=f"s={settingStr}",title_str=f"s={settingStr}",cmax3x=5e-3,cmax4x=5e-3,cmax3p=5e-5,cmax4p=5e-5)
+        psi_phi_plot1(t,-1,psi,phi, plt_show=False, plt_save=True,save_str=f"s={settingStr}",title_str=f"s={settingStr}",cmax3x=1e-3,cmax4x=1e-3,cmax3p=1e-5,cmax4p=1e-5)
+        tempPlotOutput = plot_g34_v2(phi, cutPlot=1.5, saveFig=True, pMaxCut=2,title2=f"$\phi_3$={round(vv3/VR/0.02)}π/4, $\phi_4=${round(vv4/VR/0.015)}π/4",title2filestr=settingStr, skipPlot=True)
+        with pgzip.open(thisPhiCorrFile,'wb', thread=8, blocksize=1*10**8) as file:
+            pickle.dump(tempPlotOutput, file)
+        l.info(f"  calced corrE({settingStr}) = {corrE(np.flipud(tempPlotOutput[4].T))}")
+        ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 
+
+        phi = None 
+        with pgzip.open(thispklfile,
+                        'wb', thread=8, blocksize=1*10**8) as file:
+            pickle.dump(psi, file) 
+        gc.collect()
+    
+
+
+# -
+
+for (i3,o3) in enumerate(omegaNDivsList):
+    for (i4,o4) in enumerate(omegaNDivsList):
+        print(i3,o3,i4,o4)
+        print(f"  {o3+o4}\t {(o3+o4)*2*pi/omegaNDivs}")
 
 
 
@@ -2015,6 +2249,7 @@ def gp3p4_dhalo_calc(phiHere,cut=5.0,offset3=0,offset4=0):
     gx3x4 = np.trapz(gx3x4[:,ind3,:],pzlin[ind3],axis=1)
     xip = pxlin > +0*cut*dpz 
     xim = pxlin < -0*cut*dpz 
+    #REVIEW: proper integration box
     gpp = np.trapz(np.trapz(gx3x4[:,xip],pxlin[xip],axis=1)[xip],pxlin[xip],axis=0)
     gpm = np.trapz(np.trapz(gx3x4[:,xim],pxlin[xim],axis=1)[xip],pxlin[xip],axis=0)
     gmp = np.trapz(np.trapz(gx3x4[:,xip],pxlin[xip],axis=1)[xim],pxlin[xim],axis=0)
@@ -2060,7 +2295,6 @@ def plot_dhalo_gp3p4(gx3x4,cut,offset3=0,offset4=0):
 
 # +
 # https://artmenlope.github.io/plotting-complex-variable-functions/
-from colorsys import hls_to_rgb
 def colorize(fz):
     """
     The original colorize function can be found at:
@@ -2078,7 +2312,6 @@ def colorize(fz):
     c = np.rot90(c.transpose(2,1,0), 1) # Change shape to (m,n,3) and rotate 90 degrees
     return c
 
-from matplotlib.lines import Line2D
 legend_elements = [Line2D([0], [0], marker='o', color='cyan', label='$Arg=\pm\pi$', markersize=10, lw=0),
                    Line2D([0], [0], marker='o', color='red', label='$Arg=0$', markersize=10, lw=0)]
 # -
@@ -2146,17 +2379,109 @@ plt.show()
 gx3x4[0].shape
 
 t=1.2052
-data_folder = "20240711-234819-TFF" #"20240528-224811-TFF"
-settingStr = "0-1"
-del psi, phi, swnf
+# t=0.5657
+# t=0.6347
+# t=0.03
+# t = 0.5
+# data_folder = "20240512-005555-TFF" 
+data_folder = "20240911-182427-TFF"#"20240711-234819-TFF" #"20240528-224811-TFF"
+# settingStr = "1-0"
+settingStr = "6-5"
+psi, phi = None, None
+gc.collect()
+# with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)}.pgz.pkl', 'rb', thread=8) as file:
 with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)} s={settingStr}.pgz.pkl', 'rb', thread=8) as file:
     psi = pickle.load(file)
 phi, swnf = phiAndSWNF(psi, nthreads=7)
 gc.collect()
 
-psi_phi_plot1(t,-1,psi,phi, plt_show=True, plt_save=True)
+psi, phi = None, None
+
+psi_phi_plot1(t,-2,psi,phi, plt_show=True, plt_save=True, 
+              cmax3x=2e-3,
+              cmax4x=2e-3,
+              cmax3p=2e-5,
+              cmax4p=2e-5,
+              xxlima=-xmax,xxlimb=+xmax,xylima=-zmax,xylimb=+zmax,
+              pxlima=-pxmax/(hb*k),pxlimb=+pxmax/(hb*k),pzlima=-pzmax/(hb*k),pzlimb=+pzmax/(hb*k),
+              xxTmaj=10,xxTmin=5,xyTmaj=10,xyTmin=5,
+                pxTmaj=1,pxTmin=0.5,pzTmaj=1,pzTmin=0.5
+              )
 
 
+
+whatever_bla_testing2 = plot_g34(phi, cutPlot=1.5, saveFig=True, 
+        title2=f"Setting: 3-0",
+        title2filestr="s3-0", skipPlot=False
+        )
+
+t=1.2052
+data_folder = "20240919-173152-TFF"
+# settingStr = "2-7"
+settingStr = selected_sett[0]
+psi, phi = None, None
+gc.collect()
+# with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)}.pgz.pkl', 'rb', thread=8) as file:
+with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)} s={settingStr}.pgz.pkl', 'rb', thread=8) as file:
+    psi = pickle.load(file)
+phi, swnf = phiAndSWNF(psi, nthreads=7)
+gc.collect()
+
+figSizeHere = (10.5,1.5)
+# figSizeHere = (10.5,3.5)
+whatever_bla_testing2v2 = plot_g34_v2(phi, cutPlot=1.5, saveFig=True, 
+        pMaxCut=2,
+        title2=f"s={settingStr}, szh={figSizeHere}",
+        title2filestr=f"{settingStr}, fsh={figSizeHere}", skipPlot=False,
+        figSize=figSizeHere
+        )
+del figSizeHere
+
+
+
+
+
+
+
+
+
+whatever_bla_testing2v2[4][0,3]-whatever_bla_testing2v2[4][0,1]+\
+whatever_bla_testing2v2[4][1,2]-whatever_bla_testing2v2[4][1,0]+\
+whatever_bla_testing2v2[4][2,1]-whatever_bla_testing2v2[4][2,3]+\
+whatever_bla_testing2v2[4][3,0]-whatever_bla_testing2v2[4][3,2]
+
+whatever_bla_testing2v2[4]
+
+whatever_bla_testing2v2[4][1,2]
+
+(whatever_bla_testing2v2[4][0,3],whatever_bla_testing2v2[4][0,1]
+,whatever_bla_testing2v2[4][1,2],whatever_bla_testing2v2[4][1,0]
+,whatever_bla_testing2v2[4][2,1],whatever_bla_testing2v2[4][2,3]
+,whatever_bla_testing2v2[4][3,0],whatever_bla_testing2v2[4][3,2])
+
+corrE
+
+pxmax/dpx
+
+nx
+
+nc
+
+# +
+# 2024 Aug 31 Fig
+
+
+
+# -
+
+
+
+
+
+
+
+psi, phi = None, None
+gc.collect()
 
 
 
@@ -2242,22 +2567,116 @@ def plot_g34(phiHere, cutPlot=1.5, saveFig=True,
         plt.show()
     return (gx3px4p, gx3px4m, gx3mx4p, gx3mx4m, gx3x4n)
 
-# + active=""
-# # t=0.15
-# # t=0.2657
-# # t=0.2957
-# # t=0.3257
-# # t=0.3347
-# # t=0.5657
-# # t=0.5857
-# # t=0.6057
-# # t=0.6257
-# t=1.2052
-# # data_folder = "20240521-231755-TFF"
-# data_folder="20240528-224811-TFF"
-# (vv3, tt3), (vv4, tt4) = comboSettSet[0][0] 
-# settingStr = f"{round(vv3/VR/0.02)}-{round(vv4/VR/0.015)}"
-# l.info(f"Loading t={round(t,5)}  s={settingStr}")
+
+def plot_g34_v2(phiHere, cutPlot=1.5, saveFig=True, 
+             pMaxCut=2,
+             title2="", title2filestr="NA",
+             skipPlot=False,
+             figSize=(9,3.5)):
+    gx3px4p = gp3p4_dhalo_calc(phiHere,cut=cutPlot,offset3=+p,offset4=+p)
+    gx3px4m = gp3p4_dhalo_calc(phiHere,cut=cutPlot,offset3=+p,offset4=-p)
+    gx3mx4p = gp3p4_dhalo_calc(phiHere,cut=cutPlot,offset3=-p,offset4=+p)
+    gx3mx4m = gp3p4_dhalo_calc(phiHere,cut=cutPlot,offset3=-p,offset4=-p)
+    
+    nc = int(pMaxCut*p/dpx)*2+1;
+    nr = (nx-nc)//2
+    # print(nc,nr)
+    # print(gx3px4p[0].shape)
+    # print(gx3px4p[0][nr:-nr,nr:-nr].shape)
+
+    gx3x4combined = np.zeros((2*nc,2*nc))
+    gx3x4combined[:nc, :nc] = gx3px4p[0][nr:-nr,nr:-nr]
+    gx3x4combined[:nc, nc:] = gx3px4m[0][nr:-nr,nr:-nr]
+    gx3x4combined[nc:, :nc] = gx3mx4p[0][nr:-nr,nr:-nr]
+    gx3x4combined[nc:, nc:] = gx3mx4m[0][nr:-nr,nr:-nr]
+
+    gx3x4combined2 = np.zeros((2*2,2*2))
+    gx3x4combined2[:2, :2] = [[gx3px4p[1][3],gx3px4p[1][2]],[gx3px4p[1][1],gx3px4p[1][0]]]
+    gx3x4combined2[:2, 2:] = [[gx3px4m[1][3],gx3px4m[1][2]],[gx3px4m[1][1],gx3px4m[1][0]]]
+    gx3x4combined2[2:, :2] = [[gx3mx4p[1][3],gx3mx4p[1][2]],[gx3mx4p[1][1],gx3mx4p[1][0]]]
+    gx3x4combined2[2:, 2:] = [[gx3mx4m[1][3],gx3mx4m[1][2]],[gx3mx4m[1][1],gx3mx4m[1][0]]]
+    gx3x4n = gx3x4combined2/sum(sum(gx3x4combined2))
+    
+    corrE = gx3x4n[0,3]-gx3x4n[0,1]+gx3x4n[1,2]-gx3x4n[1,0]+gx3x4n[2,1]-gx3x4n[2,3]+gx3x4n[3,0]-gx3x4n[3,2]
+
+    # if not skipPlot: 
+    ticks = np.linspace(-0.5, 2*(nc+0.5), 9)
+    ticksL = np.linspace(-0.0, 2*(nc+0.0), 9)
+    tick_labelsX = ["","$+p_{B_x}$","$0$","$-p_{B_x}$","","$+p_{B_x}$","$0$","$-p_{B_x}$",""]
+    tick_labelsY = ["","$+p_{A_x}$","$0$","$-p_{A_x}$","","$+p_{A_x}$","$0$","$-p_{A_x}$",""]
+    # tick_labels = np.concatenate((np.linspace(-4, 4, 5), np.linspace(-4, 4, 5)))
+    # plt.imshow(np.flipud(gx3x4combined.T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Greens')
+    plt.figure(figsize=figSize)
+    ax = plt.subplot(1,2,1)
+    im = ax.imshow(np.flipud(gx3x4combined.T)*1e6,cmap='Greens',norm=matplotlib.colors.Normalize(vmin=0, vmax=0.25))
+    # ax.set_yticks(ticksL, ["","A↗︎","","A↖︎","","A↘︎","","A↙︎",""])
+    # ax.set_xticks(ticksL, ["","B↗︎","","B↖︎","","B↘︎","","B↙︎",""])
+    ax.set_yticks(ticks, ["","$A$↗︎","","$A$↖︎","","$A$↘︎","","$A$↙︎",""])
+    ax.set_xticks(ticks, ["","$B$↙︎","","$B$↘︎","","$B$↖︎","","$B$↗",""])
+    
+    ax.axhline(y=1.0*nc,color='k',alpha=0.3,linewidth=0.7)
+    ax.axhline(y=0.5*nc,color='k',alpha=0.1,linewidth=0.7)
+    ax.axhline(y=1.5*nc,color='k',alpha=0.1,linewidth=0.7)
+    ax.axvline(x=1.0*nc,color='k',alpha=0.3,linewidth=0.7)
+    ax.axvline(x=0.5*nc,color='k',alpha=0.1,linewidth=0.7)
+    ax.axvline(x=1.5*nc,color='k',alpha=0.1,linewidth=0.7)
+    ax2 = ax.secondary_xaxis('top')
+    ax3 = ax.secondary_yaxis('right')
+    ax2.set_xticks(ticks, tick_labelsX[::-1])
+    ax3.set_yticks(ticks, tick_labelsY)
+    plt.title(f"cE={round(corrE,5)}\nt = {t}")
+    plt.colorbar(im,pad=0.15,fraction=0.046)
+
+    # l.info(f"""gx3px4p[1] = {gx3px4p[1]}
+    # gx3px4m[1] = {gx3px4m[1]}
+    # gx3mx4p[1] = {gx3mx4p[1]}
+    # gx3mx4m[1] = {gx3mx4m[1]}""")
+    
+    ax = plt.subplot(1,2,2)
+    im = ax.imshow(np.flipud(gx3x4n.T),cmap='Greens',norm=matplotlib.colors.Normalize(vmin=0, vmax=0.25))
+    ticks=np.arange(0,4,1)
+    ax.set_yticks(ticks, ["$A$↗︎","$A$↖︎","$A$↘︎","$A$↙︎"])
+    ax.set_xticks(ticks, ["$B$↙︎","$B$↘︎","$B$↖︎","$B$↗"])
+    ax2 = ax.secondary_xaxis('top')
+    ax3 = ax.secondary_yaxis('right')
+    # # ax2.set_yticks(ticks, ticks)
+    ax3.set_yticks(ticks, ["$+p_{A_x}$","$-p_{A_x}$","$+p_{A_x}$","$-p_{A_x}$"])
+    ax2.set_xticks(ticks, ["$+p_{B_x}$","$-p_{B_x}$","$+p_{B_x}$","$-p_{B_x}$"])
+    for i in range(gx3x4n.shape[0]):
+        for j in range(gx3x4n.shape[1]):
+            plt.text(j, i, str(round(np.flipud(gx3x4n.T)[i, j],4)), ha='center', va='center', color='black',fontsize='small')
+    plt.title(f"{title2}\ncut = {cutPlot}")
+    cbar = plt.colorbar(im,pad=0.15,fraction=0.046)
+    # cbar.set_ticks(np.linspace(0,0.25,6))
+
+    title = f"CorrE t={round(t,5)}, cut = {cutPlot}, s={title2filestr}"
+    if saveFig:
+        plt.savefig(output_prefix+title+".pdf", dpi=600, bbox_inches='tight')
+        plt.savefig(output_prefix+title+".png", dpi=600, bbox_inches='tight')
+    if skipPlot:
+        plt.close()
+    else:
+        plt.show()
+    return (gx3px4p, gx3px4m, gx3mx4p, gx3mx4m, gx3x4n)
+
+
+comboSettSet
+
+# t=0.15
+# t=0.2657
+# t=0.2957
+# t=0.3257
+# t=0.3347
+# t=0.5657
+# t=0.5857
+# t=0.6057
+# t=0.6257
+t=1.2052
+# data_folder = "20240521-231755-TFF"
+data_folder="20240528-224811-TFF"
+(vv3, tt3), (vv4, tt4) = comboSettSet[0][0] 
+settingStr = f"{round(vv3/VR/0.02)}-{round(vv4/VR/0.015)}"
+l.info(f"Loading t={round(t,5)}  s={settingStr}")
 # with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)} s={settingStr}.pgz.pkl'
 #                 , 'rb', thread=8) as file:
 #     psi = pickle.load(file)
@@ -2266,7 +2685,6 @@ def plot_g34(phiHere, cutPlot=1.5, saveFig=True,
 #          title2=f"$\phi_3$={round(vv3/VR/0.02)}π/4, $\phi_4=${round(vv4/VR/0.02)}π/4",
 #          title2filestr=settingStr
 #         )
-# -
 
 # assert False, "just to catch run all"
 
@@ -2282,36 +2700,228 @@ psi_phi_plot1(t,-1,psi,phi, plt_show=True, plt_save=True)
 
 
 
+psi=None
+phi=None
+
+
+# find all psi at t=1.2052
+def extract_pgzpkl_t(filename):
+    # match = re.search(r's=(\d+-\d+)', filename)
+    # match = re.search(r's=(\d+-\dD?\d*+)', filename)
+    match = re.search(r's=(\d+-\d+(D\d*)?)', filename)
+    # return float(match.group(1)) if match else None
+    if match: # Remove any non-numeric characters after the number
+        # print(match)
+        return match.group(1)
+    return None
+
+
+psi_pgzpkl_list = glob.glob(output_prefix+"*t=1.2052*.pgz.pkl")
+psi_pgzpkl_list.sort(key=extract_pgzpkl_t)
+psi_pgzpkl_ss_l = [extract_pgzpkl_t(x) for x in psi_pgzpkl_list]
+
+psi_pgzpkl_list[20]
+
+extract_pgzpkl_t(psi_pgzpkl_list[20])
+
+psi_pgzpkl_list[:3]
+
+psi_pgzpkl_ss_l[:3]
+
 
 
 t=1.2052
 outputOfSett = {}
-data_folder = "20240711-234819-TFF" #"20240528-224811-TFF"
-for combSetH in comboSettSet:
-    for tCombo in combSetH:
-        (vv3, tt3), (vv4, tt4) = tCombo
-        settingStr = f"{round(vv3/VR/0.02)}-{round(vv4/VR/0.015)}"
-        l.info(f"Loading {data_folder} \t t={round(t,5)}  s={settingStr}")
-        # del psi, phi, swnf
-        if 'psi' in locals():   del psi
-        if 'phi' in locals():   del phi
-        with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)} s={settingStr}.pgz.pkl'
-                        , 'rb', thread=8) as file:
-            psi = pickle.load(file)
-        phi, swnf = phiAndSWNF(psi, nthreads=7)
-        # (gx3px4p, gx3px4m, gx3mx4p, gx3mx4m, gx3x4n) 
-        psi_phi_plot1(t,-1,psi,phi, plt_show=False, plt_save=True,save_str=f"s={settingStr}",title_str=f"s={settingStr}")
-        tempPlotOutput = plot_g34(
-            phi, cutPlot=1.5, saveFig=True, 
-            title2=f"$\phi_3$={round(vv3/VR/0.02)}π/4, $\phi_4=${round(vv4/VR/0.015)}π/4",
-            title2filestr=settingStr, skipPlot=True
-            )
-        # l.info(tempPlotOutput)
+data_folder = "20240919-173152-TFF"#"20240906-124041-TFF" #"20240711-234819-TFF" #"20240528-224811-TFF"
+# for combSetH in comboSettSet:
+#     for tCombo in combSetH:
+# for psi_pgzpkl in psi_pgzpkl_list:
+for settingStr in psi_pgzpkl_ss_l:
+    # (vv3, tt3), (vv4, tt4) = tCombo
+    # settingStr = f"{round(vv3/VR/0.02)}-{round(vv4/VR/0.015)}"
+    l.info(f"Loading {data_folder} \t t={round(t,5)}  s={settingStr}")
+    # del psi, phi, swnf
+    # if 'psi' in locals():   del psi
+    # if 'phi' in locals():   del phi
+    psi, phi = None, None
+    # s3 = float(settingStr.split("-")[0])
+    # s4 = float(settingStr.split("-")[1])
+    if 'D' in settingStr:
+        dd = float(settingStr.split("D")[1])
+        s3 = float(settingStr.split("D")[0].split("-")[0])
+        s4 = float(settingStr.split("D")[0].split("-")[1])
+    else:
+        s3 = float(settingStr.split("-")[0])
+        s4 = float(settingStr.split("-")[1])
+        dd = 4 
+    thispklfile = f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)} s={settingStr}.pgz.pkl'
+    thisPhiCorrFile = output_prefix+f"phi-corr-stats s={settingStr}"+output_ext
+    if not os.path.exists(thispklfile): 
+        print("AHHHHHHH")
+        break
+    if os.path.exists(thisPhiCorrFile): 
+        with pgzip.open(thisPhiCorrFile,'rb', thread=8) as file:
+            tempPlotOutput = pickle.load(file)
+            l.info(f"  loaded corrE({settingStr}) = {corrE(np.flipud(tempPlotOutput[4].T))}")
         outputOfSett[settingStr] = tempPlotOutput
-        # del psi, phi, swnf
-        gc.collect()
+        continue
+
+    with pgzip.open(thispklfile, 'rb', thread=8) as file:
+        psi = pickle.load(file)
+    phi, swnf = phiAndSWNF(psi, nthreads=7)
+    
+    # (gx3px4p, gx3px4m, gx3mx4p, gx3mx4m, gx3x4n) 
+    scattering_evolve_loop_plot(t,settingStr,psi,phi, plt_show=False, plt_save=True)
+    gc.collect()
+    scattering_evolve_loop_plot_alt(t,settingStr,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
+    gc.collect()
+    psi_phi_plot1(t,-1,psi,phi, plt_show=False, plt_save=True,save_str=f"s={settingStr}",title_str=f"s={settingStr}",
+                    cmax3x=2e-3,cmax4x=2e-3,cmax3p=2e-5,cmax4p=2e-5)
+    # tempPlotOutput = plot_g34(
+    gc.collect()
+    psi_phi_plot1(t,-1,psi,phi, plt_show=False, plt_save=True,save_str=f"s={settingStr}",title_str=f"s={settingStr}",
+                    cmax3x=5e-3,cmax4x=5e-3,cmax3p=5e-5,cmax4p=5e-5)
+    gc.collect()
+    psi_phi_plot1(t,-1,psi,phi, plt_show=False, plt_save=True,save_str=f"s={settingStr}",title_str=f"s={settingStr}",
+                    cmax3x=1e-3,cmax4x=1e-3,cmax3p=1e-5,cmax4p=1e-5)
+    gc.collect()
+    tempPlotOutput = plot_g34_v2(
+        phi, cutPlot=1.5, saveFig=True, 
+        pMaxCut=2,
+        title2=f"$\phi_3$={s3}π/4, $\phi_4=${s4}π/4",
+        title2filestr=settingStr, skipPlot=True
+        )
+    # l.info(tempPlotOutput)
+    with pgzip.open(thisPhiCorrFile,'wb', thread=8, blocksize=1*10**8) as file:
+        pickle.dump(tempPlotOutput, file)
+
+    outputOfSett[settingStr] = tempPlotOutput
+    # del psi, phi, swnf
+    l.info(f"  calced corrE({settingStr}) = {corrE(np.flipud(tempPlotOutput[4].T))}")
+    gc.collect()
 with pgzip.open(output_prefix+f"outputOfSett"+output_ext,'wb', thread=8, blocksize=1*10**8) as file:
     pickle.dump(outputOfSett, file)
+
+with pgzip.open("/Volumes/tonyNVME Gold/twoParticleSim/20240711-234819-TFF/outputOfSett.pgz.pkl", 'rb', thread=1) as file:
+    outputOfSett = pickle.load(file)
+
+phi_corrE_list = glob.glob(output_prefix+"phi-corr-stats*")
+phi_corrE_list.sort(key=extract_pgzpkl_t)
+phi_corrE_ss_l = [extract_pgzpkl_t(x) for x in phi_corrE_list]
+
+# +
+selected_sett = ["2-7","2-1","0-7","0-1"]
+corrE_3p4 = []
+corrE_3m4 = []
+corrE_3a4 = [] 
+corrE_val = []
+corrE_3p4s = []
+corrE_3m4s = []
+corrE_3a4s = []
+corrE_vals = []  
+for (pcI, pcE) in enumerate(phi_corrE_list):
+    sss = extract_pgzpkl_t(pcE)
+    if 'D' in sss:
+        dd = float(sss.split("D")[1])
+        s3 = float(sss.split("D")[0].split("-")[0])
+        s4 = float(sss.split("D")[0].split("-")[1])
+    else:
+        s3 = float(sss.split("-")[0])
+        s4 = float(sss.split("-")[1])
+        dd = 4 
+
+    # print(sss,s3,s4, dd)
+    # continue
+    with pgzip.open(pcE,'rb', thread=2) as file:
+        tempPlotOutput = pickle.load(file)
+    cE = corrE(np.flipud(tempPlotOutput[4].T))
+    print(f"corrE({sss}) = {cE}")
+
+    if sss in selected_sett:
+        corrE_3p4s.append((s3+s4)*pi/dd)
+        corrE_vals.append(cE)
+        corrE_3m4s.append((s3-s4)*pi/dd)
+        corrE_3a4s.append((s3,s4))
+    else:
+        corrE_3p4.append((s3+s4)*pi/dd)
+        corrE_val.append(cE)
+        corrE_3m4.append((s3-s4)*pi/dd)
+        corrE_3a4.append((s3,s4))
+
+
+corrE_3p4 = np.array(corrE_3p4)
+corrE_3m4 = np.array(corrE_3m4)
+corrE_3a4 = np.array(corrE_3a4)
+corrE_val = np.array(corrE_val)
+corrE_3p4s = np.array(corrE_3p4s)
+corrE_vals = np.array(corrE_vals)
+corrE_3m4s = np.array(corrE_3m4s)
+corrE_3a4s = np.array(corrE_3a4s)
+
+# -
+
+float(sss.split("-")[0])
+
+corrE_3p4s
+
+
+# +
+def cosM(x, a, o, h):
+    return a*np.cos(x-o)+h
+par, cov = scipy.optimize.curve_fit(cosM, corrE_3p4, corrE_val)
+par_sig = np.sqrt(np.diag(cov))
+xxx = np.linspace(min(corrE_3p4)-1,max(corrE_3p4)+1,1000)
+xxe = np.linspace(min(corrE_3p4)-10,max(corrE_3p4)+10,3000)
+yyy = cosM(xxx, *par)
+yys = 2 * par_sig[0] * np.cos(xxx-par[1])
+yyd = np.sqrt(np.sum(par_sig**2))
+
+plt.figure(figsize=(11,4))
+# plt.fill_between(xxe, -1, -1/sqrt(2), color='gray', alpha=0.2, label="_nolegend_",linewidth=0)
+# plt.fill_between(xxe, +1/sqrt(2), +1, color='gray', alpha=0.2, label="_nolegend_",linewidth=0)
+plt.fill_between(xxe, -1, -0.5, color='gray', alpha=0.2, label="_nolegend_")
+plt.fill_between(xxe, +0.5, +1, color='gray', alpha=0.2, label="_nolegend_")
+
+plt.fill_between(xxx, yyy-2*yys, yyy+2*yys, color='purple', alpha=0.6, label="±2σ Fit")
+plt.scatter(corrE_3p4,corrE_val,30,marker='x',alpha=0.8, label="Simulation")
+plt.scatter(corrE_3p4s,corrE_vals,30,marker='x',alpha=0.9, color="lime", label="_nolegend_")
+l.info(f"a = {par[0]} ± {par_sig[0]}")
+l.info(f"o = {par[1]} ± {par_sig[1]}")
+l.info(f"h = {par[2]} ± {par_sig[2]}")
+plt.xlabel("$(\\varphi_{A} + \\varphi_B)/\\pi$")
+plt.ylabel("$E(\\varphi_{ A},\\varphi_{ B})$")
+plt.yticks(np.linspace(-1,1,4+1))
+# plt.xticks(np.linspace(0,2*2*pi,8+1), [str(int(x*2))+"π/4" for x in np.linspace(0,8,8+1)] )
+# plt.xticks(np.linspace(0,2*2*pi,8+1), ["0","$\\pi/2$","$\\pi$","$3\\pi/2$","$2\\pi$","${5\\pi}/{2}$","$3\\pi$","${7\\pi}/{2}$","$4\\pi$"])
+# plt.xticks(np.linspace(0,2*2*pi,16+1), ["0","$\\pi/4$", "$\\pi/2$", "$3\\pi/4$", "$\\pi$", "$5\\pi/4$", "$3\\pi/2$", "$7\\pi/4$", "$2\\pi$", "$9\\pi/4$", "$5\\pi/2$", "$11\\pi/4$", "$3\\pi$", "$13\\pi/4$", "$7\\pi/2$", "$15\\pi/4$", "$4\\pi$"])
+plt.xticks(np.linspace(0,2*2*pi,16+1),np.linspace(0,4,16+1))
+plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(pi/8))
+plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(0.1))
+plt.xlim(0-0.5,2*2*pi+0.5)
+plt.ylim(-1,+1)
+plt.grid(which='both', linestyle='-', linewidth=0.5, color='gray', alpha=0.2)
+# plt.text(4*pi-0.8,-0.81,"Non-local")
+# plt.text(4*pi-0.8,-0.67,"Local")
+plt.text(4*pi-0.8,-0.61,"Non-local")
+plt.text(4*pi-0.8,-0.46,"Local")
+# plt.text(4*pi-0.7,+0.38,"Non-local")
+# plt.text(4*pi-0.7,+0.55,"Local")
+plt.legend(loc='lower right')
+
+plt.savefig(output_prefix+"corrE-3p4-v3b.pdf", dpi=600, bbox_inches='tight')
+plt.savefig(output_prefix+"corrE-3p4-v3b.png", dpi=600, bbox_inches='tight')
+plt.show()
+# -
+
+["0","$\\frac{\\pi}{2}$","$\\pi$","$\\frac{3\\pi}{2}$","$2\\pi$","$\\frac{5\\pi}{2}$","$3\\pi$","$\\frac{7\\pi}{2}$","$4\\pi$"] 
+
+plt.scatter(corrE_3m4, corrE_val)
+
+
+
+
+
+
 
 outputOfSett["0-1"][0][0].shape
 
@@ -2320,8 +2930,6 @@ outputOfSett["0-1"][4]
 outputOfSett["0-1"][4].T
 
 np.flipud(outputOfSett["0-1"][4].T)
-
-phi.shape
 
 gx3px4p
 
@@ -2364,21 +2972,47 @@ corrE(np.flipud(outputOfSett["0-3"][4].T))
 
 np.flipud(outputOfSett["0-3"][4].T)
 
+(corrE(np.flipud(outputOfSett["0-1"][4].T))\
+,corrE(np.flipud(outputOfSett["0-3"][4].T))\
+,corrE(np.flipud(outputOfSett["1-0"][4].T))\
+,corrE(np.flipud(outputOfSett["0-1"][4].T)))
 
 
-outputOfSett["0-1"][4][0,1]
-
-np.flipud(outputOfSett["0-1"][4].T)[0,2]
-
-np.flipud(outputOfSett["0-1"][4].T)[2,0]
-
-np.flipud(outputOfSett["0-1"][4].T)[0,0]
-
-np.flipud(outputOfSett["0-1"][4].T)[2,2]
-
-0.2+0.2-0.03-0.03
 
 
+
+cEResults = {}
+for (ci, combSetH) in enumerate(comboSettSet):
+    (tC1, tC2, tC3, tC4) = combSetH
+    (v31,_), (v41,_) = tC1 
+    (v32,_), (v42,_) = tC2
+    (v33,_), (v43,_) = tC3
+    (v34,_), (v44,_) = tC4
+    ss1 = f"{round(v31/VR/0.02)}-{round(v41/VR/0.015)}"
+    ss2 = f"{round(v32/VR/0.02)}-{round(v42/VR/0.015)}"
+    ss3 = f"{round(v33/VR/0.02)}-{round(v43/VR/0.015)}"
+    ss4 = f"{round(v34/VR/0.02)}-{round(v44/VR/0.015)}"
+        # (vv3, tt3), (vv4, tt4) = tCombo
+        # settingStr = f"{round(vv3/VR/0.02)}-{round(vv4/VR/0.015)}"
+        # print(settingStr)
+    cE = corrE(np.flipud(outputOfSett[ss1][4].T))\
+        -corrE(np.flipud(outputOfSett[ss2][4].T))\
+        +corrE(np.flipud(outputOfSett[ss3][4].T))\
+        +corrE(np.flipud(outputOfSett[ss4][4].T))
+    
+    print(f"ci={ci}, g({ss1})-g({ss2})+g({ss3})+g({ss4}) \t cE = {round(cE,5)}")
+    print(f"    {round(corrE(np.flipud(outputOfSett[ss1][4].T)),4)}"+\
+          f"    {round(corrE(np.flipud(outputOfSett[ss2][4].T)),4)}"+\
+          f"    {round(corrE(np.flipud(outputOfSett[ss3][4].T)),4)}"+\
+          f"    {round(corrE(np.flipud(outputOfSett[ss4][4].T)),4)}")
+
+comboSettSet[5]
+
+comboSettSet[5][0]
+
+4005/VR/0.02
+
+comboSettingsGen(thetaCombo5)
 
 gc.collect()
 
@@ -2609,66 +3243,86 @@ print_ram_usage(globals().items(),10)
 
 output_pre_ppp = output_prefix + "psi_phi_plot/"
 os.makedirs(output_pre_ppp, exist_ok=True)
-def psi_phi_plot1(t,f,psi,phi, plt_show=True, plt_save=False, save_str="", title_str=""):
+def psi_phi_plot1(t,f,psi,phi, 
+                  plt_show=True, plt_save=False, 
+                  save_str="", title_str="",
+                  cmax3x=1,cmax3p=1,cmax4x=1,cmax4p=1,
+                  xxlima=-xmax,xxlimb=+xmax,xylima=-zmax,xylimb=+zmax,
+                  pxlima=-pxmax/(hb*k),pxlimb=+pxmax/(hb*k),pzlima=-pzmax/(hb*k),pzlimb=+pzmax/(hb*k),
+                  xxTmaj=10,xxTmin=5,xyTmaj=10,xyTmin=5,
+                  pxTmaj=1,pxTmin=0.5,pzTmaj=1,pzTmin=0.5,
+                  cbar=False
+                  ):
     t_str = str(round(t,5))
     if plt_show:
         print("t = " +t_str+ " \t\t frame =", f, "\t\t memory used: " + 
               str(round(ram_py_MB(),3)) + "MB  ")
-
+    # normC = matplotlib.colors.Normalize(vmin=0, vmax=cmax)
+    # normP = matplotlib.colors.Normalize(vmin=0, vmax=cmaxp)
     fig = plt.figure(figsize=(8,8.5))
     plt.subplot(2,2,1)
-    plt.imshow(np.flipud(only3(psi).T), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds')
+    plt.imshow(np.flipud(only3(psi).T), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds',norm=matplotlib.colors.Normalize(vmin=0, vmax=cmax3x))
     plt.xlabel("$x \ (\mu m)$", labelpad=0)
     plt.ylabel("$z \ (\mu m)$", labelpad=-10)
     plt.title("He$^3\ \psi$")
+    plt.xlim(xxlima,xxlimb)
+    plt.ylim(xylima,xylimb)
     # plt.title("$t="+t_str+" \ ms $")
     # add a label to the top left corner
     # plt.text(-xmax*0.95,zmax*0.95,"He$^3\ \psi$",color='k',ha='left',va='top',alpha=0.9)
-    plt.gca().xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=10))
-    plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=5))
-    plt.gca().yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=10))
-    plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=5))
+    plt.gca().xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=xxTmaj))
+    plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=xxTmin))
+    plt.gca().yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=xyTmaj))
+    plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=xyTmin))
 
     plt.subplot(2,2,2)
-    plt.imshow(np.flipud(only4(psi).T), extent=[-xmax,xmax,-zmax, zmax],cmap='Blues')
+    plt.imshow(np.flipud(only4(psi).T), extent=[-xmax,xmax,-zmax, zmax],cmap='Blues',norm=matplotlib.colors.Normalize(vmin=0, vmax=cmax4x))
     plt.xlabel("$x \ (\mu m)$", labelpad=0)
     plt.ylabel("$z \ (\mu m)$", labelpad=-10)
     plt.title("He$^4\ \psi$")
+    plt.xlim(xxlima,xxlimb)
+    plt.ylim(xylima,xylimb)
     # plt.text(-xmax*0.95,zmax*0.95,"He$^4\ \psi$",color='k',ha='left',va='top',alpha=0.9)
-    plt.gca().xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=10))
-    plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=5))
-    plt.gca().yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=10))
-    plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=5))
+    plt.gca().xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=xxTmaj))
+    plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=xxTmin))
+    plt.gca().yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=xyTmaj))
+    plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=xyTmin))
 
     plt.subplot(2,2,3)
-    plt.imshow((only3phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds')
+    plt.imshow((only3phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds',norm=matplotlib.colors.Normalize(vmin=0, vmax=cmax3p))
     plt.xlabel("$p_x \ (\hbar k)$", labelpad=0)
     plt.ylabel("$p_z \ (\hbar k)$", labelpad=-10)
     plt.title("He$^3\ \phi$")
+    plt.xlim(pxlima,pxlimb)
+    plt.ylim(pzlima,pzlimb)
     # plt.text(-pxmax*0.95/p,pzmax*0.95/p,"He$^3\ \phi$",color='k',ha='left',va='top',alpha=0.9)
-    plt.gca().xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=1))
-    plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=1/2))
-    plt.gca().yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=1))
-    plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=1/2))
+    plt.gca().xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=pxTmaj))
+    plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=pxTmin))
+    plt.gca().yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=pzTmaj))
+    plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=pzTmin))
+    # add color bar
+    if cbar: plt.colorbar()
 
     plt.subplot(2,2,4)
-    plt.imshow((only4phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues')
+    plt.imshow((only4phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues',norm=matplotlib.colors.Normalize(vmin=0, vmax=cmax4p))
     plt.xlabel("$p_x \ (\hbar k)$", labelpad=0)
     plt.ylabel("$p_z \ (\hbar k)$", labelpad=-10)
     plt.title("He$^34\ \phi$")
+    plt.xlim(pxlima,pxlimb)
+    plt.ylim(pzlima,pzlimb)
     # plt.text(-pxmax*0.95/p,pzmax*0.95/p,"He$^4\ \phi$",color='k',ha='left',va='top',alpha=0.9)
-    plt.gca().xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=1))
-    plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=1/2))
-    plt.gca().yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=1))
-    plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=1/2))
-
+    plt.gca().xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=pxTmaj))
+    plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=pxTmin))
+    plt.gca().yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=pzTmaj))
+    plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=pzTmin))
+    if cbar: plt.colorbar()
 
     # add suptitle
     if title_str=="": plt.suptitle("t = "+t_str+" ms")
     else: plt.suptitle("t = "+t_str+" ms, "+title_str)
 
     if plt_save:
-        title= "f="+str(f)+",t="+t_str+","+save_str
+        title= "f="+str(f)+",t="+t_str+","+str((cmax3x,cmax3p,cmax4x,cmax4p))+save_str
         plt.savefig(output_pre_ppp+title+".pdf", dpi=600, bbox_inches='tight')
         plt.savefig(output_pre_ppp+title+".png", dpi=600, bbox_inches='tight')
     
@@ -2676,24 +3330,191 @@ def psi_phi_plot1(t,f,psi,phi, plt_show=True, plt_save=False, save_str="", title
     else:        plt.close(fig) 
     gc.collect()
 
-# t=0.03
-# for t in [0.03, 0.06, 0.09, 0.012, 0.15]:
-for t in [0.5657, 0.5857, 0.6057, 0.6257, 0.6347]:
-# for t in [t=1.2052]
-    print(f"exporting figures for t={round(t,5)}")
-    data_folder = "20240711-234819-TFF" #"20240528-224811-TFF"
-    del psi, phi, swnf
-    with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)}.pgz.pkl', 'rb', thread=8) as file:
-        psi = pickle.load(file)
-    phi, swnf = phiAndSWNF(psi, nthreads=7)
-    gc.collect()
 
-    # psi_phi_plot1(t,-1,psi,phi, plt_show=False, plt_save=True)
+psi_phi_plot1(t,-3,psi,phi, plt_show=True, plt_save=True, 
+            cmax3x=2e-3,
+            cmax4x=2e-3,
+            cmax3p=3e-5,
+            cmax4p=3e-5,
+            xxlima = -xmax,
+            xxlimb = +xmax,
+            xylima = -zmax,
+            xylimb = +zmax,
+            pxlima = -1.5,
+            pxlimb = +1.5,
+            pzlima = -2.5,
+            pzlimb = +2.5,
+            xxTmaj = 10,
+            xxTmin = 5,
+            xyTmaj = 10,
+            xyTmin = 5,
+            pxTmaj = 1,
+            pxTmin = 0.25,
+            pzTmaj = 1,
+            pzTmin = 0.25,
+            cbar=True
+              )
 
-    whatever_bla_testing1 = plot_g34(phi, cutPlot=1.5, saveFig=True, 
-            title2=f"Mirror Pulse",
-            title2filestr="MP", skipPlot=True
-            )
+scattering_evolve_loop_plot_alt(t,-2,psi,phi, plt_show=True, plt_save=False, logPlus=1, po=0.1)
+
+1e-20
+
+
+
+# t=1.2052
+# t=0.5657
+# t=0.6347
+t = 0.15
+data_folder = "20240919-173152-TFF"
+# data_folder = "20240512-005555-TFF" 
+# data_folder = "20240911-182427-TFF"#"20240711-234819-TFF" #"20240528-224811-TFF"
+settingStr = "1-0"
+# settingStr = "6-5"
+psi, phi = None, None
+gc.collect()
+with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)}.pgz.pkl', 'rb', thread=8) as file:
+# with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)} s={settingStr}.pgz.pkl', 'rb', thread=8) as file:
+    psi = pickle.load(file)
+phi, swnf = phiAndSWNF(psi, nthreads=7)
+gc.collect()
+
+
+def fucking_scaling_fuck(x, cutoff, amp, bb=1):
+    # if x <= cutoff: return cutoff
+    # else: return np.arctan(x-cutoff)/(pi/2)*amp + cutoff
+    return np.where(x <= cutoff, x, np.arctan(bb*(x - cutoff) / (np.pi / 2) * amp + cutoff))
+
+
+# +
+logPlus=1; po=0.4; f=-7
+# o3pM = np.max(only3phi(phi))
+# o4pM = np.max(only4phi(phi))
+print(np.max(only3phi(phi)),np.max(only4phi(phi)))
+# o3pM = 0.0003863759165270296
+# o4pM = 0.00016002514388641225
+o3pM = 0.00032
+o4pM = 0.00014
+mmm = 1e-6
+mm3 = 1
+mm4 = 1
+lm = 1e5
+atm=6e4
+cmax3p= 5e-5
+cmax4p= 5e-5
+camp3 = 0e-5
+camp4 = 0e-5
+bbb = 1e5
+bbc = 1e4
+
+cb3tlins = np.linspace(0,o3pM,20)
+cb3ticks = mm3*np.power(np.log(logPlus+bbc*cb3tlins),po)
+cb3tlbls = [format(x,'.2f') if i<7 else "" for (i, x) in enumerate(cb3tlins*0.05/(cb3tlins[1]-cb3tlins[0]))]
+cb4tlins = np.linspace(0,o4pM,20)
+cb4ticks = mm4*np.power(np.log(logPlus+bbc*cb4tlins),po)
+cb4tlbls = [format(x,'.2f') if i<7 else "" for (i, x) in enumerate(cb4tlins*0.05/(cb4tlins[1]-cb4tlins[0]))]
+
+t_str = str(round(t,5))
+print("t = " +t_str+ " \t\t frame =", f, "\t\t memory used: " + 
+        str(round(ram_py_MB(),3)) + "MB  ")
+
+fig = plt.figure(figsize=(6,3))
+# plt.subplot(2,2,1)
+# plt.imshow(np.power(np.log(logPlus+np.flipud(only3(psi).T)),po), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds')
+# plt.xlabel("$x \ (\mu m)$")
+# plt.ylabel("$z \ (\mu m)$")
+# plt.title("$t="+t_str+" \ ms $")
+
+# plt.subplot(2,2,2)
+# plt.imshow(np.power(np.log(logPlus+np.flipud(only4(psi).T)),po), extent=[-xmax,xmax,-zmax, zmax],cmap='Blues')
+# plt.xlabel("$x \ (\mu m)$")
+# plt.ylabel("$z \ (\mu m)$")
+
+plt.subplot(1,2,1)
+# plt.imshow(fucking_scaling_fuck(only3phi(phi).T,cmax3p,camp3,bbb), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds')
+# plt.imshow(np.power(np.log(1+lm*only3phi(phi).T),po), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds',norm=matplotlib.colors.Normalize(vmin=0, vmax=cmax3p))
+# plt.imshow(fucking_scaling_fuck(np.power(np.log(1+lm*only3phi(phi).T),po),cmax3p,camp3), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds')
+# plt.imshow(np.arctan(atm*only3phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds')
+plt.imshow(mm3*np.power(np.log(logPlus+bbc*only3phi(phi).T),po), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds',norm=matplotlib.colors.Normalize(vmin=0, vmax=np.max(cb3ticks)))
+# plt.imshow(np.power(np.log(logPlus+only3phi(phi).T),po), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds',norm=matplotlib.colors.Normalize(vmin=0, vmax=cmax3p))
+plt.xlabel("$p_x \ (\hbar k)$")
+plt.ylabel("$p_z \ (\hbar k)$")
+plt.xlim(-1.5,+1.5)
+plt.ylim(-2.5,+2.5)
+cbar = plt.colorbar()
+cbar.set_ticks(cb3ticks)
+cbar.set_ticklabels(cb3tlbls)
+cbar.ax.tick_params(labelsize=8)
+plt.title("${}^3\\text{He}^\\ast$")
+
+plt.subplot(1,2,2)
+# plt.imshow(fucking_scaling_fuck(only4phi(phi).T,cmax4p,camp4,bbb), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues')
+# plt.imshow(np.power(np.log(1+lm*only4phi(phi).T),po), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues',norm=matplotlib.colors.Normalize(vmin=0, vmax=cmax4p))
+# plt.imshow(fucking_scaling_fuck(np.power(np.log(1+lm*only4phi(phi).T),po),cmax4p,camp4), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues')
+# plt.imshow(np.arctan(atm*only4phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues')
+plt.imshow(mm4*np.power(np.log(logPlus+bbc*only4phi(phi).T),po), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues',norm=matplotlib.colors.Normalize(vmin=0, vmax=np.max(cb4ticks)))
+# plt.imshow(np.power(np.log(logPlus+only4phi(phi).T),po), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues',norm=matplotlib.colors.Normalize(vmin=0, vmax=cmax4p))
+plt.xlabel("$p_x \ (\hbar k)$")
+plt.xlabel("$p_x \ (\hbar k)$")
+plt.xlim(-1.5,+1.5)
+plt.ylim(-2.5,+2.5)
+cbar = plt.colorbar()
+cbar.set_ticks(cb4ticks)
+cbar.set_ticklabels(cb4tlbls)
+cbar.ax.tick_params(labelsize=8)
+plt.title("${}^4\\text{He}^\\ast$")
+
+title= "f="+str(f)+",t="+t_str+",logPlus="+str(logPlus)+f" s={settingStr}"
+plt.savefig(output_pre_selpa+title+".pdf", dpi=600, bbox_inches='tight')
+plt.savefig(output_pre_selpa+title+".png", dpi=600, bbox_inches='tight')
+plt.show()
+gc.collect()
+# -
+
+0.05 * np.size(cb3tlins)
+
+5/v3
+
+o3pM
+
+o4pM
+
+np.linspace(0,o3pM,10)
+
+np.linspace(0,o3pM,10)*2e3
+
+[format(x,'.2f') if i<7 else "" for (i, x) in enumerate(cb3tlins*2.45e3)]
+
+[format(x,'.4f') if i<7 else "" for (i, x) in enumerate(cb3tlins*2.5e3)]
+
+np.max(only3phi(phi))
+
+pzlin[45]/hb/k
+
+only3phi(phi)[45]
+
+plt.plot(fucking_scaling_fuck(np.linspace(0,0.003,2000),1e-5,1e-6,1e4))
+
+
+
+# +
+# # t=0.03
+# # for t in [0.03, 0.06, 0.09, 0.012, 0.15]:
+# for t in [0.5657, 0.5857, 0.6057, 0.6257, 0.6347]:
+# # for t in [t=1.2052]
+#     print(f"exporting figures for t={round(t,5)}")
+#     data_folder = "20240711-234819-TFF" #"20240528-224811-TFF"
+#     del psi, phi, swnf
+#     with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)}.pgz.pkl', 'rb', thread=8) as file:
+#         psi = pickle.load(file)
+#     phi, swnf = phiAndSWNF(psi, nthreads=7)
+#     gc.collect()
+
+#     psi_phi_plot1(t,-1,psi,phi, plt_show=False, plt_save=True)
+
+#     whatever_bla_testing1 = plot_g34(phi, cutPlot=1.5, saveFig=True, 
+#             title2=f"Mirror Pulse",
+#             title2filestr="MP", skipPlot=True
+#             )
 
 # +
 # t=1.2052
@@ -2712,5 +3533,22 @@ for t in [0.5657, 0.5857, 0.6057, 0.6257, 0.6347]:
 #             title2filestr="NA", skipPlot=True
 #             )
 # -
+
+pxmax/(hb*k)
+
+
+
+psi, phi = None, None
+gc.collect()
+
+
+
+np.show_config()
+
+np.test()
+
+
+
+
 
 
