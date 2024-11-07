@@ -5,9 +5,9 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.16.4
+#       jupytext_version: 1.16.1
 #   kernelspec:
-#     display_name: Python 3
+#     display_name: py311_he34sim
 #     language: python
 #     name: python3
 # ---
@@ -41,6 +41,7 @@ from matplotlib.ticker import MaxNLocator
 from matplotlib.ticker import MultipleLocator
 from matplotlib.lines import Line2D
 from matplotlib.transforms import Bbox
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from colorsys import hls_to_rgb # for complex plot color
 
@@ -55,7 +56,7 @@ import glob
 import re
 
 # os.environ["IMAGEIO_FFMPEG_EXE"]="/opt/miniconda3/bin/ffmpeg"
-os.environ["IMAGEIO_FFMPEG_EXE"]="/envs/py311_he34sim/bin/ffmpeg"
+# os.environ["IMAGEIO_FFMPEG_EXE"]="/envs/py311_he34sim/bin/ffmpeg"
 from moviepy.editor import ImageSequenceClip
 import cv2
 
@@ -657,7 +658,7 @@ def psi0_just_opposite(dr=20,s3=sg,s4=sg,pt=0,a=0,xlin=xlin,zlin=zlin):
                 psi[:,iz3,ix4,iz4] = psi0gaussianNN(xlin-dx3,z3-dz3, x4+dx4,z4+dz4, s3,s3, s4,s4,+px,+pz,-px,-pz)
     normalisation = check_norm(psi)
     return (psi/sqrt(normalisation)).astype(dtypec)
-    
+
 
 
 su=5
@@ -915,7 +916,7 @@ def plot_gx3x4(gx3x4,cut):
     plt.text(-xmax*0.6,+xmax*0.8,"$g^{(2)}_{-+}="+str(round(gmp,4))+"$", color='white',ha='center',alpha=0.9)
     plt.text(+xmax*0.6,-xmax*0.8,"$g^{(2)}_{+-}="+str(round(gpm,4))+"$", color='white',ha='center',alpha=0.9)
     plt.text(-xmax*0.6,-xmax*0.8,"$g^{(2)}_{--}="+str(round(gmm,4))+"$", color='white',ha='center',alpha=0.9)
-    
+
 
 # + vscode={"languageId": "raw"} active=""
 # plt.figure(figsize=(14,6))
@@ -1214,7 +1215,7 @@ l.info(f"strength34 = {strength34}, \t evolve_s34 = {evolve_s34}")
 
 
 
-# ### One test run (🈶)
+# ### Initialise Initial State (🈶)
 
 assert False, "just to catch run all"
 
@@ -1222,12 +1223,21 @@ su = 3
 # psi = psi0_just_opposite_double(dr=0,s3=su*(4/3),s4=su,pt=-4.0*hb*k,a=0.5*pi) # 16.37s
 psi = psi0gaussian(sx3=su, sz3=su, sx4=su, sz4=su, px3=0, pz3=0, px4=0, pz4=0)
 t = 0
-f = 0
+f = -1
 phi, swnf = phiAndSWNF(psi, nthreads=7)
 
-scattering_evolve_loop_plot(t,f,psi,phi, plt_show=True, plt_save=False)
+# + vscode={"languageId": "raw"} active=""
+# scattering_evolve_loop_plot(t,f,psi,phi, plt_show=True, plt_save=False)
 
-scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=True, plt_save=False, logPlus=1, po=0.1)
+# + vscode={"languageId": "raw"} active=""
+# scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=True, plt_save=False, logPlus=1, po=0.1)
+# -
+
+psi_phi_plot2(t,f,psi,phi, titleR="")
+
+_=plot_g34_v2(t, phi)
+
+
 
 
 
@@ -1240,8 +1250,6 @@ gc.collect()
 # %reset -f in
 # %reset -f out
 ram_py_log()
-
-
 
 
 
@@ -1274,7 +1282,7 @@ gc.collect()
 ram_py_log()
 
 print_every = 10
-frames_count = 500
+frames_count = 300
 total_steps = print_every * frames_count
 evolve_loop_time_estimate = total_steps*evolve_loop_time_delta*1.1
 l.info(f"""print_every = {print_every}, \tframes_count = {frames_count}, total_steps = {total_steps}
@@ -1457,9 +1465,11 @@ gc.collect()
 ram_py_log()
 print_ram_usage(globals().items(),10)
 
+T_a34off
+
 print_every = 10 # every us 
-frames_count = 150 # until T_a34off
-export_every = 30
+frames_count = 600 # until T_a34off
+export_every = 30 # every 3us
 total_steps = print_every * frames_count
 t_end_target = frames_count*print_every*dt
 evolve_loop_time_estimate = total_steps*evolve_loop_time_delta*1.1
@@ -1474,33 +1484,48 @@ assert False, "just to catch run all"
 # +
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 evolve_many_loops_start = datetime.now()
-frameAcc = 0 
 with ProgressBar(total=total_steps) as progressbar:
-    for f in range(frames_count):
+    for fl in range(frames_count+1):
         evolve_many_loops_inner_now = datetime.now()
         tP = evolve_many_loops_inner_now - evolve_many_loops_start
-        if frameAcc > 0: 
-            tR = (frames_count-frameAcc)* tP/frameAcc
+        if fl > 0: 
+            tR = (frames_count-fl)* tP/fl
             tE = datetime.now() + tR
-            l.info(f"Now f={frameAcc}, t={round(t,6)}, tP={tP}, tR={tR}, tE = {tE}")
-        scattering_evolve_loop_plot(t,f,psi,phi, plt_show=False, plt_save=True)
-        scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
+            l.info(f"Now f={fl}, t={round(t,6)}, tP={tP}, tR={tR}, tE = {tE}")
+        
+        # scattering_evolve_loop_plot(t,f,psi,phi, plt_show=False, plt_save=True)
+        # scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
+        psi_phi_plot2(t,fl,psi,phi, titleR="sc", skipPlot=True, saveFig=True, settingStr="sc")
+        _=plot_g34_v2(t, phi, saveFig=True, skipPlot=True, title2filestr="sc")
         gc.collect()
-        (t,psi,phi) = scattering_evolve_bragg_loop_helper2(t,psi,swnf,
-                          steps=print_every,progress_proxy=progressbar,s34=evolve_s34,
-                          t3mid=-3, t3wid=1, v3pot=0, 
-                          t4mid=0.5*t4sc, t4wid=t4sc, v4pot=V4sc                        
-                          )
-        frameAcc += 1
-        if frameAcc % export_every == 0:
+        if fl % export_every == 0:
             with pgzip.open(output_prefix+f"psi at t={round(t,6)}"+output_ext,
                 'wb', thread=8, blocksize=1*10**8) as file:
                 pickle.dump(psi, file) 
-                
-f += 1
-scattering_evolve_loop_plot(t,f+1,psi,phi, plt_show=False, plt_save=True)
-scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
+
+        (t,psi,phi) = scattering_evolve_bragg_loop_helper2(t,psi,swnf,
+                          steps=print_every,progress_proxy=progressbar,s34=-evolve_s34,
+                          ############################################ SCATTERING LENGTH CHANGED TO NEGATIVE !!!!!!
+                          t3mid=-3, t3wid=1, v3pot=0, # He3 off 
+                          t4mid=0.5*t4sc, t4wid=t4sc, v4pot=V4sc, # He4 scattering       
+                          numba_threads=12, fftw_threads=12    
+                          )
+        
+        gc.collect()      
+
+# f += 1
+# scattering_evolve_loop_plot(t,f+1,psi,phi, plt_show=False, plt_save=True)
+# scattering_evolve_loop_plot_alt(t,f,psi,phi, plt_show=False, plt_save=True, logPlus=1, po=0.1)
+psi_phi_plot2(t,fl,psi,phi, titleR="sc", skipPlot=True, saveFig=True, settingStr="sc")
+_=plot_g34_v2(t, phi, saveFig=True, skipPlot=True, title2filestr="sc")
+with pgzip.open(output_prefix+f"psi at t={round(t,6)}"+output_ext,
+                'wb', thread=8, blocksize=1*10**8) as file:
+                pickle.dump(psi, file)
 # -
+
+frameAcc += 1
+psi_phi_plot2(t,frameAcc,psi,phi, titleR="", skipPlot=True, saveFig=True)
+_=plot_g34_v2(t, phi, saveFig=True, skipPlot=True)
 
 l.info(t)
 with pgzip.open(output_prefix+f"psi at t={round(t,6)}"+output_ext,
@@ -2328,7 +2353,8 @@ legend_elements = [Line2D([0], [0], marker='o', color='cyan', label='$Arg=\pm\pi
 # -
 
 
-
+output_pre_corr = output_prefix + "corrPlot/"
+os.makedirs(output_pre_corr, exist_ok=True)
 
 
 def plot_g34(phiHere, cutPlot=1.5, saveFig=True, 
@@ -2398,8 +2424,8 @@ def plot_g34(phiHere, cutPlot=1.5, saveFig=True,
     plt.title(f"{title2}\ncut = {cutPlot}")
     title = f"CorrE t={round(t,5)}, cut = {cutPlot}, s={title2filestr}"
     if saveFig:
-        plt.savefig(output_prefix+title+".pdf", dpi=600, bbox_inches='tight')
-        plt.savefig(output_prefix+title+".png", dpi=600, bbox_inches='tight')
+        plt.savefig(output_pre_corr+title+".pdf", dpi=600, bbox_inches='tight')
+        plt.savefig(output_pre_corr+title+".png", dpi=600, bbox_inches='tight')
     if skipPlot:
         plt.close()
     else:
@@ -2407,15 +2433,17 @@ def plot_g34(phiHere, cutPlot=1.5, saveFig=True,
     return (gx3px4p, gx3px4m, gx3mx4p, gx3mx4m, gx3x4n)
 
 
-def plot_g34_v2(phiHere, cutPlot=1.5, saveFig=True, 
+def plot_g34_v2(t, phi, cutPlot=1.5, saveFig=True, 
              pMaxCut=2,
              title2="", title2filestr="NA",
              skipPlot=False,
-             figSize=(9,3.5)):
-    gx3px4p = gp3p4_dhalo_calc(phiHere,cut=cutPlot,offset3=+p,offset4=+p)
-    gx3px4m = gp3p4_dhalo_calc(phiHere,cut=cutPlot,offset3=+p,offset4=-p)
-    gx3mx4p = gp3p4_dhalo_calc(phiHere,cut=cutPlot,offset3=-p,offset4=+p)
-    gx3mx4m = gp3p4_dhalo_calc(phiHere,cut=cutPlot,offset3=-p,offset4=-p)
+             figSize=(9,3.0),
+             sws=0.15
+             ):
+    gx3px4p = gp3p4_dhalo_calc(phi,cut=cutPlot,offset3=+p,offset4=+p)
+    gx3px4m = gp3p4_dhalo_calc(phi,cut=cutPlot,offset3=+p,offset4=-p)
+    gx3mx4p = gp3p4_dhalo_calc(phi,cut=cutPlot,offset3=-p,offset4=+p)
+    gx3mx4m = gp3p4_dhalo_calc(phi,cut=cutPlot,offset3=-p,offset4=-p)
     
     nc = int(pMaxCut*p/dpx)*2+1;
     nr = (nx-nc)//2
@@ -2445,7 +2473,8 @@ def plot_g34_v2(phiHere, cutPlot=1.5, saveFig=True,
     tick_labelsY = ["","$+p_{A_x}$","$0$","$-p_{A_x}$","","$+p_{A_x}$","$0$","$-p_{A_x}$",""]
     # tick_labels = np.concatenate((np.linspace(-4, 4, 5), np.linspace(-4, 4, 5)))
     # plt.imshow(np.flipud(gx3x4combined.T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Greens')
-    plt.figure(figsize=figSize)
+    fig = plt.figure(figsize=figSize)
+    fig.subplots_adjust(hspace=0, wspace=sws)
     ax = plt.subplot(1,2,1)
     im = ax.imshow(np.flipud(gx3x4combined.T)*1e6,cmap='Greens',norm=matplotlib.colors.Normalize(vmin=0, vmax=0.25))
     # ax.set_yticks(ticksL, ["","A↗︎","","A↖︎","","A↘︎","","A↙︎",""])
@@ -2464,7 +2493,9 @@ def plot_g34_v2(phiHere, cutPlot=1.5, saveFig=True,
     ax2.set_xticks(ticks, tick_labelsX[::-1])
     ax3.set_yticks(ticks, tick_labelsY)
     plt.title(f"cE={round(corrE,5)}\nt = {t}")
-    plt.colorbar(im,pad=0.15,fraction=0.046)
+    divider = make_axes_locatable(ax); cax = divider.append_axes("right", size="5%", pad=0.50)
+    # plt.colorbar(im,pad=0.15,fraction=0.046)
+    cbar = plt.colorbar(im,cax=cax)
 
     # l.info(f"""gx3px4p[1] = {gx3px4p[1]}
     # gx3px4m[1] = {gx3px4m[1]}
@@ -2485,18 +2516,22 @@ def plot_g34_v2(phiHere, cutPlot=1.5, saveFig=True,
         for j in range(gx3x4n.shape[1]):
             plt.text(j, i, str(round(np.flipud(gx3x4n.T)[i, j],4)), ha='center', va='center', color='black',fontsize='small')
     plt.title(f"{title2}\ncut = {cutPlot}")
-    cbar = plt.colorbar(im,pad=0.15,fraction=0.046)
+    divider = make_axes_locatable(ax); cax = divider.append_axes("right", size="5%", pad=0.50)
+    # cbar = plt.colorbar(im,pad=0.15,fraction=0.046)
     # cbar.set_ticks(np.linspace(0,0.25,6))
+    cbar = plt.colorbar(im,cax=cax)
 
     title = f"CorrE t={round(t,5)}, cut = {cutPlot}, s={title2filestr}"
     if saveFig:
-        plt.savefig(output_prefix+title+".pdf", dpi=600, bbox_inches='tight')
-        plt.savefig(output_prefix+title+".png", dpi=600, bbox_inches='tight')
+        plt.savefig(output_pre_corr+title+".pdf", dpi=600, bbox_inches='tight')
+        plt.savefig(output_pre_corr+title+".png", dpi=600, bbox_inches='tight')
     if skipPlot:
         plt.close()
     else:
         plt.show()
-    return (gx3px4p, gx3px4m, gx3mx4p, gx3mx4m, gx3x4n)
+    return (gx3px4p, gx3px4m, gx3mx4p, gx3mx4m, gx3x4n, corrE)
+
+
 
 
 
@@ -3164,24 +3199,38 @@ assert False, "just to catch run all"
 
 # Function to extract frame number from filename
 def extract_frame_number(filename):
-    match = re.search(r't=([0-9.]+)', filename)
+    match = re.search(r't=([0-9.])', filename)
     # return float(match.group(1)) if match else None
     if match: # Remove any non-numeric characters after the number
         number = match.group(1).rstrip('.')
         return float(number)
     return None
-img_alt_list = glob.glob(output_pre_selp+'*.png')
+# img_alt_list = glob.glob(output_pre_selp+'*.png')
+img_alt_list = glob.glob(output_pre_ppp+'*.png')
 # img_alt_list = glob.glob(output_pre_selpa+'*.png')
 # img_alt_list = glob.glob(output_prefix+'BS_L free time scan ok 3/*.png')
 img_alt_list.sort(key=extract_frame_number)
 
 extract_frame_number(img_alt_list[2])
 
-img_alt_list[2]
+img_alt_list[:30]
 
+re.search(r't=([0-9.])', img_alt_list[2])
 
+re.search(r't=([0-9.]).*s=sc', img_alt_list[2])
 
 N_JOBS
+
+pattern = r"f=(\d+),.*s=sc\.png"
+directory = output_pre_ppp
+img_alt_list = sorted(
+    #  (int(re.match(pattern, f).group(1)), f) for f in os.listdir(output_pre_ppp) if re.match(pattern, f)
+    # os.path.join(directory, f) for f in os.listdir(directory) if re.match(pattern, f)
+    [os.path.join(directory, f) for f in os.listdir(directory) if (m := re.match(pattern, f))],
+    key=lambda x: int(re.match(pattern, os.path.basename(x)).group(1))
+)
+
+img_alt_list
 
 # img_alt_frames = []  # Read and process images, storing them in a list
 # for image in tqdm(img_alt_list, desc="Processing Images"):
@@ -3195,7 +3244,8 @@ if img_alt_frames:  # Determine the width and height from the first image if not
     height, width, layers = img_alt_frames[0].shape # Define the codec and create VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'hvc1')  # HEVC codec
     out = cv2.VideoWriter(
-        output_prefix+"scattering_evolve_loop_plot.mov", 
+        # output_prefix+"scattering_evolve_loop_plot.mov", 
+        output_prefix+"init-scattering.mov",
         # output_prefix+"scattering_evolve_loop_plot_alt.mov", 
         # output_prefix+"BS_L free time scan ok 3.mov",
         fourcc, 10.0, (width, height), True) # Write img_alt_frames to the video file
@@ -3207,6 +3257,14 @@ else:
     print("No images found or processed.")
 del img_alt_frames
 gc.collect()
+
+cv2.cuda.printCudaDeviceInfo(0)
+
+cv2.cuda.getCudaEnabledDeviceCount()
+
+
+
+
 
 # + active=""
 # # Create a clip from the images sequence
@@ -3255,6 +3313,8 @@ print_ram_usage(globals().items(),10)
 
 
 # # Making Figures
+
+# ### Function Defs (🔄)
 
 output_pre_ppp = output_prefix + "psi_phi_plot/"
 os.makedirs(output_pre_ppp, exist_ok=True)
@@ -3346,6 +3406,110 @@ def psi_phi_plot1(t,f,psi,phi,
     gc.collect()
 
 
+def psi_phi_plot2(t,f,psi,phi, titleR="",
+                  o3xM=0.050, o4xM=0.050, o3pM=0.00050, o4pM=0.00050,
+                  lP=1, po=0.4, mX3=1, mX4=1, mP3=1, mP4=1, bX=1e2, bP=1e4,
+                  labPosX=-1, labPosY=-7,
+                  momXPlotWid=pxmax/(hb*k), momZPlotWid=pzmax/(hb*k),
+                  skipPlot=False, saveFig=True,
+                  settingStr="NA"
+                  ):
+    t_str = str(round(t,5))
+    # print(f"t={t_str}, f={f}, RMA:{round(ram_py_MB(),3)}MB")
+    titleL = f"t={t_str}ms, f={f}"
+
+    fig = plt.figure(figsize=(7,6))
+    fig.subplots_adjust(hspace=0.25, wspace=0.25)
+
+    # 1st Row Position
+    cb3tlins = np.linspace(0,o3xM,20+1)
+    cb3ticks = mX3*np.power(np.log(lP+bX*cb3tlins),po)
+    cb3tlbls = ['0.00', '0.05', '0.10', '0.15', '0.20', '', '0.30', '', '0.40', '', '0.50', '', '', '', '0.70', '', '', '', '0.90', '','']
+    cb4tlins = np.linspace(0,o4xM,20+1)
+    cb4ticks = mX4*np.power(np.log(lP+bX*cb4tlins),po)
+    cb4tlbls = cb3tlbls
+
+    ax = plt.subplot(2,2,1)
+    im = ax.imshow(mX3*np.power(np.log(lP+bX*only3(psi).T),po), extent=[-xmax,xmax,-zmax,zmax],cmap='Reds',norm=matplotlib.colors.Normalize(vmin=0, vmax=np.max(cb3ticks)))
+    ax.set_xlabel("$x (\mu m)$", labelpad=labPosX, fontsize=10)
+    ax.set_ylabel("$z (\mu m)$", labelpad=labPosY, fontsize=10)
+    divider = make_axes_locatable(ax); cax = divider.append_axes("right", size="5%", pad=0.05)
+    cbar = plt.colorbar(im, cax=cax)
+    cbar.set_ticks(cb3ticks); cbar.set_ticklabels(cb3tlbls); cbar.ax.tick_params(labelsize=8)
+    ax.set_title(titleL+"\n${}^3\\text{He}^\\ast$",fontsize=10)
+    ax.xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=10))
+    ax.xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=5))
+    ax.yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=10))
+    ax.yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=5))
+
+    ax = plt.subplot(2,2,2)
+    im = ax.imshow(mX4*np.power(np.log(lP+bX*only4(psi).T),po), extent=[-xmax,xmax,-zmax,zmax],cmap='Blues',norm=matplotlib.colors.Normalize(vmin=0, vmax=np.max(cb4ticks)))
+    ax.set_xlabel("$x (\mu m)$", labelpad=labPosX, fontsize=10)
+    # ax.set_ylabel("$z (\mu m)$", labelpad=labPosY, fontsize=10)
+    divider = make_axes_locatable(ax); cax = divider.append_axes("right", size="5%", pad=0.05)
+    cbar = plt.colorbar(im, cax=cax)
+    cbar.set_ticks(cb4ticks); cbar.set_ticklabels(cb4tlbls); cbar.ax.tick_params(labelsize=8)
+    ax.set_title(titleR+"\n${}^4\\text{He}^\\ast$",fontsize=10)
+    ax.xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=10))
+    ax.xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=5))
+    ax.yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=10))
+    ax.yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=5))
+
+    # 2nd Row Momentum 
+    cb3tlins = np.linspace(0,o3pM,20+1)
+    cb3ticks = mP3*np.power(np.log(lP+bP*cb3tlins),po)
+    # cb3tlbls = [format(x,'.2f') if (i%2==0) else "" for (i, x) in enumerate(cb3tlins*0.05/(cb3tlins[1]-cb3tlins[0]))]
+    # cb3tlbls = ['0.00', '0.05', '0.10', '0.15', '0.20', '', '0.30', '', '0.40', '', '0.50', '', '', '', '0.70', '', '', '', '0.90', '','']
+    # cb3tlbls = ['0.00', '0.05', '0.10', '0.15', '0.20', '', '0.30', '', '0.40', '', '0.50', '', '0.60', '', '', '', '0.80', '', '', '','']
+    cb4tlins = np.linspace(0,o4pM,20+1)
+    cb4ticks = mP4*np.power(np.log(lP+bP*cb4tlins),po)
+    # cb4tlbls = [format(x,'.2f') if i<7 else "" for (i, x) in enumerate(cb4tlins*0.05/(cb4tlins[1]-cb4tlins[0]))]
+    # cb4tlbls = cb3tlbls
+
+    ax = plt.subplot(2,2,3)
+    im = ax.imshow(mP3*np.power(np.log(lP+bP*only3phi(phi).T),po), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds',norm=matplotlib.colors.Normalize(vmin=0, vmax=np.max(cb3ticks)))
+    ax.set_xlabel("$p_x \ (\hbar k)$", labelpad=labPosX, fontsize=10)
+    ax.set_ylabel("$p_z \ (\hbar k)$", labelpad=labPosY, fontsize=10)
+    ax.set_xlim(-momXPlotWid,+momXPlotWid)
+    ax.set_ylim(-momZPlotWid,+momZPlotWid)
+    divider = make_axes_locatable(ax); cax = divider.append_axes("right", size="5%", pad=0.05)
+    cbar = plt.colorbar(im, cax=cax)
+    cbar.set_ticks(cb3ticks); cbar.set_ticklabels(cb3tlbls); cbar.ax.tick_params(labelsize=8)
+    # plt.title("${}^3\\text{He}^\\ast$")
+    ax.xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=1))
+    ax.xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=0.5))
+    ax.yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=1))
+    ax.yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=0.5))
+
+    ax = plt.subplot(2,2,4)
+    im = ax.imshow(mP4*np.power(np.log(lP+bP*only4phi(phi).T),po), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues',norm=matplotlib.colors.Normalize(vmin=0, vmax=np.max(cb4ticks)))
+    ax.set_xlabel("$p_x \ (\hbar k)$", labelpad=labPosX, fontsize=10)
+    # plt.ylabel("$p_z \ (\hbar k)$", labelpad=labPosY, fontsize=10)
+    ax.set_xlim(-momXPlotWid,+momXPlotWid)
+    ax.set_ylim(-momZPlotWid,+momZPlotWid)
+    divider = make_axes_locatable(ax); cax = divider.append_axes("right", size="5%", pad=0.05)
+    cbar = plt.colorbar(im, cax=cax)
+    cbar.set_ticks(cb4ticks); cbar.set_ticklabels(cb4tlbls); cbar.ax.tick_params(labelsize=8)
+    # plt.title("${}^4\\text{He}^\\ast$")
+    ax.xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=1))
+    ax.xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=0.5))
+    ax.yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=1))
+    ax.yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(base=0.5))
+
+    title= "f="+str(f)+",t="+t_str+",lP="+str(lP)+f" s={settingStr}"
+    if saveFig: 
+        plt.savefig(output_pre_ppp+title+".pdf", dpi=600, bbox_inches='tight')
+        plt.savefig(output_pre_ppp+title+".png", dpi=600, bbox_inches='tight')
+    if skipPlot: plt.close(fig)
+    else: plt.show()
+gc.collect()
+
+
+
+# ### Plottings (🈶)
+
+
+
 psi_phi_plot1(t,-3,psi,phi, plt_show=True, plt_save=True, 
             cmax3x=2e-3,
             cmax4x=2e-3,
@@ -3376,18 +3540,20 @@ scattering_evolve_loop_plot_alt(t,-2,psi,phi, plt_show=True, plt_save=False, log
 
 
 
+output_prefix
+
 # t=1.2052
 # t=0.5657
 # t=0.6347
-t = 0.15
-data_folder = "20240919-173152-TFF"
+t = 0.03
+data_folder = "20241000-000000-TFF"#"20240919-173152-TFF"
 # data_folder = "20240512-005555-TFF" 
 # data_folder = "20240911-182427-TFF"#"20240711-234819-TFF" #"20240528-224811-TFF"
-settingStr = "1-0"
+settingStr = "1-2"
 # settingStr = "6-5"
 psi, phi = None, None
 gc.collect()
-with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)}.pgz.pkl', 'rb', thread=8) as file:
+with pgzip.open(f'output/twoParticleSim/{data_folder}/psi at t={round(t,5)}.pgz.pkl', 'rb', thread=16) as file:
 # with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)} s={settingStr}.pgz.pkl', 'rb', thread=8) as file:
     psi = pickle.load(file)
 phi, swnf = phiAndSWNF(psi, nthreads=7)
@@ -3485,6 +3651,20 @@ plt.show()
 gc.collect()
 # -
 
+
+
+psi_phi_plot2(t=t,f=-8,psi=psi,phi=phi)
+
+_ = plot_g34_v2(t=t, phiHere=phi)
+
+
+
+xmax
+
+print(cb3tlbls)
+
+print([format(x,'.2f') if (True) else "" for (i, x) in enumerate(cb3tlins*0.05/(cb3tlins[1]-cb3tlins[0]))])
+
 0.05 * np.size(cb3tlins)
 
 5/v3
@@ -3502,6 +3682,8 @@ np.linspace(0,o3pM,10)*2e3
 [format(x,'.4f') if i<7 else "" for (i, x) in enumerate(cb3tlins*2.5e3)]
 
 np.max(only3phi(phi))
+
+np.max(only3(psi))
 
 pzlin[45]/hb/k
 
@@ -3618,9 +3800,58 @@ with ProgressBar(total=10) as progressbar:
 # evolve a34=0    8.49, 7.43, 7.37
 #
 #
+# RSPE 11700
+# init psi:       41.3,  24.6
+# evolve a34=.    19.92, 18.63
+# evolve a34=0    16.44, 16.98
 #
 #
 # -
+x
+
+bench_scan_bencht_scattering_evolve_bragg_loop_helper2 = np.zeros((16,16))
+for numba_threads in range(1,17):
+    for fftw_threads in  range(1,17):
+        print(f"numba_threads={numba_threads}, fftw_threads={fftw_threads}")
+        bencht_scattering_evolve_bragg_loop_helper2 = datetime.now()
+        with ProgressBar(total=10) as progressbar: 
+            _ = scattering_evolve_bragg_loop_helper2(t,psi,swnf,
+                                            steps=10,progress_proxy=progressbar,s34=0,
+                                            t3mid=T_BS, t3wid=t3pi4, v3pot=V3pi4, 
+                                            t4mid=T_BS, t4wid=t4pi4, v4pot=V4pi4,  
+                                            numba_threads = numba_threads,fftw_threads  = fftw_threads)
+        bench_t_scan_delta = datetime.now()-bencht_scattering_evolve_bragg_loop_helper2
+        print(f"    bench_t_scan_delta = {bench_t_scan_delta}")
+        # bench_scan_bencht_scattering_evolve_bragg_loop_helper2.append((numba_threads,fftw_threads,bench_t_scan_delta))
+        bench_scan_bencht_scattering_evolve_bragg_loop_helper2[numba_threads-1,fftw_threads-1] = bench_t_scan_delta.total_seconds()
+
+bench_scan_bencht_scattering_evolve_bragg_loop_helper2 = []
+for numba_threads in [1,2,4,6,8,10,12,14]:
+    for fftw_threads in  [1,2,4,6,8,10,12,14]:
+        print(f"numba_threads={numba_threads}, fftw_threads={fftw_threads}")
+        bencht_scattering_evolve_bragg_loop_helper2 = datetime.now()
+        with ProgressBar(total=10) as progressbar: 
+            _ = scattering_evolve_bragg_loop_helper2(t,psi,swnf,
+                                            steps=10,progress_proxy=progressbar,s34=0,
+                                            t3mid=T_BS, t3wid=t3pi4, v3pot=V3pi4, 
+                                            t4mid=T_BS, t4wid=t4pi4, v4pot=V4pi4,  
+                                            numba_threads = numba_threads,fftw_threads  = fftw_threads)
+        bench_t_scan_delta = datetime.now()-bencht_scattering_evolve_bragg_loop_helper2
+        print(f"    bench_t_scan_delta = {datetime.now()-bencht_scattering_evolve_bragg_loop_helper2}")
+        bench_scan_bencht_scattering_evolve_bragg_loop_helper2.append((numba_threads,fftw_threads,bench_t_scan_delta))
+
+
+bench_scan_bencht_scattering_evolve_bragg_loop_helper2
+
+df_bench = pd.DataFrame(bench_scan_bencht_scattering_evolve_bragg_loop_helper2, columns=['numba_threads', 'fftw_threads', 'time_delta'])
+df_bench['time_seconds'] = df_bench['time_delta'].apply(lambda x: x.total_seconds())
+df_bench.drop(columns=['time_delta'], inplace=True)
+print(df_bench)
+
+df_bench['time_seconds'].min()
+
+min_time_row = df_bench.loc[df_bench['time_seconds'].idxmin()]
+print(min_time_row)
 
 
 
@@ -3628,6 +3859,90 @@ with ProgressBar(total=10) as progressbar:
 
 
 
+# + vscode={"languageId": "raw"} active=""
+# @jit(forceobj=True, cache=True)
+# def phiAndSWNF(psi, nthreads=nthreads):
+#     phiUN = np.flip(np.flip(np.fft.fftshift(pyfftw.interfaces.numpy_fft.fftn(psi,threads=nthreads,norm='ortho')),axis=1),axis=3)
+#     superWeirdNormalisationFactorSq = check_norm_phi(phiUN)
+#     swnf = sqrt(superWeirdNormalisationFactorSq)
+#     phi = phiUN/swnf
+#     return phi, (swnf+0*1j)
+#
+# @jit(forceobj=True, cache=True)
+# def toPhi(psi, swnf, nthreads=nthreads) -> np.ndarray:
+#     return np.flip(np.flip(np.fft.fftshift(pyfftw.interfaces.numpy_fft.fftn(psi,threads=nthreads,norm='ortho')),axis=1),axis=3)/swnf
+#
+# @jit(forceobj=True, cache=True)
+# def toPsi(phi, swnf, nthreads=nthreads) -> np.ndarray:
+#     return pyfftw.interfaces.numpy_fft.ifftn(np.fft.ifftshift(np.flip(np.flip(phi*swnf,axis=3),axis=1)),threads=nthreads,norm='ortho')
+# -
+
+import cupy as cp
+
+
+# +
+# Conversion functions
+def numpy_to_cuda(array: np.ndarray) -> cp.ndarray:
+    return cp.asarray(array)
+
+def cuda_to_numpy(array: cp.ndarray) -> np.ndarray:
+    return cp.asnumpy(array)
+
+# CUDA-compatible normalization check
+def check_norm_phi_cuda(phi_cuda):
+    # Assuming uniform spacing, replace trapz with sum approximation
+    norm = cp.sum(cp.abs(phi_cuda)**2) * (dpx * dpx * dpz * dpz)
+    return norm
+
+# CUDA-compatible functions
+def phiAndSWNF_cuda(psi):
+    phiUN = cp.flip(cp.flip(cp.fft.fftshift(cp.fft.fftn(psi, norm='ortho'), axes=(1, 3)), axis=1), axis=3)
+    superWeirdNormalisationFactorSq = check_norm_phi_cuda(phiUN)
+    swnf = cp.sqrt(superWeirdNormalisationFactorSq)
+    phi = phiUN / swnf
+    return phi, swnf
+
+def toPhi_cuda(psi, swnf) -> cp.ndarray:
+    phi = cp.flip(cp.flip(cp.fft.fftshift(cp.fft.fftn(psi, norm='ortho'), axes=(1, 3)), axis=1), axis=3) / swnf
+    return phi
+
+def toPsi_cuda(phi, swnf) -> cp.ndarray:
+    psi = cp.fft.ifftn(cp.fft.ifftshift(cp.flip(cp.flip(phi * swnf, axis=3), axis=1)), norm='ortho')
+    return psi
 
 
 
+# -
+
+psi = psi0gaussian(sx3=su, sz3=su, sx4=su, sz4=su, px3=0, pz3=0, px4=0, pz4=0)
+
+phi, swnf = phiAndSWNF(psi, nthreads=7)
+
+psi_cuda = numpy_to_cuda(psi)
+
+phi_cuda, swnf_cuda = phiAndSWNF_cuda(psi_cuda)
+
+phi_cuda.shape
+
+
+
+# +
+# 1. Delete GPU variables
+psi_cuda = None
+phi_cuda = None
+
+# 2. Free CuPy's default memory pool
+cp.get_default_memory_pool().free_all_blocks()
+
+# (Optional) Free CuPy's pinned memory pool if used
+cp.get_default_pinned_memory_pool().free_all_blocks()
+
+# 3. Run garbage collection
+gc.collect()
+# -
+
+cp.cuda.Device(0).reset()
+
+cp.cuda.Stream.null.synchronize()
+
+cp.cuda.set_allocator(None)

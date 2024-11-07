@@ -16,6 +16,7 @@ Please run one of the following command.
 conda env create --file env-hist-macos-arm64.yml --prefix ./envs/py311_he34sim
 conda env create --file env-hist-intel.yml --prefix ./envs/py311_he34sim
 conda env create --file env-hist-noarch.yml --prefix ./envs/py311_he34sim
+conda env create --file env-hist-noarch.yml --name py311_he34sim
 ```
 
 By default, I want to create the environment in the project directory `./` so it doesn't clutter my home directory. But if you want to store packages for this environment in the conda default directory, use `--name py311_he34sim` instead of `--prefix`.  
@@ -29,6 +30,8 @@ VSCode's jupyter page should auto detect the new environment.
 
 ```bash
 conda activate ./envs/py311_he34sim 
+# or 
+conda activate py311_he34sim
 ```
 
 and deactivate once done
