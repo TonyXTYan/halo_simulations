@@ -1,0 +1,23 @@
+# python==3.11 
+setuptools<65
+numpy>=2.0
+libblas
+numba
+pgzip
+matplotlib
+uncertainties
+scipy
+pandas
+pyfftw
+statsmodels
+moviepy
+opencv-python
+joblib
+numba-progress
+pytest
+hypothesis
+meson
+ipykernel
+ipywidgets
+jupytext
+ffmpeg

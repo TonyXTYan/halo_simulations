@@ -90,7 +90,7 @@ Because I'm using VSCode so I have to do these manual conversions, if you use ju
 
 
 
-Random command logs needed to get shit working 
+Some random command logs needed to get shit working 
 ```bash
 which ffmpeg
 # and then update os.environ["IMAGEIO_FFMPEG_EXE"]
@@ -104,3 +104,54 @@ conda install numpy --update-deps --force-reinstall
 conda install 'numpy>=2.0' --update-deps --force-reinstall
 
 ```
+
+
+
+### Using venv?
+```bash
+python -m venv venv
+# For UNIX
+source venv/bin/activate
+
+# For Windows
+venv\Scripts\activate
+```
+
+```bash
+sudo apt-get update
+sudo apt-get install ffmpeg libblas-dev liblapack-dev libfftw3-dev libopencv-dev
+
+brew install ffmpeg openblas fftw opencv
+```
+
+
+
+
+
+
+
+
+## Running a simulation sequence He3-He4
+
+First initialise all functions and variable definitions with (🔄)
+
+Then run 
+
+1. Initialise initial state (🈶) section and check the plots look okay 
+2. One test run  (🈶) , this is to get numba caching working, and get a runtime estimate 
+    - tip: use benchmark tool to find 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
