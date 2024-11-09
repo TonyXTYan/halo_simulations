@@ -1,4 +1,5 @@
 # python==3.11 
+# Emmm I don' think pip have all the below packages... emmmm welp whatever, use conda please.
 setuptools<65
 numpy>=2.0
 libblas

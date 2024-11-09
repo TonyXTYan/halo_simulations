@@ -24,3 +24,7 @@ output/(20230212-191315-F) bragg_mixing_0_Pi/*
 envs
 output
 venv
+.idea
+
+# Because of fucking windows
+*Icon? 

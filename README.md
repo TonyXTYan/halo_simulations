@@ -1,5 +1,26 @@
-# A Bragg Pulse Simulator for He3-He4
+<!-- # A Bragg Pulse Simulator for He3-He4 -->
+<!-- # Split-Step-Operator Method Schrödinger Equation Propagator  -->
+<!-- Split-Time Evolution Propagator for the Schrödinger Equation -->
+<!-- Schrödinger Time Evolution Propagator using Split-step operator method -->
+# $\mathbb{STEPS}$
+<!-- # $\textbf{S}\text{chr\"odiner}$ $\textbf{T}\text{ime}$ $\textbf{E}\text{volution}$ $\textbf{P}\text{ropagator}$ $\text{using}$ $\textbf{S}\text{plit-step}$ $\text{operator}$ $\text{method}$  -->
+<!-- Split-sTep opErator method for Propagating Schrödinger equation -->
+$\textbf{S}\text{plit-s}\textbf{T}\text{ep}$ 
+$\text{op}\textbf{E}\text{rator}$ 
+$\text{method}$ 
+$\text{for}$
+$\textbf{P}\text{ropagating}$
+$\textbf{S}\text{chrödinger}$
+$\textbf{E}\text{quation}$
 
+[![python](https://img.shields.io/badge/python-3.11-gray.svg?style=flat&logo=python&logoColor=white&labelColor=black)](https://docs.python.org/3/whatsnew/3.11.html)
+![numpy](https://img.shields.io/badge/numpy-black.svg?logo=numpy&logoColor=white)
+![numba](https://img.shields.io/badge/numba-black.svg?logo=numba&logoColor=white)
+![scipy](https://img.shields.io/badge/scipy-black.svg?logo=scipy&logoColor=white)
+![conda](https://img.shields.io/badge/conda-black.svg?logo=anaconda&logoColor=white)
+
+## Introduction
+todo
 
 
 ## Dev env setup
@@ -18,6 +39,12 @@ conda env create --file env-hist-intel.yml --prefix ./envs/py311_he34sim
 conda env create --file env-hist-noarch.yml --prefix ./envs/py311_he34sim
 ```
 
+```bash
+conda env create --name py311_he34sim --file env-hist-macos-arm64.yml
+conda env create --name py311_he34sim --file env-hist-intel.yml
+conda env create --name py311_he34sim --file env-hist-noarch.yml
+```
+
 By default, I want to create the environment in the project directory `./` so it doesn't clutter my home directory. But if you want to store packages for this environment in the conda default directory, use `--name py311_he34sim` instead of `--prefix`.  
 
 `macos-armos` uses the Apple Accelerate framework, `intel` uses MKL for hardware accelerated linear algebra computations.
@@ -30,6 +57,11 @@ VSCode's jupyter page should auto detect the new environment.
 ```bash
 conda activate ./envs/py311_he34sim 
 ```
+
+```bash
+conda activate py311_he34sim 
+```
+
 
 and deactivate once done
 
@@ -107,7 +139,7 @@ conda install 'numpy>=2.0' --update-deps --force-reinstall
 
 
 
-### Using venv?
+### Using venv? *BAD IDEA DON'T DO THIS*
 ```bash
 python -m venv venv
 # For UNIX
