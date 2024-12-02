@@ -7,7 +7,7 @@
 #       format_version: '1.5'
 #       jupytext_version: 1.16.4
 #   kernelspec:
-#     display_name: Python 3
+#     display_name: py311_he34sim
 #     language: python
 #     name: python3
 # ---
@@ -2483,7 +2483,8 @@ def plot_g34_v2(phiHere, cutPlot=1.5, saveFig=True,
     ax2.set_xticks(ticks, ["$+p_{B_x}$","$-p_{B_x}$","$+p_{B_x}$","$-p_{B_x}$"])
     for i in range(gx3x4n.shape[0]):
         for j in range(gx3x4n.shape[1]):
-            plt.text(j, i, str(round(np.flipud(gx3x4n.T)[i, j],4)), ha='center', va='center', color='black',fontsize='small')
+            # plt.text(j, i, str(round(np.flipud(gx3x4n.T)[i, j],3)), ha='center', va='center', color='black',fontsize='small')
+            plt.text(j, i, format(np.flipud(gx3x4n.T)[i, j],'.4f'), ha='center', va='center', color='black',fontsize='small')
     plt.title(f"{title2}\ncut = {cutPlot}")
     cbar = plt.colorbar(im,pad=0.15,fraction=0.046)
     # cbar.set_ticks(np.linspace(0,0.25,6))
@@ -2599,31 +2600,33 @@ whatever_bla_testing2 = plot_g34(phi, cutPlot=1.5, saveFig=True,
         title2filestr="s3-0", skipPlot=False
         )
 
-t=1.2052
+# t=1.2052
+# t = 0.15
+t = 0.15
 data_folder = "20240919-173152-TFF"
 # settingStr = "2-7"
-settingStr = selected_sett[0]
+# settingStr = selected_sett[0]
 psi, phi = None, None
 gc.collect()
-# with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)}.pgz.pkl', 'rb', thread=8) as file:
-with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)} s={settingStr}.pgz.pkl', 'rb', thread=8) as file:
+with pgzip.open(f'./output/twoParticleSim/{data_folder}/psi at t={round(t,5)}.pgz.pkl', 'rb', thread=8) as file:
+# with pgzip.open(f'/Volumes/tonyNVME Gold/twoParticleSim/{data_folder}/psi at t={round(t,5)} s={settingStr}.pgz.pkl', 'rb', thread=8) as file:
     psi = pickle.load(file)
 phi, swnf = phiAndSWNF(psi, nthreads=7)
 gc.collect()
 
-figSizeHere = (10.5,1.5)
-# figSizeHere = (10.5,3.5)
+# figSizeHere = (10.5,4.0)
+figSizeHereCM = (24,6.5)
+figSizeHere = (figSizeHereCM[0]/2.54, figSizeHereCM[1]/2.54)
+figSizeHere = (round(figSizeHere[0],4), round(figSizeHere[1],4))
 whatever_bla_testing2v2 = plot_g34_v2(phi, cutPlot=1.5, saveFig=True, 
         pMaxCut=2,
-        title2=f"s={settingStr}, szh={figSizeHere}",
-        title2filestr=f"{settingStr}, fsh={figSizeHere}", skipPlot=False,
+        title2=f"s={settingStr}, szhCM={figSizeHereCM}",
+        title2filestr=f"{settingStr}, fshCM={figSizeHereCM}", skipPlot=False,
         figSize=figSizeHere
         )
-del figSizeHere
+del figSizeHere, figSizeHereCM
 
-
-
-
+p
 
 
 
@@ -2735,7 +2738,7 @@ psi_pgzpkl_list = glob.glob(output_prefix+"*t=1.2052*.pgz.pkl")
 psi_pgzpkl_list.sort(key=extract_pgzpkl_t)
 psi_pgzpkl_ss_l = [extract_pgzpkl_t(x) for x in psi_pgzpkl_list]
 
-psi_pgzpkl_list[20]
+psi_pgzpkl_list
 
 extract_pgzpkl_t(psi_pgzpkl_list[20])
 
@@ -2820,7 +2823,11 @@ with pgzip.open(output_prefix+f"outputOfSett"+output_ext,'wb', thread=8, blocksi
 with pgzip.open("/Volumes/tonyNVME Gold/twoParticleSim/20240711-234819-TFF/outputOfSett.pgz.pkl", 'rb', thread=1) as file:
     outputOfSett = pickle.load(file)
 
-phi_corrE_list = glob.glob(output_prefix+"phi-corr-stats*")
+with pgzip.open("./output/twoParticleSim/20240919-173152-TFF/outputOfSett.pgz.pkl", 'rb', thread=1) as file:
+    outputOfSett = pickle.load(file)
+
+# phi_corrE_list = glob.glob(output_prefix+"phi-corr-stats*")
+phi_corrE_list = glob.glob("./output/twoParticleSim/20240919-173152-TFF/"+"phi-corr-stats*")
 phi_corrE_list.sort(key=extract_pgzpkl_t)
 phi_corrE_ss_l = [extract_pgzpkl_t(x) for x in phi_corrE_list]
 
@@ -2879,8 +2886,10 @@ float(sss.split("-")[0])
 
 corrE_3p4s
 
-
 # +
+from tkinter import font
+
+
 def cosM(x, a, o, h):
     return a*np.cos(x-o)+h
 par, cov = scipy.optimize.curve_fit(cosM, corrE_3p4, corrE_val)
@@ -2891,25 +2900,29 @@ yyy = cosM(xxx, *par)
 yys = 2 * par_sig[0] * np.cos(xxx-par[1])
 yyd = np.sqrt(np.sum(par_sig**2))
 
-plt.figure(figsize=(11,4))
+figsize = (10,7)
+plt.figure(figsize=(figsize[0]/2.54, figsize[1]/2.54))
 # plt.fill_between(xxe, -1, -1/sqrt(2), color='gray', alpha=0.2, label="_nolegend_",linewidth=0)
 # plt.fill_between(xxe, +1/sqrt(2), +1, color='gray', alpha=0.2, label="_nolegend_",linewidth=0)
-plt.fill_between(xxe, -1, -0.5, color='gray', alpha=0.2, label="_nolegend_")
-plt.fill_between(xxe, +0.5, +1, color='gray', alpha=0.2, label="_nolegend_")
+# plt.fill_between(xxe, -1, -0.5, color='gray', alpha=0.2, label="_nolegend_")
+# plt.fill_between(xxe, +0.5, +1, color='gray', alpha=0.2, label="_nolegend_")
 
 plt.fill_between(xxx, yyy-2*yys, yyy+2*yys, color='purple', alpha=0.6, label="±2σ Fit")
-plt.scatter(corrE_3p4,corrE_val,30,marker='x',alpha=0.8, label="Simulation")
+plt.scatter(corrE_3p4,corrE_val,20,marker='x',alpha=0.6, label="Simulation")
 plt.scatter(corrE_3p4s,corrE_vals,30,marker='x',alpha=0.9, color="lime", label="_nolegend_")
 l.info(f"a = {par[0]} ± {par_sig[0]}")
 l.info(f"o = {par[1]} ± {par_sig[1]}")
 l.info(f"h = {par[2]} ± {par_sig[2]}")
-plt.xlabel("$(\\varphi_{A} + \\varphi_B)/\\pi$")
-plt.ylabel("$E(\\varphi_{ A},\\varphi_{ B})$")
-plt.yticks(np.linspace(-1,1,4+1))
+# plt.xlabel("$(\\varphi_{A} + \\varphi_B)/\\pi$")
+# plt.ylabel("$E(\\varphi_{ A},\\varphi_{ B})$")
+plt.xlabel("$(\\theta_{A} + \\theta_{B})/\\pi$", labelpad=0,fontsize=10)
+plt.ylabel("$E(\\theta_{A},\\theta_{ B})$",labelpad=-5, fontsize=10)
+plt.yticks(np.linspace(-1,1,4+1),fontsize=10)
 # plt.xticks(np.linspace(0,2*2*pi,8+1), [str(int(x*2))+"π/4" for x in np.linspace(0,8,8+1)] )
 # plt.xticks(np.linspace(0,2*2*pi,8+1), ["0","$\\pi/2$","$\\pi$","$3\\pi/2$","$2\\pi$","${5\\pi}/{2}$","$3\\pi$","${7\\pi}/{2}$","$4\\pi$"])
 # plt.xticks(np.linspace(0,2*2*pi,16+1), ["0","$\\pi/4$", "$\\pi/2$", "$3\\pi/4$", "$\\pi$", "$5\\pi/4$", "$3\\pi/2$", "$7\\pi/4$", "$2\\pi$", "$9\\pi/4$", "$5\\pi/2$", "$11\\pi/4$", "$3\\pi$", "$13\\pi/4$", "$7\\pi/2$", "$15\\pi/4$", "$4\\pi$"])
-plt.xticks(np.linspace(0,2*2*pi,16+1),np.linspace(0,4,16+1))
+# plt.xticks(np.linspace(0,2*2*pi,16+1),np.linspace(0,4,16+1))
+plt.xticks(np.linspace(0,2*2*pi,8+1),np.linspace(0,4,8+1),fontsize=10)
 plt.gca().xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(pi/8))
 plt.gca().yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(0.1))
 plt.xlim(0-0.5,2*2*pi+0.5)
@@ -2917,14 +2930,14 @@ plt.ylim(-1,+1)
 plt.grid(which='both', linestyle='-', linewidth=0.5, color='gray', alpha=0.2)
 # plt.text(4*pi-0.8,-0.81,"Non-local")
 # plt.text(4*pi-0.8,-0.67,"Local")
-plt.text(4*pi-0.8,-0.61,"Non-local")
-plt.text(4*pi-0.8,-0.46,"Local")
+# plt.text(4*pi-0.8,-0.61,"Non-local")  # this one
+# plt.text(4*pi-0.8,-0.46,"Local")      # this one
 # plt.text(4*pi-0.7,+0.38,"Non-local")
 # plt.text(4*pi-0.7,+0.55,"Local")
-plt.legend(loc='lower right')
+plt.legend(loc='lower right',fontsize=9)
 
-plt.savefig(output_prefix+"corrE-3p4-v3b.pdf", dpi=600, bbox_inches='tight')
-plt.savefig(output_prefix+"corrE-3p4-v3b.png", dpi=600, bbox_inches='tight')
+plt.savefig(output_prefix+f"corrE-3p4-v3b fS={figsize}cm.pdf", dpi=600, bbox_inches='tight')
+plt.savefig(output_prefix+f"corrE-3p4-v3b fS={figsize}cm.png", dpi=600, bbox_inches='tight')
 plt.show()
 # -
 
@@ -3483,7 +3496,93 @@ plt.savefig(output_pre_selpa+title+".pdf", dpi=600, bbox_inches='tight')
 plt.savefig(output_pre_selpa+title+".png", dpi=600, bbox_inches='tight')
 plt.show()
 gc.collect()
+
+# +
+logPlus=1; po=0.4; f=-7
+# o3pM = np.max(only3phi(phi))
+# o4pM = np.max(only4phi(phi))
+print(np.max(only3phi(phi)),np.max(only4phi(phi)))
+# o3pM = 0.0003863759165270296
+# o4pM = 0.00016002514388641225
+o3pM = 0.00032
+o4pM = 0.00014
+mmm = 1e-6
+mm3 = 1
+mm4 = 1
+lm = 1e5
+atm=6e4
+cmax3p= 5e-5
+cmax4p= 5e-5
+camp3 = 0e-5
+camp4 = 0e-5
+bbb = 1e5
+bbc = 1e4
+
+cb3tlins = np.linspace(0,o3pM,20+1)
+cb3ticks = mm3*np.power(np.log(logPlus+bbc*cb3tlins),po)
+cb3tlbls = [format(x,'.1f') if i%2==0 and (i<9 or i >= 20) else "" for (i, x) in enumerate(cb3tlins*0.05/(cb3tlins[1]-cb3tlins[0]))]
+cb4tlins = np.linspace(0,o4pM,20+1)
+cb4ticks = mm4*np.power(np.log(logPlus+bbc*cb4tlins),po)
+cb4tlbls = [format(x,'.1f') if i%2==0 and (i<9 or i >= 20) else "" for (i, x) in enumerate(cb4tlins*0.05/(cb4tlins[1]-cb4tlins[0]))]
+
+t_str = str(round(t,5))
+print("t = " +t_str+ " \t\t frame =", f, "\t\t memory used: " + 
+        str(round(ram_py_MB(),3)) + "MB  ")
+figsizeHereCM = (10,6)
+fig = plt.figure(figsize=(figsizeHereCM[0]/2.54,figsizeHereCM[1]/2.54))
+# plt.subplot(2,2,1)
+# plt.imshow(np.power(np.log(logPlus+np.flipud(only3(psi).T)),po), extent=[-xmax,xmax,-zmax, zmax],cmap='Reds')
+# plt.xlabel("$x \ (\mu m)$")
+# plt.ylabel("$z \ (\mu m)$")
+# plt.title("$t="+t_str+" \ ms $")
+
+# plt.subplot(2,2,2)
+# plt.imshow(np.power(np.log(logPlus+np.flipud(only4(psi).T)),po), extent=[-xmax,xmax,-zmax, zmax],cmap='Blues')
+# plt.xlabel("$x \ (\mu m)$")
+# plt.ylabel("$z \ (\mu m)$")
+
+plt.subplot(1,2,1)
+# plt.imshow(fucking_scaling_fuck(only3phi(phi).T,cmax3p,camp3,bbb), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds')
+# plt.imshow(np.power(np.log(1+lm*only3phi(phi).T),po), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds',norm=matplotlib.colors.Normalize(vmin=0, vmax=cmax3p))
+# plt.imshow(fucking_scaling_fuck(np.power(np.log(1+lm*only3phi(phi).T),po),cmax3p,camp3), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds')
+# plt.imshow(np.arctan(atm*only3phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds')
+plt.imshow(mm3*np.power(np.log(logPlus+bbc*only3phi(phi).T),po), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds',norm=matplotlib.colors.Normalize(vmin=0, vmax=np.max(cb3ticks)))
+# plt.imshow(np.power(np.log(logPlus+only3phi(phi).T),po), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Reds',norm=matplotlib.colors.Normalize(vmin=0, vmax=cmax3p))
+plt.xlabel("$p_x \ (\hbar k)$")
+plt.ylabel("$p_z \ (\hbar k)$")
+plt.xlim(-1.5,+1.5)
+plt.ylim(-2.5,+2.5)
+cbar = plt.colorbar()
+cbar.set_ticks(cb3ticks)
+cbar.set_ticklabels(cb3tlbls)
+cbar.ax.tick_params(labelsize=8)
+plt.title("${}^3\\text{He}^\\ast (A)$")
+
+plt.subplot(1,2,2)
+# plt.imshow(fucking_scaling_fuck(only4phi(phi).T,cmax4p,camp4,bbb), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues')
+# plt.imshow(np.power(np.log(1+lm*only4phi(phi).T),po), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues',norm=matplotlib.colors.Normalize(vmin=0, vmax=cmax4p))
+# plt.imshow(fucking_scaling_fuck(np.power(np.log(1+lm*only4phi(phi).T),po),cmax4p,camp4), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues')
+# plt.imshow(np.arctan(atm*only4phi(phi).T), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues')
+plt.imshow(mm4*np.power(np.log(logPlus+bbc*only4phi(phi).T),po), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues',norm=matplotlib.colors.Normalize(vmin=0, vmax=np.max(cb4ticks)))
+# plt.imshow(np.power(np.log(logPlus+only4phi(phi).T),po), extent=np.array([-pxmax,pxmax,-pzmax,pzmax])/(hb*k),cmap='Blues',norm=matplotlib.colors.Normalize(vmin=0, vmax=cmax4p))
+plt.xlabel("$p_x \ (\hbar k)$")
+plt.xlabel("$p_x \ (\hbar k)$")
+plt.xlim(-1.5,+1.5)
+plt.ylim(-2.5,+2.5)
+cbar = plt.colorbar()
+cbar.set_ticks(cb4ticks)
+cbar.set_ticklabels(cb4tlbls)
+cbar.ax.tick_params(labelsize=8)
+plt.title("${}^4\\text{He}^\\ast (B)$")
+
+title= "f="+str(f)+",t="+t_str+",logPlus="+str(logPlus)+f" s={settingStr}"+f" fS={figsizeHereCM}"
+plt.savefig(output_pre_selpa+title+".pdf", dpi=600, bbox_inches='tight')
+plt.savefig(output_pre_selpa+title+".png", dpi=600, bbox_inches='tight')
+plt.show()
+gc.collect()
 # -
+
+
 
 0.05 * np.size(cb3tlins)
 

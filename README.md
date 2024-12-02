@@ -19,6 +19,7 @@ $\textbf{E}\text{quation}$
 ![scipy](https://img.shields.io/badge/scipy-black.svg?logo=scipy&logoColor=white)
 ![conda](https://img.shields.io/badge/conda-black.svg?logo=anaconda&logoColor=white)
 
+
 ## Introduction
 todo
 
@@ -40,9 +41,9 @@ conda env create --file env-hist-noarch.yml --prefix ./envs/py311_he34sim
 ```
 
 ```bash
-conda env create --name py311_he34sim --file env-hist-macos-arm64.yml
-conda env create --name py311_he34sim --file env-hist-intel.yml
-conda env create --name py311_he34sim --file env-hist-noarch.yml
+conda env create --name py311_steps --file env-hist-macos-arm64.yml
+conda env create --name py311_steps --file env-hist-intel.yml
+conda env create --name py311_steps --file env-hist-noarch.yml
 ```
 
 By default, I want to create the environment in the project directory `./` so it doesn't clutter my home directory. But if you want to store packages for this environment in the conda default directory, use `--name py311_he34sim` instead of `--prefix`.  
@@ -158,7 +159,8 @@ brew install ffmpeg openblas fftw opencv
 
 
 
-
+## Papers produced using this codebase 
+[![arXiv](https://img.shields.io/badge/arXiv-2411.08356-dd3333.svg?logo=arXiv&logoColor=white)](https://arxiv.org/abs/2411.08356)
 
 
 
