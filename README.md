@@ -13,7 +13,7 @@ $\textbf{P}\text{ropagating}$
 $\textbf{S}\text{chrödinger}$
 $\textbf{E}\text{quation}$
 
-[![python](https://img.shields.io/badge/python-3.11-gray.svg?style=flat&logo=python&logoColor=white&labelColor=black)](https://docs.python.org/3/whatsnew/3.11.html)
+[![python](https://img.shields.io/badge/python-3.12-gray.svg?style=flat&logo=python&logoColor=white&labelColor=black)](https://docs.python.org/3/whatsnew/3.12.html)
 ![numpy](https://img.shields.io/badge/numpy-black.svg?logo=numpy&logoColor=white)
 ![numba](https://img.shields.io/badge/numba-black.svg?logo=numba&logoColor=white)
 ![scipy](https://img.shields.io/badge/scipy-black.svg?logo=scipy&logoColor=white)
@@ -24,7 +24,19 @@ $\textbf{E}\text{quation}$
 todo
 
 
-## Dev env setup
+## Dev env setup (Apr 2025)
+As of April 2025, I've updated to use python 3.12 on macOS 15.4 arm64, and `miniconda` to manage the python packages for this project. Lower python versions should still work.  
+```bash
+conda env create --name steps python=3.12
+conda activate steps
+```
+Note the environment name `steps` can be changed to whatever you like.
+
+Then use `conda install package_name` to manually install the list of packages in `requirements.txt` or `env-hist-noarch.yml` file. 
+Note some packages may not be available with `conda`, in that case, you can use `pip install package_name` to install them (some may not be available with `pip` either, in that case, you'll need `brew install package_name` or `apt-get install package_name`).
+
+
+## Dev env setup (OLD Pre-2024)
 I use [`miniconda`](https://docs.anaconda.com/miniconda/) to manage the python packages for this project, please have it installed in order to follow this setup guide.
 I am using python 3.11 (as of Oct 2024) since this is the only version that somewhat satisfies all dependencies. At some point, I would like to move to python 3.12 to utilise the new typing features.
 I'm also using VSCode for multi view, extensions, copilot, etc. For an identical dev experience, consider using the VSCode profile `py311_h34sim.code-profile`, and workspace `py311_h34sim.code-workspace`
@@ -117,8 +129,10 @@ jupytext --to ipynb twoParticle_v.a.6.py
 Because I'm using VSCode so I have to do these manual conversions, if you use jupyter notebook or lab, you can setup a pairing between `.ipynb` and `.py` files, and then can convert automatically, see doc [here](https://jupytext.readthedocs.io/en/latest/paired-notebooks.html). 
 
 
-
-
+Generate an `html` archives of the jupyter notebook 
+```bash
+jupyter nbconvert --to html twoParticle_v.a.6.ipynb
+```
 
 
 
@@ -161,7 +175,17 @@ brew install ffmpeg openblas fftw opencv
 
 ## Papers produced using this codebase 
 [![arXiv](https://img.shields.io/badge/arXiv-2411.08356-dd3333.svg?logo=arXiv&logoColor=white)](https://arxiv.org/abs/2411.08356)
-
+```
+@misc{yan2025proposalbelltestentangled,
+      title={Proposal for a Bell Test with Entangled Atoms of Different Mass}, 
+      author={X. T. Yan and S. Kannan and Y. S. Athreya and A. G. Truscott and S. S. Hodgman},
+      year={2025},
+      eprint={2411.08356},
+      archivePrefix={arXiv},
+      primaryClass={quant-ph},
+      url={https://arxiv.org/abs/2411.08356}, 
+}
+```
 
 
 
@@ -176,7 +200,9 @@ Then run
     - tip: use benchmark tool to find 
 
 
+## Running Bragg pulse simulations
 
+TODO
 
 
 
